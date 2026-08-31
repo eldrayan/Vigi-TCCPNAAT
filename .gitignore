@@ -1,0 +1,32 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C / C++ / Embedded build outputs
+*.o
+*.bin
+*.elf
+*.hex
+*.map
+.pio/
+.espressif/
+
+# Environments and configs with credentials
+.env
+.env.local
+*.secret
+venv/
+.venv/
+env/
+
+# IDE specific files
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Temporary extracted text files
+extracted_apostila.txt
+/tmp/
