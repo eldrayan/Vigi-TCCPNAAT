@@ -17,7 +17,7 @@
 
 | Identificador | Descrição | Prioridade (MoSCoW) | Depende de |
 | :--- | :--- | :--- | :--- |
-| US01 | Como operário da linha, quero que **o sistema de visão computacional identifique recipientes sem tampa, com tampa frouxa ou deformidades no corpo antes da etapa final**, para que produtos defeituosos não cheguem às máquinas de empacotamento. | Deve ter | - |
+| US01 | Como operário da linha, quero que **o sistema de visão computacional identifique recipientes sem tampa, com tampa frouxa ou deformidades no corpo antes da etapa final**, para que produtos defeituosos não cheguem às máquinas de empacotamento. | Deve ter | `Nenhum` |
 | US02 | Como supervisor de produção, quero **receber alertas sonoros/visuais e no painel da linha sempre que a taxa de refugo ultrapassar o limite aceitável em um lote**, para intervir na máquina envasadora/rosqueadora antes que ocorra desperdício em massa. | Deve ter | US01 |
 | US03 | Como supervisor de produção, quero **visualizar a contagem total de anomalias (sem tampa, tampa torta, frasco amassado) em tempo real**, para identificar e dar manutenção a estações críticas com antecedência. | Deveria ter | US01 |
 | US04 | Como supervisor de produção, quero **receber relatórios categorizados pelo tipo de anomalia** (sem tampa, tampa torta, frasco amassado), para identificar qual estação do processo anterior está gerando mais falhas. | Deveria ter | US01 |
