@@ -1,3 +1,18 @@
+> **Projeto:** Vigi — Sistema Embarcado para Inspeção e Triagem de Linhas de Envase  
+> **Revisão:** 0.1.0  
+> **Responsável:** Alan Mendes Vieira
+> **Milestone:** Estruturação de Requisitos
+
+---
+
+### Registro de Alterações
+
+| Versão | Responsável | Data | Alterações |
+| :--- | :--- | :--- | :--- |
+| **0.1.0** | Alan Mendes Vieira | 01/09/2026 | Elaboração inicial das Histórias de Usuário.
+
+---
+
 ### Requisitos Funcionais
 
 | Identificador | Descrição | Prioridade (MoSCoW) | Depende de |
