@@ -53,7 +53,9 @@ O sistema **Vigi** atua como uma estação intermediária de inspeção não-int
 │   └── workflows/              # Automações de CI e gerenciamento de dependências
 ├── docs/
 │   └── requisitos/             # Especificação de Requisitos (IEEE 29148 / PNAAT)
-│       └── 01-regras-de-negocio.md
+│       ├── 01-regras-de-negocio.md
+│       ├── 02-requisitos-funcionais.md
+│       └── 03-requisitos-nao-funcionais.md
 ├── .gitignore
 └── README.md
 ```
