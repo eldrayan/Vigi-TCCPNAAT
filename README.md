@@ -56,10 +56,19 @@ O sistema **Vigi** atua como uma estação intermediária de inspeção não-int
 │       ├── 01-regras-de-negocio.md
 │       ├── 02-requisitos-funcionais.md
 │       └── 03-requisitos-nao-funcionais.md
-├── scripts/
-│   └── coletar_dataset.py       # Captura assistida das imagens na Raspberry Pi
-├── tests/
-│   └── test_coletar_dataset.py  # Testes das regras do coletor
+├── edge/                        # Aplicação executada na Raspberry Pi
+│   ├── config.py                # Configuração e argumentos do nó de borda
+│   ├── acquisition/             # Contrato e backends de câmera
+│   │   └── backends/            # Picamera2 e OpenCV/USB
+│   ├── collection/              # Caso de uso de coleta do dataset
+│   │   ├── controller.py        # Coordenação do fluxo de captura
+│   │   ├── state.py             # Estado da sessão e classes
+│   │   ├── image_store.py       # Gravação atômica dos JPEGs
+│   │   ├── manifest.py          # Metadados da coleta
+│   │   └── views/               # Interfaces OpenCV e terminal/SSH
+│   ├── tools/
+│   │   └── collect_dataset.py   # Composição da ferramenta
+│   └── tests/                   # Testes unitários do Edge
 ├── .gitignore
 └── README.md
 ```
@@ -78,26 +87,31 @@ No Raspberry Pi OS, instale as dependências no Python do sistema:
 
 ```bash
 sudo apt update
-sudo apt install -y python3-picamera2 python3-opencv python3-numpy rpicam-apps
-```
-
-Teste primeiro se a câmera CSI está disponível:
-
-```bash
-rpicam-hello -t 3000
+sudo apt install -y python3-picamera2 python3-opencv
 ```
 
 Execute o coletor a partir da raiz do repositório:
 
 ```bash
-python3 scripts/coletar_dataset.py --width 1280 --height 720
+python3 -m edge.tools.collect_dataset --width 1280 --height 720
 ```
 
-O backend `rpicam` permanece disponível somente como alternativa caso a API
-Picamera2 não possa ser utilizada. Para uma webcam USB, use:
+Quando executado por SSH ou em outro terminal sem ambiente gráfico, o coletor
+detecta a ausência de `DISPLAY`/Wayland e ativa automaticamente o modo terminal.
+Nesse modo, as mesmas teclas funcionam sem precisar pressionar `ENTER`, mas a
+mira não é exibida. Também é possível forçar esse comportamento:
 
 ```bash
-python3 scripts/coletar_dataset.py --backend opencv --camera 0
+python3 -m edge.tools.collect_dataset --headless --width 1280 --height 720
+```
+
+Para visualizar a mira, execute o comando em um terminal aberto na área de
+trabalho gráfica da própria Raspberry Pi.
+
+Para uma webcam USB, use:
+
+```bash
+python3 -m edge.tools.collect_dataset --backend opencv --camera 0
 ```
 
 Controles da janela:
