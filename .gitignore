@@ -30,3 +30,6 @@ env/
 # Temporary extracted text files
 extracted_apostila.txt
 /tmp/
+
+# Dataset local de imagens (distribuir externamente ou rastrear com DVC)
+/dataset/

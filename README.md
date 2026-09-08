@@ -56,9 +56,66 @@ O sistema **Vigi** atua como uma estação intermediária de inspeção não-int
 │       ├── 01-regras-de-negocio.md
 │       ├── 02-requisitos-funcionais.md
 │       └── 03-requisitos-nao-funcionais.md
+├── scripts/
+│   └── coletar_dataset.py       # Captura assistida das imagens na Raspberry Pi
+├── tests/
+│   └── test_coletar_dataset.py  # Testes das regras do coletor
 ├── .gitignore
 └── README.md
 ```
+
+---
+
+## 📷 Coleta do Dataset na Raspberry Pi
+
+O coletor serve exclusivamente para adquirir e organizar as imagens. Ele não
+executa YOLO, inferência, treinamento ou classificação local. O backend padrão
+usa a API `Picamera2` para ler diretamente a câmera CSI conectada à Raspberry
+Pi; os JPEGs resultantes podem ser enviados posteriormente à plataforma externa
+de classificação escolhida.
+
+No Raspberry Pi OS, instale as dependências no Python do sistema:
+
+```bash
+sudo apt update
+sudo apt install -y python3-picamera2 python3-opencv python3-numpy rpicam-apps
+```
+
+Teste primeiro se a câmera CSI está disponível:
+
+```bash
+rpicam-hello -t 3000
+```
+
+Execute o coletor a partir da raiz do repositório:
+
+```bash
+python3 scripts/coletar_dataset.py --width 1280 --height 720
+```
+
+O backend `rpicam` permanece disponível somente como alternativa caso a API
+Picamera2 não possa ser utilizada. Para uma webcam USB, use:
+
+```bash
+python3 scripts/coletar_dataset.py --backend opencv --camera 0
+```
+
+Controles da janela:
+
+| Tecla | Ação |
+| :---: | :--- |
+| `1`–`4` | Seleciona `conforme`, `sem_tampa`, `tampa_torta` ou `amassado` |
+| `ESPAÇO` | Captura uma imagem |
+| `B` | Liga ou desliga o modo burst |
+| `N` | Inicia o registro de uma nova garrafa física |
+| `C` | Alterna entre quadro completo e recorte da região guia |
+| `Q` ou `ESC` | Encerra a coleta com segurança |
+
+As imagens são gravadas em `dataset/raw/<classe>/`. O arquivo
+`dataset/raw/manifest.csv` registra a sessão e a garrafa física de cada imagem.
+Pressione `N` sempre que trocar a garrafa real: essa identificação permite que
+o particionamento mantenha imagens correlacionadas no mesmo subconjunto e evita
+vazamento entre treino e validação.
 
 ---
 
