@@ -23,3 +23,11 @@
 | US04 | Como supervisor de produção, quero **receber relatórios categorizados pelo tipo de anomalia** (sem tampa, tampa torta, frasco amassado), para identificar qual estação do processo anterior está gerando mais falhas. | Deveria ter | US01 |
 | US05 | Como supervisor de produção, quero que o **sistema armazene automaticamente cada ocorrência de anomalia detectada (com data, hora, tipo de anomalia, lote e estação)**, para que a equipe possa realizar análises estatísticas de longo prazo, identificar padrões de falhas e embasar melhorias no processo. | Poderia ter | US01 |
 | US06 | Como técnico de automação, quero que **um mecanismo pneumático/braço ejetor desvie frascos defeituosos para uma esteira de refugo em tempo real**, para evitar travamentos mecânicos e paradas não programadas. | Não terá desta vez | US01 |
+
+---
+
+### Documentos Complementares
+
+* [05. Levantamento de Requisitos Técnicos](file:///home/rayanoliveira/Desktop/Workspace/Vigi-TCCPNAAT/docs/requisitos/05-requisitos-tecnicos.md)
+* [Diagrama Arquitetural do Sistema](file:///home/rayanoliveira/Desktop/Workspace/Vigi-TCCPNAAT/docs/arquitetura/diagrama-arquitetural.md)
+
