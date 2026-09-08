@@ -12,7 +12,7 @@
 | **0.1.0** | Squad Vigi | 06/09/2026 | Elaboração inicial do Diagrama Arquitetural orientado a Fluxo de Dados (Pressman). |
 | **0.2.0** | Squad Vigi | 06/09/2026 | Simplificação de atuadores físicos e inclusão de buffer offline. |
 | **0.3.0** | Squad Vigi | 06/09/2026 | Integração do sensor fotoelétrico infravermelho E18-D80NK. |
-| **0.4.0** | Squad Vigi | 06/09/2026 | Atualização do armazenamento local para banco SQLite e dashboard de supervisão para Node-RED. |
+| **0.4.0** | Squad Vigi | 06/09/2026 | Atualização do armazenamento local para banco SQLite e dashboard de supervisão para FastAPI e React. |
 
 ---
 
@@ -27,7 +27,7 @@ A arquitetura do sistema **Vigi** adota o modelo de **Design Orientado ao Fluxo 
    * Inferência de Inteligência Artificial (*Edge AI*);
    * Lógica de decisão preventiva (*Fail-Safe*);
    * Gravação transacional segura no banco de dados local **SQLite**.
-3. **Camada de Saídas (*Outputs*):** Publicação assíncrona orientada a eventos via protocolo **MQTT** para o Broker e visualização de indicadores no **Dashboard Node-RED** em tempo real.
+3. **Camada de Saídas (*Outputs*):** Publicação assíncrona orientada a eventos via protocolo **MQTT** para o Broker Mosquitto, consumo pelo FastAPI e visualização de indicadores no **Dashboard React** em tempo real.
 
 ---
 
@@ -62,11 +62,13 @@ flowchart LR
     subgraph SAIDAS["3. Camada de Saídas (IoT & Supervisão)"]
         direction TB
         O1["Cliente Publicador MQTT<br/><i>(Payloads JSON Assíncronos)</i>"]
-        O2["Broker MQTT Central<br/><i>(Distribuição de Tópicos)</i>"]
-        O3["Dashboard Web Node-RED<br/><i>(Métricas OEE, Alarmes e Histórico)</i>"]
+        O2["Broker Mosquitto<br/><i>(Distribuição de Tópicos)</i>"]
+        O3["Backend FastAPI<br/><i>(Consumidor MQTT, API REST e SSE)</i>"]
+        O4["Dashboard Web React<br/><i>(Chart.js, Lucide e SCSS)</i>"]
         
         O1 -->|Wi-Fi TCP/IP| O2
-        O2 -->|WebSockets / MQTT| O3
+        O2 -->|MQTT| O3
+        O3 -->|HTTP / SSE| O4
     end
 
     S1 -->|Interrupção Digital| P1
@@ -84,25 +86,32 @@ flowchart LR
 * **Câmera Digital (RPi Camera Module / USB HD):** Acionada sob demanda apenas no instante em que o frasco está centralizado no plano de teste.
 
 ### 2. Camada de Processamento (*Edge Node — Raspberry Pi 5*)
-* **Debounce & Sincronização:** Filtra oscilações eletromecânicas do sinal do sensor E18-D80NK (30 a 100 ms, conforme [RNF08](file:///home/rayanoliveira/Desktop/Workspace/Vigi-TCCPNAAT/docs/requisitos/03-requisitos-nao-funcionais.md)).
+* **Debounce & Sincronização:** Filtra oscilações eletromecânicas do sinal do sensor E18-D80NK (30 a 100 ms, conforme [RNF08](../requisitos/03-requisitos-nao-funcionais.md)).
 * **Pipeline de Visão & Edge AI:**
   * Pré-processamento e normalização do frame;
-  * Classificação visual (ausência de tampa, tampa desalinhada/torta, frasco amassado ou conforme) com acurácia mínima de 90% ([RNF06](file:///home/rayanoliveira/Desktop/Workspace/Vigi-TCCPNAAT/docs/requisitos/03-requisitos-nao-funcionais.md)).
+  * Classificação visual (ausência de tampa, tampa desalinhada/torta, frasco amassado ou conforme) com acurácia mínima de 90% ([RNF06](../requisitos/03-requisitos-nao-funcionais.md)).
 * **Mecanismo de Decisão & *Fail-Safe*:**
-  * Em caso de baixa confiança ou falha de leitura, o recipiente é preventivamente marcado como não-conforme ([RN02](file:///home/rayanoliveira/Desktop/Workspace/Vigi-TCCPNAAT/docs/requisitos/01-regras-de-negocio.md)).
+  * Em caso de baixa confiança ou falha de leitura, o recipiente é preventivamente marcado como não-conforme ([RN02](../requisitos/01-regras-de-negocio.md)).
 * **Persistência Local com SQLite (*Offline-First*):**
-  * Cada ciclo de inspeção é gravado em banco relacional SQLite local com garantia ACID (evitando corrupção em quedas de energia) e mantido por até 30 dias ([RN04](file:///home/rayanoliveira/Desktop/Workspace/Vigi-TCCPNAAT/docs/requisitos/01-regras-de-negocio.md), [RN10](file:///home/rayanoliveira/Desktop/Workspace/Vigi-TCCPNAAT/docs/requisitos/01-regras-de-negocio.md), [RNF03](file:///home/rayanoliveira/Desktop/Workspace/Vigi-TCCPNAAT/docs/requisitos/03-requisitos-nao-funcionais.md)). O campo `sync_status` gerencia a fila de envio e retransmissão ordenada ao broker MQTT ([RNF04](file:///home/rayanoliveira/Desktop/Workspace/Vigi-TCCPNAAT/docs/requisitos/03-requisitos-nao-funcionais.md)).
+  * Cada ciclo de inspeção é gravado em banco relacional SQLite local com garantia ACID (evitando corrupção em quedas de energia) e mantido por até 30 dias ([RN04](../requisitos/01-regras-de-negocio.md), [RN10](../requisitos/01-regras-de-negocio.md), [RNF03](../requisitos/03-requisitos-nao-funcionais.md)). O campo `sync_status` gerencia a fila de envio e retransmissão ordenada ao broker MQTT ([RNF04](../requisitos/03-requisitos-nao-funcionais.md)).
 
 ### 3. Camada de Saídas (*IoT & Supervisão*)
 * **Publicador MQTT:** Envia assincronamente as mensagens JSON para o broker central via Wi-Fi sem bloquear o laço de inspeção.
-* **Dashboard Node-RED:** Interface gráfica interativa conectada ao broker MQTT para exibição em tempo real de contagem de produção, indicadores de OEE, gráficos de falhas por categoria e alarmes visuais para o supervisor ([US02](file:///home/rayanoliveira/Desktop/Workspace/Vigi-TCCPNAAT/docs/requisitos/02-requisitos-funcionais.md), [US03](file:///home/rayanoliveira/Desktop/Workspace/Vigi-TCCPNAAT/docs/requisitos/02-requisitos-funcionais.md), [RNF11](file:///home/rayanoliveira/Desktop/Workspace/Vigi-TCCPNAAT/docs/requisitos/03-requisitos-nao-funcionais.md)).
+* **Backend FastAPI:** Consome os eventos do broker Mosquitto, disponibiliza consultas REST e envia atualizações em tempo real por SSE.
+* **Dashboard React:** Interface conectada exclusivamente à API FastAPI, com gráficos em Chart.js, ícones Lucide e estilos SCSS ([US02](../requisitos/02-requisitos-funcionais.md), [US03](../requisitos/02-requisitos-funcionais.md), [RNF11](../requisitos/03-requisitos-nao-funcionais.md)).
+
+### Separação entre backend e frontend
+
+O **backend e toda a camada de dados** utilizam Python: processamento de imagens, inferência, publicação e consumo MQTT, persistência SQLite, validações e API FastAPI. Manter essas responsabilidades no mesmo ecossistema simplifica a comunicação com o modelo e evita duplicar regras em linguagens diferentes.
+
+O **frontend** utiliza JavaScript com React e não acessa diretamente MQTT nem SQLite. Ele recebe dados do FastAPI por REST/SSE. O React favorece a composição de telas por componentes, atualizações incrementais em tempo real e a integração com Chart.js e Lucide, recursos adequados ao dashboard operacional do Vigi.
 
 ---
 
 ## ⏱️ Pipeline Temporal de Inspeção
 
 ```text
-[T0: Presença Física] ──> [T1: Gatilho & Captura] ──> [T2: Inferência Edge AI] ──> [T3: Decisão & SQLite] ──> [T4: Publicação MQTT] ──> [T5: Node-RED Dashboard]
+[T0: Presença Física] ──> [T1: Gatilho & Captura] ──> [T2: Inferência Edge AI] ──> [T3: Decisão & SQLite] ──> [T4: Publicação MQTT] ──> [T5: FastAPI + React]
    (Sensor E18-D80NK)       (Câmera + Debounce)          (Raspberry Pi 5)             (Persistência Local)            (Broker Wi-Fi)             (Painel Visual)
        
 |<─────────────────────────────────────────────────── Latência Total < 500 ms (RNF01) ───────────────────────────────────────────────────>|
@@ -116,8 +125,9 @@ flowchart LR
 CREATE TABLE IF NOT EXISTS inspecoes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-    status VARCHAR(20) NOT NULL,          -- 'APROVADO' | 'REJEITADO'
-    anomalia_tipo VARCHAR(50),           -- 'sem_tampa', 'tampa_torta', 'amassado', NULL
+    resultado VARCHAR(20) NOT NULL,       -- 'CONFORME' | 'NAO_CONFORME'
+    categoria VARCHAR(30),                -- 'ANOMALIA_PRODUTO' | 'FALHA_TECNICA' | NULL
+    codigo VARCHAR(50),                   -- tipos de anomalia ou falha técnica
     confianca REAL NOT NULL,             -- Ex: 0.96
     tempo_processamento_ms INTEGER,      -- Ex: 185
     sync_status VARCHAR(20) DEFAULT 'PENDENTE' -- 'PENDENTE' | 'SINCRONIZADO'
@@ -133,8 +143,9 @@ CREATE TABLE IF NOT EXISTS inspecoes (
 {
   "id_inspecao": 1042,
   "timestamp": "2026-09-06T14:30:01.250Z",
-  "status": "REJEITADO",
-  "anomalia_detectada": "sem_tampa",
+  "resultado": "NAO_CONFORME",
+  "categoria": "ANOMALIA_PRODUTO",
+  "codigo": "SEM_TAMPA",
   "confianca": 0.94,
   "tempo_processamento_ms": 180
 }
@@ -163,7 +174,7 @@ CREATE TABLE IF NOT EXISTS inspecoes (
 
 ## 📄 Documentos Relacionados
 
-* [01. Regras de Negócio](file:///home/rayanoliveira/Desktop/Workspace/Vigi-TCCPNAAT/docs/requisitos/01-regras-de-negocio.md)
-* [02. Requisitos Funcionais](file:///home/rayanoliveira/Desktop/Workspace/Vigi-TCCPNAAT/docs/requisitos/02-requisitos-funcionais.md)
-* [03. Requisitos Não-Funcionais](file:///home/rayanoliveira/Desktop/Workspace/Vigi-TCCPNAAT/docs/requisitos/03-requisitos-nao-funcionais.md)
-* [05. Requisitos Técnicos e Justificativas](file:///home/rayanoliveira/Desktop/Workspace/Vigi-TCCPNAAT/docs/requisitos/05-requisitos-tecnicos.md)
+* [01. Regras de Negócio](../requisitos/01-regras-de-negocio.md)
+* [02. Requisitos Funcionais](../requisitos/02-requisitos-funcionais.md)
+* [03. Requisitos Não-Funcionais](../requisitos/03-requisitos-nao-funcionais.md)
+* [05. Requisitos Técnicos e Justificativas](../requisitos/05-requisitos-tecnicos.md)
