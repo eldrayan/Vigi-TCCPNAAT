@@ -33,3 +33,5 @@ extracted_apostila.txt
 
 # Dataset local de imagens (distribuir externamente ou rastrear com DVC)
 /dataset/
+
+/CONTEXTO/
