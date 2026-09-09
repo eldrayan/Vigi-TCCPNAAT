@@ -28,7 +28,7 @@ class Picamera2Camera:
         self.started = False
         try:
             configuration = self.camera.create_video_configuration(
-                main={"size": (width, height), "format": "RGB888"},
+                main={"size": (width, height), "format": "BGR888"},
                 controls={"FrameRate": float(fps)},
                 buffer_count=4,
             )
