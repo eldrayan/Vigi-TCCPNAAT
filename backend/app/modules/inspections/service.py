@@ -41,9 +41,9 @@ class InspectionService:
     async def find_by_id(
         self,
         session: AsyncSession,
-        id_inspecao: int,
+        inspection_id: int,
     ) -> InspectionResponseDTO | None:
-        inspection = await self.repository.find_by_id(session, id_inspecao)
+        inspection = await self.repository.find_by_id(session, inspection_id)
         if inspection is None:
             return None
         return InspectionResponseDTO.model_validate(inspection)
@@ -52,9 +52,9 @@ class InspectionService:
         self,
         session: AsyncSession,
     ) -> InspectionSummaryDTO:
-        total, conformes, nao_conformes = await self.repository.get_summary(session)
+        total, compliant, noncompliant = await self.repository.get_summary(session)
         return InspectionSummaryDTO(
             total=total,
-            conformes=conformes,
-            nao_conformes=nao_conformes,
+            compliant=compliant,
+            noncompliant=noncompliant,
         )

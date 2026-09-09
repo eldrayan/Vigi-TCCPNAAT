@@ -22,24 +22,24 @@ class InspectionCreateDTO(BaseModel):
         str_strip_whitespace=True,
     )
 
-    id_inspecao: int = Field(gt=0)
+    inspection_id: int = Field(gt=0)
     timestamp: datetime
-    resultado: InspectionResult
-    categoria: InspectionCategory | None = None
-    tipo_nao_conformidade: NonConformityType | None = None
-    tipo_falha_tecnica: TechnicalFailureType | None = None
-    confianca: float | None = Field(default=None, ge=0, le=1)
-    tempo_processamento_ms: int = Field(ge=0)
+    result: InspectionResult
+    category: InspectionCategory | None = None
+    nonconformity_type: NonConformityType | None = None
+    technical_failure_type: TechnicalFailureType | None = None
+    confidence: float | None = Field(default=None, ge=0, le=1)
+    processing_time_ms: int = Field(ge=0)
 
     @model_validator(mode="after")
     def validate_classification(self) -> Self:
-        if self.resultado == InspectionResult.CONFORME:
+        if self.result == InspectionResult.CONFORME:
             if any(
                 value is not None
                 for value in (
-                    self.categoria,
-                    self.tipo_nao_conformidade,
-                    self.tipo_falha_tecnica,
+                    self.category,
+                    self.nonconformity_type,
+                    self.technical_failure_type,
                 )
             ):
                 raise ValueError(
@@ -47,17 +47,17 @@ class InspectionCreateDTO(BaseModel):
                 )
             return self
 
-        if self.categoria == InspectionCategory.ANOMALIA_PRODUTO:
-            if self.tipo_nao_conformidade is None:
+        if self.category == InspectionCategory.ANOMALIA_PRODUTO:
+            if self.nonconformity_type is None:
                 raise ValueError("Anomalia de produto deve informar o tipo.")
-            if self.tipo_falha_tecnica is not None:
+            if self.technical_failure_type is not None:
                 raise ValueError("Anomalia de produto não pode possuir falha técnica.")
             return self
 
-        if self.categoria == InspectionCategory.FALHA_TECNICA:
-            if self.tipo_falha_tecnica is None:
+        if self.category == InspectionCategory.FALHA_TECNICA:
+            if self.technical_failure_type is None:
                 raise ValueError("Falha técnica deve informar o tipo.")
-            if self.tipo_nao_conformidade is not None:
+            if self.nonconformity_type is not None:
                 raise ValueError("Falha técnica não pode possuir anomalia de produto.")
             return self
 

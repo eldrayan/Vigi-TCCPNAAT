@@ -12,64 +12,64 @@ from app.infrastructure.database import Base
 
 
 class Inspection(Base):
-    __tablename__ = "inspecoes"
+    __tablename__ = "inspections"
     __table_args__ = (
         CheckConstraint(
-            "resultado IN ('CONFORME', 'NAO_CONFORME')",
-            name="ck_inspecoes_resultado",
+            "result IN ('CONFORME', 'NAO_CONFORME')",
+            name="ck_inspections_result",
         ),
         CheckConstraint(
-            "categoria IS NULL OR categoria IN "
+            "category IS NULL OR category IN "
             "('ANOMALIA_PRODUTO', 'FALHA_TECNICA')",
-            name="ck_inspecoes_categoria",
+            name="ck_inspections_category",
         ),
         CheckConstraint(
-            "tipo_nao_conformidade IS NULL OR tipo_nao_conformidade IN "
+            "nonconformity_type IS NULL OR nonconformity_type IN "
             "('SEM_TAMPA', 'TAMPA_TORTA', 'AMASSADO')",
-            name="ck_inspecoes_tipo_nao_conformidade",
+            name="ck_inspections_nonconformity_type",
         ),
         CheckConstraint(
-            "tipo_falha_tecnica IS NULL OR tipo_falha_tecnica IN "
+            "technical_failure_type IS NULL OR technical_failure_type IN "
             "('ERRO_CAPTURA', 'BAIXA_CONFIANCA', 'ERRO_INFERENCIA')",
-            name="ck_inspecoes_tipo_falha_tecnica",
+            name="ck_inspections_technical_failure_type",
         ),
         CheckConstraint(
-            "confianca IS NULL OR confianca BETWEEN 0 AND 1",
-            name="ck_inspecoes_confianca",
+            "confidence IS NULL OR confidence BETWEEN 0 AND 1",
+            name="ck_inspections_confidence",
         ),
         CheckConstraint(
-            "tempo_processamento_ms >= 0",
-            name="ck_inspecoes_tempo_processamento",
+            "processing_time_ms >= 0",
+            name="ck_inspections_processing_time",
         ),
         CheckConstraint(
-            "(resultado = 'CONFORME' AND categoria IS NULL "
-            "AND tipo_nao_conformidade IS NULL AND tipo_falha_tecnica IS NULL) "
-            "OR (resultado = 'NAO_CONFORME' AND "
-            "((categoria = 'ANOMALIA_PRODUTO' "
-            "AND tipo_nao_conformidade IS NOT NULL "
-            "AND tipo_falha_tecnica IS NULL) "
-            "OR (categoria = 'FALHA_TECNICA' "
-            "AND tipo_nao_conformidade IS NULL "
-            "AND tipo_falha_tecnica IS NOT NULL)))",
-            name="ck_inspecoes_classificacao",
+            "(result = 'CONFORME' AND category IS NULL "
+            "AND nonconformity_type IS NULL AND technical_failure_type IS NULL) "
+            "OR (result = 'NAO_CONFORME' AND "
+            "((category = 'ANOMALIA_PRODUTO' "
+            "AND nonconformity_type IS NOT NULL "
+            "AND technical_failure_type IS NULL) "
+            "OR (category = 'FALHA_TECNICA' "
+            "AND nonconformity_type IS NULL "
+            "AND technical_failure_type IS NOT NULL)))",
+            name="ck_inspections_classification",
         ),
-        Index("idx_inspecoes_timestamp", "timestamp"),
-        Index("idx_inspecoes_resultado", "resultado"),
+        Index("idx_inspections_timestamp", "timestamp"),
+        Index("idx_inspections_result", "result"),
         Index(
-            "idx_inspecoes_tipo_nao_conformidade",
-            "tipo_nao_conformidade",
+            "idx_inspections_nonconformity_type",
+            "nonconformity_type",
         ),
     )
 
-    id_inspecao: Mapped[int] = mapped_column(Integer, primary_key=True)
+    inspection_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    resultado: Mapped[str] = mapped_column(String(20))
-    categoria: Mapped[str | None] = mapped_column(String(30))
-    tipo_nao_conformidade: Mapped[str | None] = mapped_column(String(30))
-    tipo_falha_tecnica: Mapped[str | None] = mapped_column(String(30))
-    confianca: Mapped[float | None] = mapped_column(Float)
-    tempo_processamento_ms: Mapped[int] = mapped_column(Integer)
-    recebido_em: Mapped[datetime] = mapped_column(
+    result: Mapped[str] = mapped_column(String(20))
+    category: Mapped[str | None] = mapped_column(String(30))
+    nonconformity_type: Mapped[str | None] = mapped_column(String(30))
+    technical_failure_type: Mapped[str | None] = mapped_column(String(30))
+    confidence: Mapped[float | None] = mapped_column(Float)
+    processing_time_ms: Mapped[int] = mapped_column(Integer)
+    received_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.current_timestamp(),
     )

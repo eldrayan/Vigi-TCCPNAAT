@@ -8,5 +8,5 @@ from pydantic import BaseModel
 
 class InspectionSummaryDTO(BaseModel):
     total: int
-    conformes: int
-    nao_conformes: int
+    compliant: int
+    noncompliant: int

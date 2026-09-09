@@ -12,4 +12,4 @@ from .inspection_create import InspectionCreateDTO
 
 class InspectionResponseDTO(InspectionCreateDTO):
     model_config = ConfigDict(from_attributes=True)
-    recebido_em: datetime
+    received_at: datetime

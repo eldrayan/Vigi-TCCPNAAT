@@ -14,72 +14,72 @@ depends_on = None
 
 def upgrade() -> None:
     op.create_table(
-        "inspecoes",
-        sa.Column("id_inspecao", sa.Integer(), primary_key=True),
+        "inspections",
+        sa.Column("inspection_id", sa.Integer(), primary_key=True),
         sa.Column("timestamp", sa.DateTime(timezone=True), nullable=False),
-        sa.Column("resultado", sa.String(20), nullable=False),
-        sa.Column("categoria", sa.String(30), nullable=True),
-        sa.Column("tipo_nao_conformidade", sa.String(30), nullable=True),
-        sa.Column("tipo_falha_tecnica", sa.String(30), nullable=True),
-        sa.Column("confianca", sa.Float(), nullable=True),
-        sa.Column("tempo_processamento_ms", sa.Integer(), nullable=False),
+        sa.Column("result", sa.String(20), nullable=False),
+        sa.Column("category", sa.String(30), nullable=True),
+        sa.Column("nonconformity_type", sa.String(30), nullable=True),
+        sa.Column("technical_failure_type", sa.String(30), nullable=True),
+        sa.Column("confidence", sa.Float(), nullable=True),
+        sa.Column("processing_time_ms", sa.Integer(), nullable=False),
         sa.Column(
-            "recebido_em",
+            "received_at",
             sa.DateTime(timezone=True),
             server_default=sa.func.current_timestamp(),
             nullable=False,
         ),
         sa.CheckConstraint(
-            "resultado IN ('CONFORME', 'NAO_CONFORME')",
-            name="ck_inspecoes_resultado",
+            "result IN ('CONFORME', 'NAO_CONFORME')",
+            name="ck_inspections_result",
         ),
         sa.CheckConstraint(
-            "categoria IS NULL OR categoria IN "
+            "category IS NULL OR category IN "
             "('ANOMALIA_PRODUTO', 'FALHA_TECNICA')",
-            name="ck_inspecoes_categoria",
+            name="ck_inspections_category",
         ),
         sa.CheckConstraint(
-            "tipo_nao_conformidade IS NULL OR tipo_nao_conformidade IN "
+            "nonconformity_type IS NULL OR nonconformity_type IN "
             "('SEM_TAMPA', 'TAMPA_TORTA', 'AMASSADO')",
-            name="ck_inspecoes_tipo_nao_conformidade",
+            name="ck_inspections_nonconformity_type",
         ),
         sa.CheckConstraint(
-            "tipo_falha_tecnica IS NULL OR tipo_falha_tecnica IN "
+            "technical_failure_type IS NULL OR technical_failure_type IN "
             "('ERRO_CAPTURA', 'BAIXA_CONFIANCA', 'ERRO_INFERENCIA')",
-            name="ck_inspecoes_tipo_falha_tecnica",
+            name="ck_inspections_technical_failure_type",
         ),
         sa.CheckConstraint(
-            "confianca IS NULL OR confianca BETWEEN 0 AND 1",
-            name="ck_inspecoes_confianca",
+            "confidence IS NULL OR confidence BETWEEN 0 AND 1",
+            name="ck_inspections_confidence",
         ),
         sa.CheckConstraint(
-            "tempo_processamento_ms >= 0",
-            name="ck_inspecoes_tempo_processamento",
+            "processing_time_ms >= 0",
+            name="ck_inspections_processing_time",
         ),
         sa.CheckConstraint(
-            "(resultado = 'CONFORME' AND categoria IS NULL "
-            "AND tipo_nao_conformidade IS NULL AND tipo_falha_tecnica IS NULL) "
-            "OR (resultado = 'NAO_CONFORME' AND "
-            "((categoria = 'ANOMALIA_PRODUTO' "
-            "AND tipo_nao_conformidade IS NOT NULL "
-            "AND tipo_falha_tecnica IS NULL) "
-            "OR (categoria = 'FALHA_TECNICA' "
-            "AND tipo_nao_conformidade IS NULL "
-            "AND tipo_falha_tecnica IS NOT NULL)))",
-            name="ck_inspecoes_classificacao",
+            "(result = 'CONFORME' AND category IS NULL "
+            "AND nonconformity_type IS NULL AND technical_failure_type IS NULL) "
+            "OR (result = 'NAO_CONFORME' AND "
+            "((category = 'ANOMALIA_PRODUTO' "
+            "AND nonconformity_type IS NOT NULL "
+            "AND technical_failure_type IS NULL) "
+            "OR (category = 'FALHA_TECNICA' "
+            "AND nonconformity_type IS NULL "
+            "AND technical_failure_type IS NOT NULL)))",
+            name="ck_inspections_classification",
         ),
     )
-    op.create_index("idx_inspecoes_timestamp", "inspecoes", ["timestamp"])
-    op.create_index("idx_inspecoes_resultado", "inspecoes", ["resultado"])
+    op.create_index("idx_inspections_timestamp", "inspections", ["timestamp"])
+    op.create_index("idx_inspections_result", "inspections", ["result"])
     op.create_index(
-        "idx_inspecoes_tipo_nao_conformidade",
-        "inspecoes",
-        ["tipo_nao_conformidade"],
+        "idx_inspections_nonconformity_type",
+        "inspections",
+        ["nonconformity_type"],
     )
 
 
 def downgrade() -> None:
-    op.drop_index("idx_inspecoes_tipo_nao_conformidade", table_name="inspecoes")
-    op.drop_index("idx_inspecoes_resultado", table_name="inspecoes")
-    op.drop_index("idx_inspecoes_timestamp", table_name="inspecoes")
-    op.drop_table("inspecoes")
+    op.drop_index("idx_inspections_nonconformity_type", table_name="inspections")
+    op.drop_index("idx_inspections_result", table_name="inspections")
+    op.drop_index("idx_inspections_timestamp", table_name="inspections")
+    op.drop_table("inspections")

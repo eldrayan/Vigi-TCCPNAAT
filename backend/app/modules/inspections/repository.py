@@ -18,28 +18,28 @@ class InspectionRepository:
         dto: InspectionCreateDTO,
     ) -> Inspection:
         values = {
-            "id_inspecao": dto.id_inspecao,
+            "inspection_id": dto.inspection_id,
             "timestamp": dto.timestamp,
-            "resultado": dto.resultado.value,
-            "categoria": dto.categoria.value if dto.categoria is not None else None,
-            "tipo_nao_conformidade": (
-                dto.tipo_nao_conformidade.value
-                if dto.tipo_nao_conformidade is not None
+            "result": dto.result.value,
+            "category": dto.category.value if dto.category is not None else None,
+            "nonconformity_type": (
+                dto.nonconformity_type.value
+                if dto.nonconformity_type is not None
                 else None
             ),
-            "tipo_falha_tecnica": (
-                dto.tipo_falha_tecnica.value
-                if dto.tipo_falha_tecnica is not None
+            "technical_failure_type": (
+                dto.technical_failure_type.value
+                if dto.technical_failure_type is not None
                 else None
             ),
-            "confianca": dto.confianca,
-            "tempo_processamento_ms": dto.tempo_processamento_ms,
+            "confidence": dto.confidence,
+            "processing_time_ms": dto.processing_time_ms,
         }
 
         statement = (
             insert(Inspection)
             .values(**values)
-            .on_conflict_do_nothing(index_elements=[Inspection.id_inspecao])
+            .on_conflict_do_nothing(index_elements=[Inspection.inspection_id])
         )
 
         async with session.begin():
@@ -47,7 +47,7 @@ class InspectionRepository:
 
             result = await session.execute(
                 select(Inspection).where(
-                    Inspection.id_inspecao == dto.id_inspecao
+                    Inspection.inspection_id == dto.inspection_id
                 )
             )
             inspection = result.scalar_one()
@@ -71,9 +71,9 @@ class InspectionRepository:
     async def find_by_id(
         self,
         session: AsyncSession,
-        id_inspecao: int,
+        inspection_id: int,
     ) -> Inspection | None:
-        return await session.get(Inspection, id_inspecao)
+        return await session.get(Inspection, inspection_id)
 
     async def get_summary(
         self,
@@ -81,14 +81,14 @@ class InspectionRepository:
     ) -> tuple[int, int, int]:
         result = await session.execute(
             select(
-                func.count(Inspection.id_inspecao),
+                func.count(Inspection.inspection_id),
                 func.sum(
-                    case((Inspection.resultado == "CONFORME", 1), else_=0)
+                    case((Inspection.result == "CONFORME", 1), else_=0)
                 ),
                 func.sum(
-                    case((Inspection.resultado == "NAO_CONFORME", 1), else_=0)
+                    case((Inspection.result == "NAO_CONFORME", 1), else_=0)
                 ),
             )
         )
-        total, conformes, nao_conformes = result.one()
-        return total or 0, conformes or 0, nao_conformes or 0
+        total, compliant, noncompliant = result.one()
+        return total or 0, compliant or 0, noncompliant or 0
