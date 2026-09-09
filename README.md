@@ -15,7 +15,7 @@ O **Vigi** tem como propósito automatizar a inspeção visual e a triagem em te
 
 Em uma fábrica com processo contínuo de envase e empacotamento, recipientes chegam à etapa final de embalagem apresentando anomalias estruturais e falhas de fechamento. A passagem dessas peças defeituosas gera travamentos mecânicos no maquinário de empacotamento secundário, exige paradas não programadas da linha, provoca derramamento de líquidos sobre a esteira e componentes elétricos, e resulta em perda de lotes e redução drástica da Eficiência Global do Equipamento (OEE).
 
-O sistema **Vigi** atua como uma estação intermediária de inspeção não-intrusiva instalada na esteira de transporte. A passagem física de cada recipiente é detectada pelo sensor fotoelétrico infravermelho **E18-D80NK**, disparando a captura instantânea de imagem e a análise automatizada por visão computacional na borda (**Edge AI** com **Raspberry Pi 5**). Ao identificar uma não-conformidade, o sistema grava o evento no banco local **SQLite** e publica a telemetria e os alertas em tempo real via **MQTT** para supervisão no dashboard **Node-RED**.
+O sistema **Vigi** atua como uma estação intermediária de inspeção não-intrusiva instalada na esteira de transporte. A passagem física de cada recipiente é detectada pelo sensor fotoelétrico infravermelho **E18-D80NK**, disparando a captura instantânea de imagem e a análise automatizada por visão computacional na borda (**Edge AI** com **Raspberry Pi 5**). Ao identificar uma não-conformidade, o sistema grava o evento no banco local **SQLite** e publica a telemetria e os alertas em tempo real via **MQTT** para supervisão no backend **FastAPI** e dashboard **React**.
 
 ---
 
@@ -26,7 +26,7 @@ O sistema **Vigi** atua como uma estação intermediária de inspeção não-int
 2. Captura sincronizada de imagem do recipiente inspecionado no ponto focal.
 3. Classificação automatizada entre recipientes conformes e não-conformes por visão computacional na borda (Edge AI na Raspberry Pi 5).
 4. Persistência local transacional de eventos e histórico em banco embutido **SQLite** (*offline-first*).
-5. Envio de telemetria de produção, contagem de anomalias e alertas via protocolo MQTT para dashboard em **Node-RED** em tempo real.
+5. Envio de telemetria e alertas via MQTT para o broker Mosquitto, com consumo pelo **FastAPI** e visualização no dashboard **React**.
 6. Operação autônoma com sincronização de eventos pendentes após restabelecimento de conexão.
 
 ### Fora do Escopo (*Out-of-Scope*):
@@ -49,10 +49,17 @@ Abaixo está representado o fluxo integrado de inspeção visual, processamento 
 1. **Sensor Fotoelétrico (E18-D80NK):** Detecta a presença física do recipiente na esteira e dispara o gatilho de hardware.
 2. **Câmera Digital:** Realiza a captura sincronizada do quadro focal do frasco posicionado.
 3. **Raspberry Pi 5 (Edge AI):** Executa o pipeline de **Visão Computacional** e modelo de classificação para identificação de não-conformidades.
-4. **Comunicação MQTT:** Transmite assincronamente os eventos de inspeção e telemetria para o broker central.
+4. **Comunicação MQTT:** Transmite assincronamente os eventos de inspeção e telemetria para o broker Mosquitto.
 5. **Consumo dos Dados:**
    * **SQLite:** Persistência local transacional dos registros de inspeção (*offline-first* com retenção de 30 dias).
-   * **Node-RED + Dashboard:** Supervisão em tempo real, visualização de OEE, contadores de anomalias e gestão de alarmes.
+   * **Backend Python:** O FastAPI consome MQTT, acessa o SQLite e fornece dados ao dashboard por REST/SSE. A camada de dados permanece em Python para manter o mesmo ecossistema do modelo de visão computacional.
+   * **Frontend JavaScript:** O React apresenta indicadores, gráficos e alarmes no navegador, sem acessar diretamente o broker ou o banco de dados.
+
+### Separação da stack
+
+O processamento de imagens, a inferência do modelo, a comunicação MQTT, a persistência e a API são implementados em **Python**. Essa escolha reduz a quantidade de tecnologias na camada de dados e facilita o compartilhamento de modelos, validações e contratos entre o processamento em borda e o backend.
+
+Somente o frontend é implementado em **JavaScript**, com **React**. O React permite dividir o dashboard em componentes reutilizáveis, atualizar apenas os elementos afetados por novos eventos e integrar bibliotecas maduras como **Chart.js** e **Lucide**. Como o código é executado no navegador, o dashboard não adiciona uma segunda linguagem ao processamento de dados da Raspberry Pi.
 
 ---
 
