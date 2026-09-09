@@ -85,9 +85,82 @@ Somente o frontend é implementado em **JavaScript**, com **React**. O React per
 │       ├── 02-requisitos-funcionais.md
 │       ├── 03-requisitos-nao-funcionais.md
 │       └── 05-requisitos-tecnicos.md
+├── edge/                        # Aplicação executada na Raspberry Pi
+│   ├── config.py                # Configuração e argumentos do nó de borda
+│   ├── acquisition/             # Contrato e backends de câmera
+│   │   └── backends/            # Picamera2 e OpenCV/USB
+│   ├── collection/              # Caso de uso de coleta do dataset
+│   │   ├── controller.py        # Coordenação do fluxo de captura
+│   │   ├── state.py             # Estado da sessão e classes
+│   │   ├── image_store.py       # Gravação atômica dos JPEGs
+│   │   ├── manifest.py          # Metadados da coleta
+│   │   └── views/               # Interfaces OpenCV e terminal/SSH
+│   ├── tools/
+│   │   └── collect_dataset.py   # Composição da ferramenta
+│   └── tests/                   # Testes unitários do Edge
+├── scripts/
+│   └── coletar_dataset.py       # Entrada compatível para a ferramenta modular
 ├── .gitignore
 └── README.md
 ```
+
+---
+
+## 📷 Coleta do Dataset na Raspberry Pi
+
+O coletor serve exclusivamente para adquirir e organizar as imagens. Ele não
+executa YOLO, inferência, treinamento ou classificação local. O backend padrão
+usa a API `Picamera2` para ler diretamente a câmera CSI conectada à Raspberry
+Pi; os JPEGs resultantes podem ser enviados posteriormente à plataforma externa
+de classificação escolhida.
+
+No Raspberry Pi OS, instale as dependências no Python do sistema:
+
+```bash
+sudo apt update
+sudo apt install -y python3-picamera2 python3-opencv
+```
+
+Execute o coletor a partir da raiz do repositório:
+
+```bash
+python3 scripts/coletar_dataset.py --width 1280 --height 720
+```
+
+Quando executado por SSH ou em outro terminal sem ambiente gráfico, o coletor
+detecta a ausência de `DISPLAY`/Wayland e ativa automaticamente o modo terminal.
+Nesse modo, as mesmas teclas funcionam sem precisar pressionar `ENTER`, mas a
+mira não é exibida. Também é possível forçar esse comportamento:
+
+```bash
+python3 scripts/coletar_dataset.py --headless --width 1280 --height 720
+```
+
+Para visualizar a mira, execute o comando em um terminal aberto na área de
+trabalho gráfica da própria Raspberry Pi.
+
+Para uma webcam USB, use:
+
+```bash
+python3 scripts/coletar_dataset.py --backend opencv --camera 0
+```
+
+Controles da janela:
+
+| Tecla | Ação |
+| :---: | :--- |
+| `1`–`4` | Seleciona `conforme`, `sem_tampa`, `tampa_torta` ou `amassado` |
+| `ESPAÇO` | Captura uma imagem |
+| `B` | Liga ou desliga o modo burst |
+| `N` | Inicia o registro de uma nova garrafa física |
+| `C` | Alterna entre quadro completo e recorte da região guia |
+| `Q` ou `ESC` | Encerra a coleta com segurança |
+
+As imagens são gravadas em `dataset/raw/<classe>/`. O arquivo
+`dataset/raw/manifest.csv` registra a sessão e a garrafa física de cada imagem.
+Pressione `N` sempre que trocar a garrafa real: essa identificação permite que
+o particionamento mantenha imagens correlacionadas no mesmo subconjunto e evita
+vazamento entre treino e validação.
 
 ---
 
