@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vigi-tccpnaat"
+version = "0.1.0"
+description = "Pipeline de coleta, treinamento e inferencia Edge AI do Vigi"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "numpy>=1.26,<3",
+    "Pillow>=10,<13",
+    "PyYAML>=6,<7",
+    "ultralytics>=8.2,<9",
+]
+
+[project.optional-dependencies]
+train = [
+    "matplotlib>=3.8,<4",
+]
+mlops = [
+    "dvc[ssh]>=3.50,<4",
+]
+[dependency-groups]
+dev = [
+    "pytest>=8,<10",
+    "ruff>=0.11,<1",
+    "Pillow>=10,<13",
+    "PyYAML>=6,<7",
+]
+
+[tool.setuptools.packages.find]
+include = ["edge*", "vigi_ml*"]
+exclude = ["edge.tests*"]
+
+[tool.pytest.ini_options]
+testpaths = ["edge/tests", "tests"]
+addopts = "-ra"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
