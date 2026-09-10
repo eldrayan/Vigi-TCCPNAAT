@@ -59,9 +59,7 @@ class OpenCVCollectionView:
     ) -> Any:
         preview = frame.copy()
         x1, y1, x2, y2 = guide
-        color = (
-            (0, 220, 0) if score >= threshold or threshold <= 0 else (0, 80, 255)
-        )
+        color = (0, 220, 0) if score >= threshold or threshold <= 0 else (0, 80, 255)
         self.cv2.rectangle(preview, (x1, y1), (x2, y2), color, 2)
         center_x, center_y = (x1 + x2) // 2, (y1 + y2) // 2
         self.cv2.line(
