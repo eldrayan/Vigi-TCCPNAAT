@@ -31,7 +31,25 @@ env/
 extracted_apostila.txt
 /tmp/
 
-# Dataset local de imagens (distribuir externamente ou rastrear com DVC)
-/dataset/
+# Dataset local de imagens (os ponteiros .dvc permanecem no Git)
+/dataset/*
+!/dataset/*.dvc
+!/dataset/.gitkeep
+
+# Artefatos de modelos gerenciados pelo DVC
+/models/
+
+# Saidas locais de treinamento e avaliacao
+/runs/
+/reports/
+
+# Ferramentas Python
+.pytest_cache/
+.ruff_cache/
+.coverage
+dist/
+build/
+*.egg-info/
+/*.pt
 
 /CONTEXTO/
