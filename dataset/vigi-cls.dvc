@@ -1,6 +1,6 @@
 outs:
-- md5: fcb076a655a097b74aef36c91686d038.dir
-  size: 3160281
-  nfiles: 856
+- md5: 2ca8c58956a3bbd88af1ee0dfb597c0d.dir
+  size: 3342801
+  nfiles: 858
   hash: md5
   path: vigi-cls
