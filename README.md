@@ -98,6 +98,12 @@ Somente o frontend é implementado em **JavaScript**, com **React**. O React per
 │   ├── tools/
 │   │   └── collect_dataset.py   # Composição da ferramenta
 │   └── tests/                   # Testes unitários do Edge
+├── model_lifecycle/             # Ciclo de vida do modelo de classificação
+│   ├── inspection_classes.py    # Classes e códigos reconhecidos pelo Vigi
+│   ├── dataset_validation.py    # Integridade e identificação do dataset
+│   ├── model_evaluation.py      # Execução e relatórios da avaliação
+│   ├── quality_metrics.py       # Métricas e critérios do quality gate
+│   └── manifest.py              # Contrato do modelo promovido
 ├── scripts/
 │   └── coletar_dataset.py       # Entrada compatível para a ferramenta modular
 ├── .gitignore
@@ -161,6 +167,150 @@ As imagens são gravadas em `dataset/raw/<classe>/`. O arquivo
 Pressione `N` sempre que trocar a garrafa real: essa identificação permite que
 o particionamento mantenha imagens correlacionadas no mesmo subconjunto e evita
 vazamento entre treino e validação.
+
+---
+
+## 🧠 Treinamento e MLOps do classificador
+
+O treinamento consome o dataset que já foi particionado e aumentado na
+plataforma externa. Este repositório **não monta splits nem aplica data
+augmentation adicional**. A estrutura esperada é:
+
+```text
+dataset/vigi-cls/
+├── train/{01_conforme,02_sem_tampa,03_tampa_torta,04_amassado}/
+├── val/{01_conforme,02_sem_tampa,03_tampa_torta,04_amassado}/
+└── test/{01_conforme,02_sem_tampa,03_tampa_torta,04_amassado}/
+```
+
+### Ambiente local
+
+Use Python 3.12 e instale os grupos necessários com `uv`:
+
+```bash
+uv python install 3.12
+uv sync --python 3.12 --extra train --extra mlops --group dev
+uv run python scripts/verificar_ambiente.py
+```
+
+O preflight confirma a versão do Python, a disponibilidade de CUDA no PyTorch,
+o DVC e o SSH antes de iniciar um treinamento longo.
+
+### Versionamento dos artefatos
+
+O Vigi reutiliza o mesmo storage remoto do `yolo-edge-api`:
+
+```ini
+[core]
+    remote = local_remote
+['remote "local_remote"']
+    url = ssh://alan@100.67.236.30/home/alan/dvc-storage
+```
+
+Configure a chave apenas localmente, valide o dataset e publique os primeiros
+artefatos:
+
+```bash
+dvc remote modify --local local_remote keyfile /caminho/para/chave
+uv run python scripts/validar_dataset.py --dataset dataset/vigi-cls
+dvc add dataset/vigi-cls
+dvc push dataset/vigi-cls.dvc
+git add dataset/vigi-cls.dvc .gitignore
+```
+
+Depois que modelos candidatos ou o modelo ativo existirem:
+
+```bash
+dvc add models
+dvc push models.dvc
+git add models.dvc .gitignore
+```
+
+Os arquivos binários nunca devem ser adicionados diretamente ao Git.
+
+### Fine-tuning e avaliação
+
+Execute a baseline e a configuração ajustada separadamente:
+
+```bash
+uv run python scripts/treinar_modelo.py \
+  --dataset dataset/vigi-cls \
+  --config training_configuration/training-baseline.yaml
+
+uv run python scripts/treinar_modelo.py \
+  --dataset dataset/vigi-cls \
+  --config training_configuration/training-tuned.yaml \
+  --export-tflite
+```
+
+Calibre o limiar somente no split de validação e depois avalie uma única vez no
+teste:
+
+```bash
+uv run python scripts/avaliar_modelo.py \
+  --model models/candidates/vigi-yolov8n-cls-tuned.pt \
+  --dataset dataset/vigi-cls --split val --calibrate
+
+uv run python scripts/avaliar_modelo.py \
+  --model models/candidates/vigi-yolov8n-cls-tuned.pt \
+  --dataset dataset/vigi-cls --split test --threshold 0.70
+```
+
+O valor usado em `--threshold` no teste deve ser exatamente o produzido pela
+calibração. O gate exige acurácia de pelo menos 90%, falsos negativos de no
+máximo 10% e falsos positivos de no máximo 15%. Com menos de 200 imagens de
+teste, o relatório é marcado como provisório.
+
+Promova somente um modelo aprovado:
+
+```bash
+uv run python scripts/promover_modelo.py \
+  --model models/candidates/vigi-yolov8n-cls-tuned.pt \
+  --format pytorch \
+  --metrics reports/model-gate/metrics.json \
+  --threshold 0.70
+```
+
+### Inferência e benchmark na Raspberry Pi 5
+
+Após `dvc pull`, classifique uma imagem ou capture um quadro da câmera CSI:
+
+```bash
+uv run python scripts/inferir.py \
+  --manifest models/active/manifest.json \
+  --image imagem.jpg
+
+uv run python scripts/inferir.py \
+  --manifest models/active/manifest.json \
+  --camera 0 --backend picamera2
+```
+
+O benchmark descarta execuções de aquecimento e exige p95 abaixo de 500 ms e
+nenhuma execução acima de 1.000 ms:
+
+```bash
+uv run python scripts/benchmark_modelo.py \
+  --manifest models/active/manifest.json \
+  --images dataset/vigi-cls/test \
+  --runs 100 --warmup 10 \
+  --output reports/benchmark-pi.json
+```
+
+### Pipeline do GitHub Actions
+
+O workflow `.github/workflows/mlops-ci.yml` executa três gates encadeados:
+
+1. **Lint & Tests:** Ruff, testes e smoke das CLIs, sem acessar o Pi.
+2. **ML Artifact Check:** conecta ao Tailscale, recupera dataset/modelos pelo
+   DVC e valida a integridade dos artefatos.
+3. **Model Quality Gate:** reavalia o modelo ativo no conjunto de teste e
+   publica métricas e matriz de confusão como artifact do workflow.
+
+Configure no GitHub os secrets `TS_OAUTH_CLIENT_ID`, `TS_OAUTH_SECRET` e
+`RPI_SSH_KEY`. Enquanto `dataset/vigi-cls.dvc` e `models.dvc` ainda não
+existirem, os dois gates de ML informam que aguardam os primeiros artefatos e
+encerram com sucesso. Não há Docker, publicação no GHCR ou deploy automático na
+Raspberry Pi nesta etapa.
 
 ---
 

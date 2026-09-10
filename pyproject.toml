@@ -30,7 +30,7 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["edge*", "vigi_ml*"]
+include = ["edge*", "model_lifecycle*"]
 exclude = ["edge.tests*"]
 
 [tool.pytest.ini_options]
