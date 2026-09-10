@@ -1,0 +1,174 @@
+name: Vigi MLOps — CI e Model Gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mlops-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint & Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependencias de teste
+        run: |
+          python -m pip install uv==0.12.9
+          uv sync --frozen --only-group dev
+
+      - name: Lint
+        run: uv run --no-sync ruff check .
+
+      - name: Testes automatizados
+        run: uv run --no-sync pytest -v --tb=short
+
+      - name: Validar sintaxe Python
+        run: git ls-files -z '*.py' | xargs -0 uv run --no-sync python -m py_compile # Verifica se todos os arquivos `.py` estão compiláveis
+
+      - name: Smoke das CLIs # Verifica inicialização das CLIs
+        run: |
+          uv run --no-sync python scripts/validar_dataset.py --help
+          uv run --no-sync python scripts/treinar_modelo.py --help
+          uv run --no-sync python scripts/avaliar_modelo.py --help
+          uv run --no-sync python scripts/inferir.py --help
+          uv run --no-sync python scripts/benchmark_modelo.py --help
+          uv run --no-sync python scripts/promover_modelo.py --help
+          uv run --no-sync python scripts/quality_gate.py --help
+
+  artifacts:
+    name: ML Artifact Check
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detectar ponteiros DVC
+        id: dvc-artifacts
+        run: |
+          if [[ -f dataset/vigi-cls.dvc && -f models.dvc ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Dataset/modelos ainda nao foram publicados no DVC."
+          fi
+
+      - name: Conectar ao Tailscale
+        if: steps.dvc-artifacts.outputs.available == 'true'
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+
+      - name: Setup Python 3.12
+        if: steps.dvc-artifacts.outputs.available == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependencias de MLOps
+        if: steps.dvc-artifacts.outputs.available == 'true'
+        run: python -m pip install "dvc[ssh]>=3.50,<4" Pillow PyYAML
+
+      - name: Recuperar artefatos DVC
+        if: steps.dvc-artifacts.outputs.available == 'true'
+        env:
+          RPI_SSH_KEY: ${{ secrets.RPI_SSH_KEY }}
+        run: |
+          install -d -m 700 "$HOME/.ssh"
+          printf '%s' "$RPI_SSH_KEY" > "$HOME/.ssh/dvc_key"
+          chmod 600 "$HOME/.ssh/dvc_key"
+          dvc remote modify --local local_remote keyfile "$HOME/.ssh/dvc_key"
+          dvc pull dataset/vigi-cls.dvc models.dvc
+          dvc status -c
+
+      - name: Validar dataset e manifestos
+        if: steps.dvc-artifacts.outputs.available == 'true'
+        run: |
+          python scripts/validar_dataset.py --dataset dataset/vigi-cls
+          python -c "from pathlib import Path; from model_lifecycle.manifest import ModelManifest; ModelManifest.load(Path('models/active/manifest.json'))"
+          if git ls-files 'dataset/**' 'models/**' | grep -Ev '\.dvc$|\.gitkeep$'; then
+            echo "Binario rastreado diretamente pelo Git"
+            exit 1
+          fi
+
+  model-gate:
+    name: Model Quality Gate
+    needs: artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detectar ponteiros DVC
+        id: dvc-artifacts
+        run: |
+          if [[ -f dataset/vigi-cls.dvc && -f models.dvc ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Quality gate aguardando os primeiros artefatos DVC."
+          fi
+
+      - name: Conectar ao Tailscale
+        if: steps.dvc-artifacts.outputs.available == 'true'
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+
+      - name: Setup Python 3.12
+        if: steps.dvc-artifacts.outputs.available == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependencias do gate
+        if: steps.dvc-artifacts.outputs.available == 'true'
+        run: |
+          python -m pip install uv==0.12.9
+          uv sync --frozen --extra train --extra mlops
+
+      - name: Recuperar dataset e modelo
+        if: steps.dvc-artifacts.outputs.available == 'true'
+        env:
+          RPI_SSH_KEY: ${{ secrets.RPI_SSH_KEY }}
+        run: |
+          install -d -m 700 "$HOME/.ssh"
+          printf '%s' "$RPI_SSH_KEY" > "$HOME/.ssh/dvc_key"
+          chmod 600 "$HOME/.ssh/dvc_key"
+          dvc remote modify --local local_remote keyfile "$HOME/.ssh/dvc_key"
+          dvc pull dataset/vigi-cls.dvc models.dvc
+
+      - name: Executar quality gate
+        if: steps.dvc-artifacts.outputs.available == 'true'
+        run: uv run --no-sync python scripts/quality_gate.py
+
+      - name: Publicar relatorio
+        if: always() && steps.dvc-artifacts.outputs.available == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-quality-gate
+          path: reports/model-gate/
+          if-no-files-found: warn
