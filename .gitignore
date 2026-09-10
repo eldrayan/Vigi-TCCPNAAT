@@ -53,3 +53,5 @@ build/
 /*.pt
 
 /CONTEXTO/
+/models
+/weights/
