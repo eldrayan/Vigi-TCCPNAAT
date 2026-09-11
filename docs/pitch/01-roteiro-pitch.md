@@ -1,146 +1,174 @@
-# Entrega 3 — Esboço do vídeo pitch final do Vigi
+# Entrega 3: Esboço do vídeo pitch final do Vigi
 
-**Versão:** 0.1 — roteiro para ensaio, 11/09/2026.  
-**Duração máxima:** 15 minutos, incluindo demonstração e transições.  
-**Issue:** [#13 — Documentação Técnica, Roteiro do Pitch e Demonstração da PoC](https://github.com/eldrayan/Vigi-TCCPNAAT/issues/13).
+Versão: 0.2, roteiro para ensaio, 11/09/2026.
+
+Duração máxima: 15 minutos, incluindo demonstração e transições.
+
+Issue: [#13: Documentação Técnica, Roteiro do Pitch e Demonstração da PoC](https://github.com/eldrayan/Vigi-TCCPNAAT/issues/13).
 
 ## 1. Proposta narrativa
 
-Recipientes defeituosos podem causar desperdícios e interrupções no empacotamento. Isso motiva uma estação de inspeção visual; sua arquitetura transforma imagens em classificações e eventos para supervisão. A demonstração torna esse caminho observável. A conclusão confronta o que foi demonstrado com o benefício esperado e explicita o trabalho restante.
+A apresentação começa pelos desperdícios e pelas interrupções que recipientes defeituosos podem causar no empacotamento. Em seguida, explica como a estação de inspeção proposta usa imagens para classificar os recipientes e gerar eventos para supervisão. A demonstração mostra esse processo na bancada. Na conclusão, a equipe compara os resultados com o benefício esperado e explica o que falta fazer.
 
-Este documento planeja o **vídeo final de até 15 minutos**. O [vídeo da PoC da Entrega 2](../poc/01-roteiro-video-poc.md) é outro artefato, de aproximadamente 5 minutos. O pitch tem seu próprio bloco de demonstração: ele pode aproveitar a sequência ensaiada para a PoC, atualizada ao estado final, sem acrescentar mais cinco minutos ao limite total.
+Este roteiro é para o vídeo final de até 15 minutos. O [vídeo da PoC da Entrega 2](../poc/01-roteiro-video-poc.md), de aproximadamente 5 minutos, é uma gravação separada. O pitch reserva um bloco para a demonstração dentro do tempo total. Nesse bloco, a equipe pode aproveitar a sequência ensaiada para a PoC, atualizando-a conforme o estado final do projeto.
 
-As falas abaixo orientam a apresentação. Dados entre colchetes devem ser preenchidos com evidências antes da gravação. A arquitetura é proposta; somente os componentes efetivamente demonstrados devem ser anunciados como implementados e integrados.
+Antes de gravar, preencha os campos entre colchetes com os dados verificados. As falas descrevem a arquitetura proposta; anuncie como implementados e integrados apenas os componentes demonstrados.
+
+### Argumentos que orientam a apresentação
+
+| Argumento | O que explicar | Evidência ou limite |
+| --- | --- | --- |
+| Autonomia local | A arquitetura prevê inspeção, decisão e armazenamento na Raspberry Pi, sem depender de internet ou de rede externa para essas funções | Verificar o funcionamento offline antes de anunciá-lo como demonstrado. Processamento local não comprova, por si só, a segurança do sistema |
+| Montagem compacta | A case reúne a Raspberry Pi e a câmera, conforme a montagem informada pela equipe | Mostrar a case real e confirmar seu conteúdo. O espaço da instalação também inclui sensor, alimentação, cabos, fixação e área de captura; dimensões precisam ser medidas |
+| Acompanhamento da operação | O dashboard reúne resultados, histórico e alarmes para operadores e supervisores | O acesso por outros dispositivos precisa de conexão com a Raspberry Pi. Identificar se o painel está integrado, se usa dados simulados ou se ainda é uma proposta |
+
+A operação offline está prevista na [RN04](../requisitos/01-regras-de-negocio.md) e tem critérios de teste no [RNF03](../requisitos/03-requisitos-nao-funcionais.md). Acesso pela rede local e acesso pela internet são situações diferentes: a inspeção deve continuar sem rede externa, enquanto o painel remoto depende da conexão entre os dispositivos. Um teste apenas sem internet não comprova funcionamento sem rede local.
+
+Use “destinado aos responsáveis pela operação” para identificar o público do dashboard. Só afirme que o acesso é restrito a essas pessoas se houver autenticação e autorização implementadas e verificadas. Da mesma forma, apresente o processamento local como característica da solução, sem transformá-lo em uma garantia geral de segurança.
 
 ## 2. Distribuição do tempo
 
 | Parte obrigatória | Intervalo | Duração | Conteúdo e apoio visual |
 | --- | --- | --- | --- |
-| Introdução | 00:00–02:30 | 2 min 30 s | Problema, exemplos de defeitos, público e consequências; recipientes e esquema da linha |
-| Solução | 02:30–06:00 | 3 min 30 s | Papel do Vigi, arquitetura, classificação e limites; diagrama de blocos |
-| Demonstração | 06:00–11:00 | 5 min | Bancada e captura de tela; entrada → processamento → resultado e integrações disponíveis |
-| Conclusão | 11:00–15:00 | 4 min | Evidências, limitações, próximos passos e impacto esperado; síntese dos resultados |
-| **Total** | **00:00–15:00** | **15 min** | Transições já incluídas nos intervalos |
+| Introdução | 00:00 a 02:30 | 2 min 30 s | Problema, exemplos de defeitos, público e consequências; recipientes e esquema da linha |
+| Solução | 02:30 a 06:00 | 3 min 30 s | Papel do Vigi, case, autonomia local, dashboard e classificador; montagem e diagrama de blocos |
+| Demonstração | 06:00 a 11:00 | 5 min | Bancada e captura de tela; entrada → processamento → resultado e integrações disponíveis |
+| Conclusão | 11:00 a 15:00 | 4 min | Evidências, limitações, próximos passos e impacto esperado; síntese dos resultados |
+| Total | 00:00 a 15:00 | 15 min | Transições já incluídas nos intervalos |
 
-## 3. Introdução — 00:00–02:30
+## 3. Introdução: 00:00 a 02:30
 
-### 00:00–00:40 — Identificação e contexto
+### 00:00 a 00:40: Identificação e contexto
 
-**Mostrar:** nome Vigi, equipe e uma visão da bancada ou esquema da linha de envase.
+Mostrar: nome Vigi, equipe e uma visão da bancada ou esquema da linha de envase.
 
-> “Somos a equipe do Vigi, um sistema embarcado para inspeção visual de recipientes em linhas de envase. Nosso projeto trata de um problema na passagem do envase para o empacotamento: recipientes com defeitos que seguem adiante sem que a não conformidade seja identificada a tempo.”
+> Somos a equipe do Vigi, um sistema embarcado para inspeção visual de recipientes em linhas de envase. O problema que estamos tratando aparece entre o envase e o empacotamento: recipientes com defeitos seguem pela linha sem que a falha seja identificada a tempo.
 
-### 00:40–01:40 — Problema concreto
+### 00:40 a 01:40: Problema concreto
 
-**Mostrar:** exemplos de recipiente conforme, sem tampa, com tampa torta e amassado. Identificar exemplos ilustrativos como tais.
+Mostrar: exemplos de recipiente conforme, sem tampa, com tampa torta e amassado. Identificar exemplos ilustrativos como tais.
 
-> “Uma garrafa sem tampa pode derramar o conteúdo; um recipiente deformado pode prejudicar o fluxo no empacotamento. Além da perda de produto, essas ocorrências podem exigir intervenção e interromper a produção. O operador precisa identificar a ocorrência, enquanto o supervisor precisa saber quais defeitos se repetem para orientar a investigação.”
+> Uma garrafa sem tampa pode derramar o conteúdo. Um recipiente deformado pode atrapalhar o empacotamento. Além da perda de produto, esses defeitos podem exigir intervenção e interromper a produção. O operador precisa identificar a ocorrência, e o supervisor precisa saber quais defeitos se repetem para investigar suas causas.
 
-**Desenvolver:** explicar com os recipientes o que distingue cada defeito e em que ponto uma inspeção intermediária poderia ajudar. Não atribuir perdas quantitativas a uma fábrica sem dados reais.
+Desenvolver: explicar com os recipientes o que distingue cada defeito e em que ponto uma inspeção intermediária poderia ajudar. Não atribuir perdas quantitativas a uma fábrica sem dados reais.
 
-### 01:40–02:30 — Necessidade e transição
+### 01:40 a 02:30: Necessidade e transição
 
-**Mostrar:** posição proposta da inspeção entre envase e empacotamento.
+Mostrar: posição proposta da inspeção entre envase e empacotamento.
 
-> “A necessidade é transformar a observação do recipiente em uma informação de inspeção disponível no momento certo. Por isso, propomos uma estação que reconheça defeitos visuais e disponibilize o resultado para acompanhamento. Essa necessidade conduz à solução que vamos apresentar: combinar aquisição de imagem, inteligência artificial na borda e registro dos eventos.”
+> Precisamos identificar esses defeitos a tempo e disponibilizar o resultado para acompanhamento. A proposta é colocar uma estação de inspeção entre o envase e o empacotamento. Ela combina a captura de imagens com inteligência artificial na borda e o registro das ocorrências.
 
-## 4. Solução — 02:30–06:00
+## 4. Solução: 02:30 a 06:00
 
-### 02:30–03:20 — Como o Vigi atua sobre o problema
+### 02:30 a 03:20: Inspeção e montagem com a case
 
-**Mostrar:** fluxo simplificado e local da estação de inspeção.
+Mostrar: fluxo simplificado, case real e posição do conjunto na bancada. Apontar a Raspberry Pi e a câmera, confirmando o que está dentro da case; mostrar também os elementos externos. Usar este bloco para a montagem, sem acrescentar tempo ao vídeo.
 
-> “O Vigi foi concebido para inspecionar cada recipiente no ponto de captura. O modelo classifica a imagem e produz uma informação sobre a condição observada. Esse resultado pode apoiar a intervenção do operador e, com o registro das ocorrências, a análise dos defeitos recorrentes. O protótipo não inclui um mecanismo físico de ejeção.”
+> A proposta é que o Vigi classifique a imagem de cada recipiente para apoiar a intervenção do operador e o acompanhamento dos defeitos recorrentes. A case reúne [componentes confirmados na montagem]. Aqui podemos ver como ela acomoda a Raspberry Pi e a câmera. A instalação também precisa de espaço para o sensor, a alimentação, os cabos e o ponto de captura. O protótipo não inclui ejeção mecânica.
 
-### 03:20–04:50 — Elementos e relações da arquitetura
+### 03:20 a 04:50: Arquitetura, autonomia local e dashboard
 
-**Mostrar:** [diagrama de blocos no README](../../README.md), destacando cada ligação durante a fala.
+Mostrar: [diagrama de blocos no README](../../README.md), destacando cada ligação durante a fala.
 
-> “Na arquitetura proposta, o sensor E18-D80NK detecta a passagem e dispara a captura da câmera. A Raspberry Pi 5 recebe a imagem e executa o processamento e o classificador. O resultado alimenta a decisão e o registro local no SQLite. Os eventos também seguem por MQTT ao broker Mosquitto e ao backend FastAPI. O dashboard React, executado no navegador, consulta o backend para apresentar as informações ao usuário.”
+> Na arquitetura proposta, o sensor E18-D80NK dispara a captura, e a Raspberry Pi 5 processa a imagem e executa o classificador. O resultado orienta a decisão e fica registrado no SQLite. Essas funções foram planejadas para continuar sem internet e sem rede externa. Os eventos seguem por MQTT ao Mosquitto e ao backend FastAPI. O dashboard React consulta o backend e reúne os resultados, o histórico e os alarmes para operadores e supervisores. Para acessá-lo em outro dispositivo, é preciso uma conexão com a Raspberry Pi pela rede local.
 
-**Desenvolver:** apontar entrada física, imagem, processamento, saída da classificação e consumo dos eventos. Explicar que câmera adquire a imagem, modelo faz a previsão, banco guarda eventos e comunicação distribui informações. Identificar os blocos ainda não integrados, usando o estado verificado antes da gravação.
+Dividir os 90 segundos deste bloco: cerca de 40 segundos para percorrer o fluxo, 20 para explicar a autonomia local e 30 para o papel do dashboard. Ao apontar cada componente, explicar sua função e indicar o que ainda falta integrar. Não é necessário recitar nomes de bibliotecas além dos que ajudam a entender o caminho dos dados.
 
-### 04:50–06:00 — Tecnologia central e transição à prática
+A fala sobre offline descreve a proposta. Se houver teste, informar quais funções continuaram funcionando e qual conexão estava indisponível. O processamento local dispensa o envio de imagens à nuvem para inferência na arquitetura proposta; isso não equivale a comprovar segurança ou controle de acesso.
 
-**Mostrar:** classes do modelo efetivamente usado e identificação dos pesos; distinguir treinamento de inferência.
+### 04:50 a 06:00: Tecnologia central e transição à prática
 
-> “O núcleo de visão previsto na issue 11 é o classificador YOLOv8n-cls. O treinamento utiliza imagens rotuladas; na inferência, o modelo recebe uma imagem e retorna uma previsão. As classes previstas são conforme, sem tampa, tampa torta e amassado. [Confirmar as classes e o modelo exportado.] Para verificar esse núcleo, vamos acompanhar a entrada e o resultado de duas amostras na montagem real.”
+Mostrar: classes do modelo efetivamente usado e identificação dos pesos; distinguir treinamento de inferência.
 
-**Desenvolver:** informar onde o modelo foi treinado e onde roda a inferência, após confirmação. Não apresentar score como acurácia nem classificação como detecção de objetos com caixas, se o modelo não produzir caixas.
+> O classificador previsto na issue 11 é o YOLOv8n-cls. No treinamento, usamos imagens rotuladas. Na inferência, o modelo recebe uma imagem e retorna uma previsão. As classes previstas são conforme, sem tampa, tampa torta e amassado. [Confirmar as classes e o modelo exportado.] Na bancada, vamos acompanhar a entrada e o resultado de duas amostras.
 
-## 5. Demonstração — 06:00–11:00
+Desenvolver: informar onde o modelo foi treinado e onde roda a inferência, após confirmação. Não apresentar score como acurácia nem classificação como detecção de objetos com caixas, se o modelo não produzir caixas.
 
-**Espaço reservado:** bancada física com câmera, Raspberry Pi e amostras; tela de execução legível. Usar enquadramento conjunto ou captura de tela com a bancada sobreposta. A demonstração ocupa cinco minutos dentro do pitch, com áudio explicando cada ação.
+## 5. Demonstração: 06:00 a 11:00
 
-### 06:00–06:40 — Montagem e início
+Reserve a bancada com câmera, Raspberry Pi e amostras. A tela de execução deve ficar legível, no mesmo enquadramento ou em uma captura de tela com a imagem da bancada sobreposta. Use os cinco minutos deste bloco para demonstrar o funcionamento e explicar as ações enquanto elas acontecem.
 
-**Ação:** identificar equipamento, câmera, modelo e modo de captura. Mostrar o comando real validado, ou o processo já iniciado com identificação de um novo ciclo.
+### 06:00 a 06:40: Montagem e início
 
-> “Esta é a montagem usada no teste. [Identificar os elementos reais.] A captura é [modo real], e o processamento ocorre em [equipamento real]. Vamos manter visíveis a entrada utilizada e o resultado correspondente.”
+Ação: mostrar a case na bancada e identificar equipamento, câmera, modelo e modo de captura. Informar onde o processamento roda e qual é a conexão usada para visualizar a saída. Mostrar o comando validado, ou identificar um novo ciclo do processo já iniciado.
 
-### 06:40–08:00 — Amostra conforme
+> Esta é a montagem usada no teste. [Identificar os elementos reais.] A captura é [modo real], e o processamento roda em [equipamento real]. A entrada e o resultado correspondente vão ficar visíveis durante a execução.
 
-**Ação:** mostrar a amostra A, posicioná-la, mostrar a imagem, executar a inferência e manter a saída visível. Preservar a continuidade entre entrada e resultado.
+### 06:40 a 08:00: Amostra conforme
 
-> “Esta amostra apresenta [condição observada]. A imagem que estamos mostrando é a entrada do ciclo. Após a execução, a classe retornada foi [resultado real]. [Explicar se corresponde ou diverge da condição da amostra.]”
+Ação: mostrar a amostra A, posicioná-la, mostrar a imagem, executar a inferência e manter a saída visível. Preservar a continuidade entre entrada e resultado.
 
-### 08:00–09:20 — Amostra com defeito
+> Esta amostra apresenta [condição observada]. A imagem na tela é a entrada deste ciclo. O modelo retornou [resultado real]. [Explicar se corresponde ou diverge da condição da amostra.]
 
-**Ação:** trocar pela amostra B, apontar o defeito e repetir todo o ciclo. Distinguir a nova saída da anterior.
+### 08:00 a 09:20: Amostra com defeito
 
-> “Agora a entrada muda: esta amostra apresenta [defeito]. Mantemos as condições da bancada e executamos novamente. A saída foi [resultado real]. Isso nos permite observar o comportamento do modelo para outra condição do recipiente.”
+Ação: trocar pela amostra B, apontar o defeito e repetir todo o ciclo. Distinguir a nova saída da anterior.
 
-### 09:20–10:20 — Integração e leitura do resultado
+> Esta outra amostra apresenta [defeito]. Vamos repetir o processo nas mesmas condições da bancada para observar como o modelo responde a esse caso. A saída foi [resultado real].
 
-**Ação:** explicar a classe e os campos realmente disponíveis. Se sensor, SQLite ou MQTT já estiverem integrados, mostrar o gatilho ou o evento vinculado ao mesmo ciclo por identificador ou horário. Se não estiverem, usar este minuto para repetir uma inferência e explicar a integração câmera/modelo que funciona.
+### 09:20 a 10:20: Integração e leitura do resultado
 
-> “O resultado deste ciclo é [resultado]. [Mostrar a evidência da integração disponível.] Os componentes funcionando juntos nesta demonstração são [lista verificada]. Os demais blocos do diagrama permanecem como [estado real].”
+Ação: explicar a classe e os campos disponíveis. Usar este minuto conforme o estado do dashboard:
 
-### 10:20–11:00 — Síntese e transição
+| Estado na gravação | O que mostrar e dizer |
+| --- | --- |
+| Integrado à inferência | Mostrar no painel o resultado de um ciclo recém-executado, relacionando amostra e evento por identificador ou horário. Dizer: “Este resultado veio da inspeção que acabamos de executar” apenas se isso for verificável |
+| Interface pronta com dados simulados | Apresentar como protótipo de interface e identificar os dados simulados na tela e na fala. Explicar o que o operador poderá consultar e que a ligação com a inferência ainda falta |
+| Ainda previsto | Explicar sua função no diagrama e usar o restante do minuto para repetir uma inferência ou mostrar uma integração existente |
 
-**Ação:** manter a evidência visível e resumir o que acabou de ocorrer.
+Se sensor, SQLite ou MQTT estiverem integrados, o gatilho ou o registro do mesmo ciclo também pode servir de evidência. O painel é opcional na demonstração: mantenha os dois ciclos de inferência e o limite de cinco minutos do bloco.
 
-> “Acompanhamos a entrada, a execução e o resultado de [quantidade real] ciclos. O teste mostrou [observação sustentada pela gravação]. Agora vamos relacionar essa evidência ao objetivo do projeto e explicar os limites e próximos passos.”
+> O resultado deste ciclo é [resultado]. [Mostrar a evidência da integração disponível.] Aqui, [lista verificada] estão funcionando juntos. Os demais blocos do diagrama estão em [estado real].
 
-**Contingência:** se for necessário usar um trecho gravado anteriormente, identificá-lo e informar a montagem. Se só houver inferência em arquivo, mostrar arquivo → execução → resultado e explicitar a ausência de captura integrada. Não simular uma integração ausente. Uma falha deve ser relatada; encerrar a tentativa dentro do bloco reservado para preservar a conclusão.
+### 10:20 a 11:00: Síntese e transição
 
-## 6. Conclusão — 11:00–15:00
+Ação: manter a evidência visível e resumir o que acabou de ocorrer.
 
-### 11:00–12:00 — Resultado observado e evidência
+> Acompanhamos a entrada, a execução e o resultado de [quantidade real] ciclos. Nesses testes, observamos [observação sustentada pela gravação]. Com esses resultados, podemos avaliar o que já atende ao objetivo do projeto e o que ainda precisa de trabalho.
 
-**Mostrar:** síntese dos ciclos e, se disponíveis, métricas verificadas da issue #11 com conjunto avaliado e ambiente.
+Se usar um trecho gravado anteriormente, avise e informe a montagem utilizada. Se a inferência aceitar apenas arquivos, mostre o arquivo, a execução e o resultado, explicando que a captura ainda não está integrada. Apresente apenas integrações que funcionam. Em caso de falha, relate o ocorrido e encerre a tentativa dentro deste bloco para manter o tempo da conclusão.
 
-> “Partimos do problema de recipientes defeituosos seguindo para o empacotamento. A solução proposta transforma a imagem em uma classificação e prevê o registro dessa informação. Na demonstração, observamos [resultados reais]. Isso sustenta [alcance efetivamente validado], nas condições apresentadas.”
+## 6. Conclusão: 11:00 a 15:00
 
-**Desenvolver:** separar exemplos demonstrativos de avaliação do modelo. Se citar acurácia, informar o conjunto não usado no treinamento e sua dimensão. Se citar tempo, informar se é de inferência ou do ciclo completo. Sem medições, apresentar as metas como metas.
+### 11:00 a 12:00: Resultado observado e evidência
 
-### 12:00–13:00 — Limitações e próxima etapa
+Mostrar: síntese dos ciclos e, se disponíveis, métricas verificadas da issue #11 com conjunto avaliado e ambiente.
 
-**Mostrar:** quadro “demonstrado / pendente”, preenchido antes da gravação.
+> O problema é a passagem de recipientes defeituosos para o empacotamento. Propomos classificar suas imagens e registrar os resultados para acompanhamento. Na demonstração, observamos [resultados reais]. Nas condições apresentadas, conseguimos verificar [alcance efetivamente validado].
 
-> “Ainda precisamos [pendências verificadas]. A próxima etapa técnica é [ação concreta], seguida de [teste que verificará o resultado]. Também precisamos avaliar o comportamento em mais amostras e condições de iluminação, além do tempo do ciclo completo.”
+Desenvolver: separar exemplos demonstrativos de avaliação do modelo. Se citar acurácia, informar o conjunto não usado no treinamento e sua dimensão. Se citar tempo, informar se é de inferência ou do ciclo completo. Sem medições, apresentar as metas como metas.
 
-**Exemplos para selecionar conforme o estado final:** integrar gatilho do sensor à captura; persistir eventos; distribuir eventos e apresentar no dashboard; testar baixa confiança; medir inspeções ponta a ponta. Não anunciar essas funções como ausentes se já tiverem sido concluídas.
+### 12:00 a 13:00: Limitações e próxima etapa
 
-### 13:00–14:20 — Resultado esperado e impacto no OEE
+Mostrar: quadro "demonstrado / pendente", preenchido antes da gravação.
 
-**Mostrar:** relação qualitativa entre defeitos identificados, ação do operador e redução esperada de desperdícios/paradas.
+> Ainda precisamos [pendências verificadas]. O próximo passo é [ação concreta]. Depois, vamos verificar isso com [teste que verificará o resultado]. Também precisamos testar mais amostras, variar a iluminação e medir o tempo do ciclo completo.
 
-> “O resultado esperado é disponibilizar informação de inspeção para apoiar a identificação de não conformidades e a investigação de causas recorrentes. A expectativa é contribuir para a qualidade e para a redução de interrupções associadas a esses defeitos. Essas dimensões se relacionam à eficiência global do equipamento, o OEE. O projeto ainda precisa de avaliação em operação para demonstrar qualquer ganho nesse indicador.”
+Exemplos para selecionar conforme o estado final: integrar gatilho do sensor à captura; persistir eventos; distribuir eventos e apresentar no dashboard; testar baixa confiança; medir inspeções ponta a ponta. Não anunciar essas funções como ausentes se já tiverem sido concluídas.
 
-**Desenvolver:** a classificação sozinha não corrige o processo nem remove fisicamente a peça. O benefício depende da resposta operacional e da integração prevista. Não mostrar percentual de melhoria, retorno financeiro ou ganho industrial sem medição.
+### 13:00 a 14:20: Resultado esperado e impacto no OEE
 
-### 14:20–15:00 — Fechamento
+Mostrar: relação qualitativa entre defeitos identificados, ação do operador e redução esperada de desperdícios/paradas.
 
-**Mostrar:** nome do projeto, equipe e endereço do repositório.
+> Esperamos que as informações de inspeção ajudem a identificar não conformidades e a investigar as causas dos defeitos recorrentes. Com isso, a proposta é melhorar a qualidade e reduzir as interrupções causadas por esses defeitos. Qualidade e interrupções afetam a eficiência global do equipamento, o OEE. Ainda precisamos avaliar o projeto em operação para medir qualquer ganho nesse indicador.
 
-> “O Vigi propõe uma inspeção visual embarcada para tornar identificáveis os defeitos de recipientes antes do empacotamento. Apresentamos a arquitetura, demonstramos [escopo real] e indicamos o que falta validar. O resultado esperado é apoiar decisões com informação de inspeção e rastreabilidade. O código e a documentação estão no repositório do projeto. Obrigado.”
+Explique que a classificação depende da resposta operacional e da integração prevista para trazer benefícios: ela não corrige o processo nem remove fisicamente a peça. Percentuais de melhoria, retorno financeiro e ganhos industriais só devem aparecer se tiverem sido medidos.
+
+### 14:20 a 15:00: Fechamento
+
+Mostrar: nome do projeto, equipe e endereço do repositório.
+
+> O Vigi propõe identificar defeitos antes do empacotamento, com processamento local e uma montagem que reúne a placa e a câmera na case. Mostramos [escopo real] e o que ainda falta validar. Com o dashboard, esperamos facilitar o acompanhamento pelos responsáveis e apoiar decisões com os registros das inspeções. O código e a documentação estão no repositório do projeto. Obrigado.
 
 ## 7. Preparação e verificação da Entrega 3
 
 - [ ] Distribuir as falas entre os integrantes, incluindo as trocas no tempo de cada bloco.
 - [ ] Preencher modelo, equipamento, comandos, resultados e pendências com evidências atuais.
 - [ ] Selecionar os apoios visuais e preparar a bancada e a captura de tela.
+- [ ] Conferir o conteúdo da case e registrar suas dimensões, se forem citadas; mostrar os elementos externos da instalação.
+- [ ] Registrar o estado do dashboard e escolher a apresentação correspondente: integrado, interface com dados simulados ou proposta.
+- [ ] Para qualquer afirmação de operação offline, registrar o teste, as funções verificadas e a conexão indisponível. Se houver acesso remoto, planejar a captura local antes de interromper a rede.
+- [ ] Conferir as falas sobre segurança e acesso: processamento local não comprova segurança; público previsto não comprova restrição de acesso.
 - [ ] Ensaiar as quatro partes, buscando terminar em 14 min 30 s para absorver pequenas pausas sem ultrapassar 15 minutos.
 - [ ] Preservar os cinco minutos reservados à demonstração; ajustar primeiro repetições na narração.
 - [ ] Conferir as transições: problema → solução → demonstração → conclusão.
@@ -155,4 +183,4 @@ As falas abaixo orientam a apresentação. Dados entre colchetes devem ser preen
 | Conclusão retoma problema, solução e resultado previsto | Síntese da evidência, impacto esperado e fechamento |
 | Quatro partes dentro de 15 minutos | Cronograma de 00:00 a 15:00, com demonstração de 06:00 a 11:00 |
 
-**Estado da entrega:** esboço textual preparado; ensaio, validação da equipe e gravação pendentes. Este roteiro não constitui evidência de funcionamento do hardware nem de conclusão da issue #13.
+O esboço textual está preparado. Faltam o ensaio, a validação da equipe e a gravação. O funcionamento do hardware e a conclusão da issue #13 precisam de evidências próprias.

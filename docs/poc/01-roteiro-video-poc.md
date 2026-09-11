@@ -1,27 +1,32 @@
-# Entrega 2 — Roteiro de demonstração da PoC do Vigi
+# Entrega 2: Roteiro de demonstração da PoC do Vigi
 
-**Duração prevista:** 5 minutos.  
-**Versão:** rascunho inicial para ensaio, 11/09/2026.  
-**Vínculo:** [issue #13](https://github.com/eldrayan/Vigi-TCCPNAAT/issues/13), entregável de roteiro da demonstração prática.  
-**Dependência de execução:** [issue #11](https://github.com/eldrayan/Vigi-TCCPNAAT/issues/11), modelo e pipeline de inferência na Raspberry Pi 5.
+Duração prevista: 5 minutos.
+
+Versão: rascunho inicial para validação, 11/09/2026.
+
+Vínculo: [issue #13](https://github.com/eldrayan/Vigi-TCCPNAAT/issues/13), entregável de roteiro da demonstração prática.
+
+Dependência de execução: [issue #11](https://github.com/eldrayan/Vigi-TCCPNAAT/issues/11), modelo e pipeline de inferência na Raspberry Pi 5.
 
 ## 1. Objetivo e recorte
 
-Demonstrar a viabilidade inicial da classificação visual de recipientes: apresentar uma entrada identificável, executar a inferência e mostrar o resultado correspondente em uma sequência acompanhável.
+Mostrar a classificação visual de recipientes em funcionamento. Quem assistir deve conseguir identificar a entrada, acompanhar a inferência e relacionar o resultado à amostra apresentada.
 
-Este vídeo é a PoC da Entrega 2, com publicação prevista como **não listado no YouTube**. O [pitch final de até 15 minutos — Entrega 3](../pitch/01-roteiro-pitch.md) é outro vídeo, com roteiro próprio. O [README — Entrega 4](../../README.md) organiza o esboço da documentação. Esses materiais também fazem parte da issue #13.
+Este vídeo é a PoC da Entrega 2, com publicação prevista como não listado no YouTube. O [pitch final de até 15 minutos: Entrega 3](../pitch/01-roteiro-pitch.md) é outro vídeo, com roteiro próprio. O [README: Entrega 4](../../README.md) organiza o esboço da documentação. Esses materiais também fazem parte da issue #13.
 
-**Sequência principal proposta:** recipiente na bancada → imagem da câmera → modelo na Raspberry Pi 5 → classe prevista na tela ou no terminal. A câmera é o outro elemento da arquitetura que deve funcionar junto da tecnologia central, a inferência. Não é necessário antecipar a integração completa para demonstrar esse recorte.
+A sequência proposta começa com o recipiente na bancada. A câmera fornece a imagem ao modelo na Raspberry Pi 5, e a classe prevista aparece na tela ou no terminal. Essa montagem mostra a inferência funcionando com outro elemento da arquitetura, a câmera, e pode ser demonstrada antes da integração completa do sistema.
 
-O roteiro pode ser preparado enquanto a issue #11 é finalizada. A gravação depende de verificar o modelo e a execução real. Na revisão local usada para este documento, o repositório disponibiliza o coletor de dataset, que **não executa inferência**; portanto, seu comando não deve ser apresentado como execução do classificador.
+A preparação do roteiro pode seguir enquanto a equipe finaliza a issue #11. Para gravar, será preciso verificar o modelo e sua execução na bancada. O código disponível nesta revisão contém o coletor de dataset, que não executa inferência. Seu comando não deve ser usado para apresentar o classificador.
+
+A case pode aparecer na apresentação da montagem. O dashboard cabe como saída adicional se já receber a inferência; sua ausência não impede este recorte da PoC. A explicação mais ampla sobre autonomia local, montagem compacta e supervisão fica no pitch final.
 
 ## 2. Preparação da bancada e da tela
 
 - Separar um recipiente conforme e outro com um defeito visível pertencente às classes efetivamente disponíveis no modelo. Preferir `sem_tampa` pela facilidade de identificação visual, se essa classe estiver operacional.
 - Manter iluminação, fundo e enquadramento consistentes. Identificar as amostras como A e B para relacionar cada entrada à respectiva saída.
-- Exibir a Raspberry Pi e a câmera e explicar onde o processamento acontece. Se houver notebook conectado por acesso remoto, identificá-lo como tela de acesso, quando esse for seu papel real.
+- Mostrar a case e confirmar como a Raspberry Pi e a câmera estão acomodadas. Apontar também os elementos externos, sem dizer que toda a instalação ocupa apenas a case. Explicar onde o processamento acontece. Se houver notebook conectado por acesso remoto, identificá-lo como tela de acesso, quando esse for seu papel real.
 - Organizar a gravação para mostrar a bancada e a saída legível, por enquadramento conjunto ou captura de tela com imagem da bancada sobreposta. Mostrar o quadro realmente usado pelo modelo, quando disponível.
-- Usar a interface existente da inferência: terminal ou janela já são suficientes. Não é necessário criar dashboard para este vídeo.
+- Usar o terminal ou a janela de inferência existente. O vídeo pode ser gravado sem criar um dashboard.
 - Ensaiar o acionamento real, manual ou contínuo, e declará-lo na fala. Só atribuir a captura ao sensor E18-D80NK se essa integração estiver funcionando.
 
 ### Dados a preencher após a entrega da issue #11
@@ -36,84 +41,81 @@ O roteiro pode ser preparado enquanto a issue #11 é finalizada. A gravação de
 | Comando real de execução e diretório de trabalho | A preencher após teste na bancada |
 | Saída disponível | Confirmar classe, score e eventual tempo medido |
 | Evidência do ensaio | Registrar amostras, saídas reais e limitações observadas |
+| Case e montagem | Confirmar componentes internos e externos; medir dimensões se forem citadas |
+| Dashboard | Registrar se está integrado, se é interface com dados simulados ou se ainda está previsto |
+| Conectividade no ensaio | Registrar uso de internet, rede local e acesso remoto; só declarar offline para as funções testadas |
 
-## 3. Roteiro de gravação — 00:00 a 05:00
+## 3. Roteiro de gravação: 00:00 a 05:00
 
-As falas são sugestões; substituir os campos entre colchetes por informações verificadas. Os intervalos incluem operação da bancada, troca de amostras e tempo para leitura da tela, além da narração.
+Adapte as falas ao ensaio e preencha os campos entre colchetes com informações verificadas. O tempo de cada bloco inclui a narração, a operação da bancada, a troca de amostras e as pausas para leitura da tela.
 
-### 00:00–00:30 — Apresentação e objetivo (30 s)
+### 00:00 a 00:30: Apresentação e objetivo (30 s)
 
-**Imagem/ação:** apresentador e bancada, com o nome Vigi e a identificação “Entrega 2 — Prova de Conceito”.
+Imagem/ação: apresentador e bancada, com o nome Vigi e a identificação "Entrega 2: Prova de Conceito".
 
-**Fala sugerida:**
+> Este é o Vigi, um projeto de inspeção visual de recipientes em linhas de envase. Queremos distinguir recipientes conformes de outros com defeitos visíveis, como a falta de tampa. Nesta prova de conceito, vamos testar esse funcionamento inicial: fornecer uma imagem ao modelo, executar a inferência e mostrar a classificação na tela.
 
-> “Este é o Vigi, um projeto de inspeção visual de recipientes em linhas de envase. A proposta é identificar recipientes conformes e defeitos visíveis, como ausência de tampa. Nesta prova de conceito, vamos mostrar a tecnologia central: uma imagem entra no modelo, a inferência é executada e a classificação aparece na tela. O foco desta entrega é verificar esse funcionamento inicial.”
+### 00:30 a 01:10: Elementos e caminho da informação (40 s)
 
-### 00:30–01:10 — Elementos e caminho da informação (40 s)
+Imagem/ação: mostrar a case na bancada e apontar o recipiente, a câmera, a Raspberry Pi e a tela. Exibir brevemente o fluxo `Câmera → Inferência na Raspberry Pi → Resultado`.
 
-**Imagem/ação:** apontar o recipiente, a câmera, a Raspberry Pi e a tela. Exibir brevemente o fluxo `Câmera → Inferência na Raspberry Pi → Resultado`.
+Após confirmar a montagem, adaptar a fala:
 
-**Fala sugerida, após confirmar a montagem:**
+> Esta case acomoda [componentes confirmados]. A câmera fornece a imagem do recipiente, e a Raspberry Pi 5 executa localmente o modelo [nome e versão], treinado para distinguir [classes disponíveis]. A imagem e o resultado aparecem nesta tela. A captura é [manual/contínua/acionada pelo sensor]. Assim, acompanhamos a câmera e a inferência funcionando juntas.
 
-> “O recipiente é o objeto inspecionado. A câmera fornece a imagem de entrada. A Raspberry Pi 5 executa o modelo [nome e versão], treinado para distinguir [classes disponíveis]. A tela permite acompanhar a imagem e a saída do processamento. Nesta montagem, a captura é [manual/contínua/acionada pelo sensor]. Assim, mostramos a inferência trabalhando com a câmera, que já é um componente previsto na arquitetura do Vigi.”
+Usar apenas a modalidade real de captura e as informações exibidas. Processamento local não comprova segurança nem funcionamento offline. Se o resultado for visualizado por acesso remoto, informar que essa visualização usa a rede local.
 
-**Atenção:** usar apenas a modalidade real de captura e as informações efetivamente exibidas.
+### 01:10 a 02:20: Primeiro ciclo: recipiente conforme (70 s)
 
-### 01:10–02:20 — Primeiro ciclo: recipiente conforme (70 s)
-
-**Imagem/ação, em sequência contínua:**
+Imagem/ação, em sequência contínua:
 
 1. Mostrar a amostra A e explicar por que ela é visualmente conforme.
 2. Posicioná-la diante da câmera e mostrar sua imagem de entrada.
 3. Iniciar a execução pelo comando validado ou evidenciar o próximo ciclo, caso o processo já esteja rodando.
 4. Acompanhar o processamento e manter o resultado legível por alguns segundos, sem corte entre entrada e saída.
 
-**Fala sugerida:**
+> Esta é a amostra A, com a tampa posicionada e sem o defeito que vamos mostrar depois. A imagem na tela será usada nesta execução. Agora [ação real que inicia o ciclo]. O programa passa a imagem ao modelo, que retorna a classificação [classe observada] para essa amostra. [Se disponível: o score exibido foi valor observado.]
 
-> “Esta é a amostra A, com a tampa posicionada e sem o defeito que vamos mostrar depois. Esta imagem é a entrada desta execução. Agora [ação real que inicia o ciclo]. O programa fornece a imagem ao modelo e obtém a classificação. A saída para esta amostra foi [classe observada]. [Se disponível: o score exibido foi valor observado.] Esse resultado corresponde ao recipiente que acabamos de apresentar.”
+Compare a previsão com a condição da amostra. Se houver divergência, descreva o erro em vez de ler a fala prevista para um acerto. O score de uma previsão não é a acurácia do modelo.
 
-**Interpretação:** comparar a previsão com a condição da amostra. Se houver divergência, relatá-la; não ler uma fala de acerto pré-escrita. Score de uma previsão não é acurácia do modelo.
+### 02:20 a 03:30: Segundo ciclo: defeito visível (70 s)
 
-### 02:20–03:30 — Segundo ciclo: defeito visível (70 s)
-
-**Imagem/ação, em sequência contínua:**
+Imagem/ação, em sequência contínua:
 
 1. Retirar A, mostrar a amostra B e apontar o defeito visível.
 2. Apresentar B à câmera, preservando as condições da bancada.
 3. Repetir o ciclo e mostrar a nova saída, distinguindo-a do resultado anterior.
 4. Comparar a classe retornada com o defeito apresentado.
 
-**Fala sugerida:**
+> Esta é a amostra B, que apresenta [defeito visível]. Vamos fazer uma nova inferência com a mesma câmera e o mesmo enquadramento. Para esta imagem, o modelo retornou [classe observada]. [Se houver acerto: a classificação corresponde ao defeito mostrado.]
 
-> “Agora usamos a amostra B, que apresenta [defeito visível]. Mantemos a câmera e o enquadramento para acompanhar a mudança da entrada. Executamos novamente o mesmo processo. O modelo retornou [classe observada]. [Se houver acerto: a classificação corresponde ao defeito mostrado.] A troca da amostra permite observar uma nova inferência e o resultado associado à nova imagem.”
+Em caso de erro ou instabilidade, descreva o que ocorreu e a limitação observada. Ao repetir o teste, mostre novamente a entrada e a execução. Preserve a saída real na gravação, sem substituí-la por texto na edição.
 
-**Se houver erro ou instabilidade:** descrever o que ocorreu e a limitação observada. Qualquer repetição deve mostrar novamente a entrada e a execução; não substituir o resultado por texto inserido na edição.
+### 03:30 a 04:15: Leitura do resultado e alcance da prova (45 s)
 
-### 03:30–04:15 — Leitura do resultado e alcance da prova (45 s)
+Imagem/ação: manter a saída real visível e apontar seus campos. Se o dashboard já estiver integrado, mostrar o evento de uma das amostras e relacioná-lo à inferência por identificador ou horário, dentro destes 45 segundos. Se houver tempo disponível, repetir A, sem tratar a repetição como avaliação estatística.
 
-**Imagem/ação:** manter a saída real visível e apontar seus campos. Se houver tempo disponível, repetir A para mostrar mais um ciclo, sem tratar a repetição como avaliação estatística.
+Se o painel tiver apenas dados simulados, reservá-lo para a explicação do pitch, onde será identificado como protótipo de interface. Na PoC, preservar a saída real da inferência. Se ainda estiver previsto, citar o dashboard no encerramento como parte a integrar.
 
-**Fala sugerida:**
+> A classe é a previsão do modelo para a imagem apresentada. [Se disponível: este score acompanha a previsão; ele não representa a acurácia global.] Nos ciclos que mostramos, observamos [resumo fiel dos resultados]. Esses testes mostram o funcionamento inicial da captura com a inferência nesta bancada. Para avaliar a qualidade do modelo, ainda precisamos considerar os testes com imagens que ficaram fora do treinamento.
 
-> “A classe indica a previsão do modelo para a imagem apresentada. [Se disponível: este score acompanha a previsão; ele não representa a acurácia global.] Nestes ciclos, observamos [resumo fiel dos resultados]. A demonstração fornece evidência inicial do funcionamento da captura com a inferência nesta bancada. Para avaliar a qualidade do modelo de forma ampla, ainda precisamos considerar os testes com imagens separadas do treinamento.”
+Se a saída mostrar um tempo medido, explique a que intervalo ele se refere. O RNF01 considera toda a inspeção, da detecção à disponibilização do resultado; medir apenas a inferência não comprova esse requisito. Os dois exemplos do vídeo também não bastam para comprovar a meta de acurácia do RNF06.
 
-**Se houver tempo medido na saída:** explicar o intervalo medido. Tempo de inferência isolado não comprova o RNF01, que considera a inspeção desde a detecção até a disponibilização do resultado. Não afirmar o atendimento à meta de acurácia do RNF06 com base nos dois exemplos do vídeo.
+### 04:15 a 05:00: Limites e próxima etapa técnica (45 s)
 
-### 04:15–05:00 — Limites e próxima etapa técnica (45 s)
+Imagem/ação: voltar à bancada ou ao fluxo simplificado. Identificar visualmente o trecho demonstrado e as integrações futuras.
 
-**Imagem/ação:** voltar à bancada ou ao fluxo simplificado. Identificar visualmente o trecho demonstrado e as integrações futuras.
+Adaptar a fala ao que estiver funcionando:
 
-**Fala sugerida, ajustada ao estado real:**
+> Nesta PoC, usamos [componentes realmente usados] e mostramos os resultados das amostras. O próximo passo é [integração ainda pendente, por exemplo: ligar o gatilho do sensor à captura e à inferência]. Depois, estão previstos o registro dos eventos no SQLite e o envio por MQTT para o backend e o dashboard. [Citar somente o que de fato falta integrar.] Também precisamos ampliar os testes de classificação e medir o tempo do ciclo.
 
-> “Nesta PoC, demonstramos [componentes realmente usados] e os resultados obtidos para as amostras. A próxima etapa técnica é [integração ainda pendente, por exemplo: ligar o gatilho do sensor à captura e à inferência]. Depois, o fluxo previsto inclui registrar os eventos no SQLite e distribuí-los por MQTT para o backend e o dashboard. [Citar somente o que de fato falta integrar.] Também será necessário ampliar os testes de classificação e de tempo do ciclo. Esta entrega apresenta a viabilidade inicial do núcleo de visão computacional do Vigi.”
-
-**Limite de escopo:** não apresentar rejeição mecânica de recipientes como próxima entrega; atuadores estão fora do escopo atual do projeto.
+Os atuadores estão fora do escopo atual do projeto. Por isso, a rejeição mecânica de recipientes não deve ser anunciada como próxima entrega.
 
 ## 4. Alternativa se a captura integrada ainda não estiver disponível
 
-Usar uma imagem previamente capturada é uma alternativa para mostrar a inferência inicial: exibir o arquivo identificado, iniciar o processamento real e mostrar a saída correspondente, sem cortes nesse ciclo. Explicar que a entrada é um arquivo e informar o equipamento real de execução.
+Se a captura integrada ainda não funcionar, use uma imagem já capturada. Mostre qual arquivo será usado, inicie o processamento e mantenha a gravação até a saída, sem cortes no ciclo. Informe que a entrada é um arquivo e em qual equipamento a inferência está rodando.
 
-Essa alternativa demonstra a inferência sobre imagem, mas não evidencia por si só a câmera funcionando junto do modelo. Para buscar o nível Avançado, priorizar o ciclo com câmera integrada ou mostrar outro elemento arquitetural realmente conectado à inferência. Se a execução ocorrer somente em notebook ou ambiente remoto, não afirmar que a inferência embarcada na Raspberry Pi foi validada.
+O teste com arquivo demonstra a inferência sobre uma imagem. Para mostrar a câmera funcionando com o modelo e buscar o nível Avançado, será preciso gravar o ciclo com captura integrada ou usar outro elemento da arquitetura conectado à inferência. Uma execução apenas em notebook ou ambiente remoto não valida a inferência embarcada na Raspberry Pi.
 
 ## 5. Conferência com os critérios da atividade
 
@@ -128,7 +130,7 @@ Essa alternativa demonstra a inferência sobre imagem, mas não evidencia por si
 | Próxima etapa ou função ainda não integrada/implementada | Encerramento com pendências concretas verificadas no ensaio |
 | Artefato solicitado | Link do vídeo não listado no YouTube, com cerca de 5 minutos |
 
-O roteiro foi estruturado para contemplar o nível Avançado descrito na atividade. O atendimento depende da execução e das evidências efetivamente presentes na gravação.
+Para atender ao nível Avançado, a gravação precisa mostrar as evidências planejadas na tabela.
 
 ## 6. Checklist do ensaio e da entrega
 
@@ -138,21 +140,24 @@ O roteiro foi estruturado para contemplar o nível Avançado descrito na ativida
 - [ ] Conferir se a imagem mostrada corresponde à entrada real da inferência.
 - [ ] Confirmar a câmera integrada, ou declarar explicitamente a alternativa utilizada.
 - [ ] Ajustar as falas de resultado, limitações e próxima etapa ao estado observado.
+- [ ] Confirmar a apresentação da case e a função de cada componente mostrado.
+- [ ] Se usar o dashboard, verificar que o evento mostrado veio da inferência gravada.
+- [ ] Identificar a conexão usada e evitar afirmações de segurança, acesso restrito ou autonomia offline sem verificação.
 - [ ] Ensaiar com cronômetro para aproximadamente 5 minutos, preservando o tempo de leitura das saídas.
 - [ ] Conferir áudio e legibilidade; manter cada ciclo sem cortes entre entrada e resultado.
 - [ ] Revisar a gravação completa e confirmar que não há métricas ou integrações apresentadas sem evidência.
-- [ ] Publicar o vídeo como **não listado** no YouTube e testar o acesso pelo link sem a conta do autor.
+- [ ] Publicar o vídeo como não listado no YouTube e testar o acesso pelo link sem a conta do autor.
 - [ ] Registrar o link final e enviá-lo à plataforma da atividade.
 
-**Link do vídeo:** pendente de gravação e publicação.
+Link do vídeo: pendente de gravação e publicação.
 
 ## 7. Referências e alinhamento da issue
 
-- [Issue #13 — documentação e roteiros](https://github.com/eldrayan/Vigi-TCCPNAAT/issues/13).
-- [Issue #11 — treinamento e inferência](https://github.com/eldrayan/Vigi-TCCPNAAT/issues/11).
+- [Issue #13: documentação e roteiros](https://github.com/eldrayan/Vigi-TCCPNAAT/issues/13).
+- [Issue #11: treinamento e inferência](https://github.com/eldrayan/Vigi-TCCPNAAT/issues/11).
 - [Arquitetura do Vigi](../arquitetura/diagrama-arquitetural.md).
-- [Requisitos funcionais — US01](../requisitos/02-requisitos-funcionais.md).
-- [Requisitos não funcionais — RNF01 e RNF06](../requisitos/03-requisitos-nao-funcionais.md).
+- [Requisitos funcionais: US01](../requisitos/02-requisitos-funcionais.md).
+- [Requisitos não funcionais: RNF01 e RNF06](../requisitos/03-requisitos-nao-funcionais.md).
 - Critérios da Entrega 2 fornecidos na solicitação desta atividade.
 
-A issue #13 menciona sensor, SQLite/MQTT/Node-RED na demonstração. Este roteiro adota o recorte inicial de inferência solicitado para a Entrega 2; não declara concluído o fluxo mais amplo da issue. A arquitetura documentada atualmente prevê FastAPI e React para supervisão, portanto Node-RED não foi incluído como componente da apresentação. A conclusão da issue #13 também depende dos demais entregáveis e da validação com a equipe.
+A issue #13 pede uma demonstração com sensor e SQLite/MQTT/Node-RED. Para a Entrega 2, este roteiro cobre a inferência inicial; o fluxo completo da issue continua pendente. A apresentação segue a arquitetura documentada, com FastAPI e React para supervisão, sem Node-RED. Para concluir a issue #13, também será preciso finalizar os demais entregáveis e validá-los com a equipe.
