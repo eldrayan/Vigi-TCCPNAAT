@@ -22,9 +22,12 @@ class MQTTClient:
         self.settings = settings
         self.loop: asyncio.AbstractEventLoop | None = None
         self.subscriptions: dict[str, tuple[int, MessageHandler]] = {}
+        self.pending: set[Future[None]] = set()
         self.client = mqtt.Client(
             callback_api_version=mqtt.CallbackAPIVersion.VERSION2,
             client_id=settings.mqtt_client_id,
+            clean_session=False,
+            manual_ack=True,
         )
         self.client.on_connect = self._on_connect
         self.client.on_message = self._on_message
@@ -47,8 +50,13 @@ class MQTTClient:
         self.client.loop_start()
 
     def stop(self) -> None:
+        for future in tuple(self.pending):
+            future.cancel()
         self.client.disconnect()
         self.client.loop_stop()
+
+    def is_connected(self) -> bool:
+        return self.client.is_connected()
 
     def _on_connect(
         self,
@@ -83,12 +91,24 @@ class MQTTClient:
             if mqtt.topic_matches_sub(topic, message.topic)
         ]
 
-        for handler in handlers:
-            future = asyncio.run_coroutine_threadsafe(
-                handler(message.payload),
-                self.loop,
-            )
-            future.add_done_callback(self._handle_processing_result)
+        future = asyncio.run_coroutine_threadsafe(
+            self._process(message, handlers), self.loop
+        )
+        self.pending.add(future)
+        future.add_done_callback(self.pending.discard)
+        future.add_done_callback(self._handle_processing_result)
+
+    async def _process(self, message, handlers: list[MessageHandler]) -> None:
+        while True:
+            try:
+                for handler in handlers:
+                    await handler(message.payload)
+            except Exception:
+                logger.exception("Falha ao salvar mensagem; nova tentativa em 5s.")
+                await asyncio.sleep(5)
+            else:
+                self.client.ack(message.mid, message.qos)
+                return
 
     @staticmethod
     def _handle_processing_result(future: Future[None]) -> None:

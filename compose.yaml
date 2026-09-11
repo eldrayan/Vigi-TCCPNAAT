@@ -5,7 +5,7 @@ services:
     image: eclipse-mosquitto:2.0.22
     restart: unless-stopped
     ports:
-      - "${MQTT_PORT:-1883}:1883"
+      - "127.0.0.1:${MQTT_PORT:-1883}:1883"
     volumes:
       - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
       - mqtt_data:/mosquitto/data
@@ -42,7 +42,7 @@ services:
       MQTT_PORT: 1883
       MQTT_TOPIC_INSPECTIONS: ${MQTT_TOPIC_INSPECTIONS:-vigi/esteira/inspecoes}
     ports:
-      - "${BACKEND_PORT:-8000}:8000"
+      - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
     volumes:
       - backend_data:/app/data
     healthcheck:

@@ -1,5 +1,5 @@
 .PHONY: help setup setup-dev setup-rpi test lint up down build ps logs \
-	migrate infer-help infer-image infer-camera mqtt-sub mqtt-pub
+	migrate infer-help infer-image infer-camera mqtt-sub mqtt-pub test-backend
 
 MQTT_IMAGE ?= eclipse-mosquitto:2.0.22
 HOST ?= localhost
@@ -14,8 +14,9 @@ UV_RUN ?= uv run --no-sync
 help:
 	@echo "make setup                         Instala as dependências travadas"
 	@echo "make setup-dev                     Instala também as ferramentas de desenvolvimento"
-	@echo "make setup-rpi                     Prepara o ambiente usando os pacotes da Raspberry"
+	@echo "make setup-rpi                     Instala CPU travado e permite drivers da câmera CSI"
 	@echo "make test                          Executa os testes do Edge"
+	@echo "make test-backend                  Executa os testes unitários do backend"
 	@echo "make lint                          Verifica o código com Ruff"
 	@echo "make up                            Sobe os serviços"
 	@echo "make down                          Para os serviços"
@@ -32,20 +33,23 @@ help:
 	@echo "Opções: HOST, PORT, TOPIC, MODEL_TOPIC, MANIFEST, CAMERA e CAMERA_BACKEND"
 
 setup:
-	uv sync --frozen
+	uv sync --frozen --no-dev
 
 setup-dev:
 	uv sync --frozen --group dev
 
 setup-rpi:
-	uv venv --clear --system-site-packages --python /usr/bin/python3 .venv
-	uv pip install --python .venv/bin/python paho-mqtt==2.1.0
+	@test -d .venv || uv venv --system-site-packages --python /usr/bin/python3 .venv
+	uv sync --frozen --no-dev
 
 test:
 	$(UV_RUN) pytest -q
 
+test-backend:
+	cd backend && uv run --frozen pytest -q
+
 lint:
-	$(UV_RUN) ruff check edge scripts tests
+	$(UV_RUN) ruff check backend/app backend/migrations edge scripts tests
 
 up:
 	docker compose up --build --detach

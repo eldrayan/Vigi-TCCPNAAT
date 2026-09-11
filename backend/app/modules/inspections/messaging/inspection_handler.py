@@ -26,5 +26,12 @@ class InspectionMessageHandler:
             logger.exception("Payload de inspeção inválido.")
             return
 
+        logger.info("Inspeção %s recebida via MQTT.", dto.inspection_id)
+
         async with SessionFactory() as session:
             await self.service.create(session, dto)
+
+        logger.info(
+            "Inspeção %s persistida com sucesso.",
+            dto.inspection_id,
+        )

@@ -4,10 +4,10 @@ Autor: Leôncio Ferreira
 """
 
 import asyncio
-import os
 from logging.config import fileConfig
 
 from alembic import context
+from app.config import get_settings
 from app.infrastructure.database import Base
 from app.modules.inspections import model  # noqa: F401
 from sqlalchemy import pool
@@ -15,8 +15,9 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 config = context.config
 
-if database_url := os.getenv("DATABASE_URL"):
-    config.set_main_option("sqlalchemy.url", database_url)
+config.set_main_option(
+    "sqlalchemy.url", get_settings().database_url.replace("%", "%%")
+)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
