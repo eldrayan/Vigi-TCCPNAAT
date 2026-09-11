@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from edge.inference.engine import InferenceEngine, decide
 from edge.inference.schemas import Classification
 from model_lifecycle.inspection_classes import CLASS_NAMES
@@ -15,7 +17,11 @@ def manifest() -> ModelManifest:
         image_size=224,
         dataset_hash="abc",
         ultralytics_version="8.2.0",
-        metrics={"accuracy": 0.95},
+        metrics={
+            "accuracy": 0.95,
+            "false_negative_rate": 0.05,
+            "false_positive_rate": 0.05,
+        },
     )
 
 
@@ -54,3 +60,27 @@ def test_runtime_error_is_fail_safe() -> None:
     result = engine.inspect(object())
     assert result.resultado == "NAO_CONFORME"
     assert result.codigo == "ERRO_INFERENCIA"
+
+
+def test_engine_always_uses_manifest_threshold() -> None:
+    engine = InferenceEngine(
+        manifest(), StubClassifier(Classification("01_conforme", 0.69))
+    )
+    assert engine.inspect(object()).codigo == "BAIXA_CONFIANCA"
+
+
+def test_inference_cli_rejects_threshold_override() -> None:
+    from scripts import inferir
+
+    with pytest.raises(SystemExit) as exc_info:
+        inferir.main(
+            [
+                "--manifest",
+                "models/active/manifest.json",
+                "--image",
+                "image.jpg",
+                "--threshold",
+                "0.5",
+            ]
+        )
+    assert exc_info.value.code == 2

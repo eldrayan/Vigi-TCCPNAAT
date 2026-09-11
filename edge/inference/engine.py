@@ -54,26 +54,17 @@ class InferenceEngine:
         self,
         manifest: ModelManifest,
         classifier: Classifier,
-        confidence_threshold: float | None = None,
     ) -> None:
         self.manifest = manifest
         self.classifier = classifier
-        self.threshold = (
-            manifest.confidence_threshold
-            if confidence_threshold is None
-            else confidence_threshold
-        )
-        if not 0.0 <= self.threshold <= 1.0:
-            raise ValueError("confidence_threshold deve estar entre 0 e 1")
+        self.threshold = manifest.confidence_threshold
 
     @classmethod
-    def from_manifest(
-        cls, manifest_path: Path, confidence_threshold: float | None = None
-    ) -> InferenceEngine:
+    def from_manifest(cls, manifest_path: Path) -> InferenceEngine:
         manifest = ModelManifest.load(manifest_path)
         model_path = str(manifest.resolve_model_path(manifest_path))
         classifier = UltralyticsClassifier(model_path, manifest.image_size)
-        return cls(manifest, classifier, confidence_threshold)
+        return cls(manifest, classifier)
 
     def inspect(self, image: Any) -> InspectionDecision:
         started = time.perf_counter()

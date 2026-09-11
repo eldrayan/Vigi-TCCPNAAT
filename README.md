@@ -239,37 +239,43 @@ uv run python scripts/treinar_modelo.py \
 
 uv run python scripts/treinar_modelo.py \
   --dataset dataset/vigi-cls \
-  --config training_configuration/training-tuned.yaml \
-  --export-tflite
+  --config training_configuration/training-tuned.yaml
 ```
 
 Calibre o limiar somente no split de validação e depois avalie uma única vez no
-teste:
+teste. A opção escolhida define o split automaticamente, sem permitir que o
+usuário combine modos e splits incompatíveis:
 
 ```bash
 uv run python scripts/avaliar_modelo.py \
   --model models/candidates/vigi-yolov8n-cls-tuned.pt \
-  --dataset dataset/vigi-cls --split val --calibrate
+  --dataset dataset/vigi-cls \
+  --calibrate \
+  --output reports/calibration
 
 uv run python scripts/avaliar_modelo.py \
   --model models/candidates/vigi-yolov8n-cls-tuned.pt \
-  --dataset dataset/vigi-cls --split test --threshold 0.70
+  --dataset dataset/vigi-cls \
+  --calibration-report reports/calibration/metrics.json \
+  --output reports/model-gate
 ```
 
-O valor usado em `--threshold` no teste deve ser exatamente o produzido pela
-calibração. O gate exige acurácia de pelo menos 90%, falsos negativos de no
-máximo 10% e falsos positivos de no máximo 15%. Com menos de 200 imagens de
-teste, o relatório é marcado como provisório.
+`--calibrate` usa internamente o split `val`. `--calibration-report` usa o split
+`test` e reaproveita automaticamente o limiar produzido pela calibração. O gate
+exige acurácia de pelo menos 90%, falsos negativos de no máximo 10% e falsos
+positivos de no máximo 15%. Com menos de 200 imagens de teste, o relatório é
+marcado como provisório.
 
 Promova somente um modelo aprovado:
 
 ```bash
 uv run python scripts/promover_modelo.py \
   --model models/candidates/vigi-yolov8n-cls-tuned.pt \
-  --format pytorch \
-  --metrics reports/model-gate/metrics.json \
-  --threshold 0.70
+  --metrics reports/model-gate/metrics.json
 ```
+
+A promoção suporta somente checkpoints PyTorch `.pt` e usa obrigatoriamente o
+`quality_gate.confidence_threshold` registrado no relatório final.
 
 ### Inferência e benchmark na Raspberry Pi 5
 
@@ -285,8 +291,9 @@ uv run python scripts/inferir.py \
   --camera 0 --backend picamera2
 ```
 
-O benchmark descarta execuções de aquecimento e exige p95 abaixo de 500 ms e
-nenhuma execução acima de 1.000 ms:
+O benchmark descarta o aquecimento das estatísticas, reprova qualquer erro de
+inferência e exige que pelo menos 95% das medições terminem em até 500 ms, sem
+nenhuma ultrapassar 1.000 ms:
 
 ```bash
 uv run python scripts/benchmark_modelo.py \
@@ -295,6 +302,21 @@ uv run python scripts/benchmark_modelo.py \
   --runs 100 --warmup 10 \
   --output reports/benchmark-pi.json
 ```
+
+### Relatórios e artefatos gerados
+
+| Artefato | Finalidade |
+| --- | --- |
+| `best.pt` | Melhor estado aprendido pelo modelo durante o treinamento |
+| `vigi-training-summary.json` | Registra como o treinamento foi executado |
+| `predictions.csv` | Resultado individual da classificação de cada imagem |
+| `metrics.json` | Qualidade agregada e limiar de confiança avaliado |
+| `confusion-matrix.png` | Diagnóstico visual dos erros entre classes |
+| `manifest.json` | Contrato do modelo que será usado em produção |
+| `benchmark-pi.json` | Desempenho temporal do modelo no hardware de borda |
+
+Consulte [`docs/REPORTS.md`](docs/REPORTS.md) para entender como cada arquivo é
+produzido e utilizado no ciclo de treinamento, avaliação e promoção do modelo.
 
 ### Pipeline do GitHub Actions
 
@@ -306,8 +328,10 @@ O workflow `.github/workflows/mlops-ci.yml` executa três gates encadeados:
 3. **Model Quality Gate:** reavalia o modelo ativo no conjunto de teste e
    publica métricas e matriz de confusão como artifact do workflow.
 
-Configure no GitHub os secrets `TS_OAUTH_CLIENT_ID`, `TS_OAUTH_SECRET` e
-`RPI_SSH_KEY`. Enquanto `dataset/vigi-cls.dvc` e `models.dvc` ainda não
+Configure no GitHub os secrets `TS_OAUTH_CLIENT_ID`, `TS_OAUTH_SECRET`,
+`RPI_SSH_KEY` e `RPI_KNOWN_HOSTS`. O primeiro secret SSH contém a chave privada
+do cliente de CI; o segundo contém a chave pública de host da Raspberry Pi no
+formato de `known_hosts`. Enquanto `dataset/vigi-cls.dvc` e `models.dvc` ainda não
 existirem, os dois gates de ML informam que aguardam os primeiros artefatos e
 encerram com sucesso. Não há Docker, publicação no GHCR ou deploy automático na
 Raspberry Pi nesta etapa.

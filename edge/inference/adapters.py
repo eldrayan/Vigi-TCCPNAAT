@@ -21,7 +21,7 @@ class Classifier(Protocol):
 
 
 class UltralyticsClassifier:
-    """Carrega checkpoints PyTorch ou TFLite pela interface uniforme do YOLO."""
+    """Carrega checkpoints PyTorch pela interface uniforme do YOLO."""
 
     def __init__(self, model_path: str, image_size: int) -> None:
         try:

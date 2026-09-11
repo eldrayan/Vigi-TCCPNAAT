@@ -44,11 +44,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--width", type=int, default=1280)
     parser.add_argument("--height", type=int, default=720)
-    parser.add_argument("--threshold", type=float)
     args = parser.parse_args(argv)
 
     try:
-        engine = InferenceEngine.from_manifest(args.manifest, args.threshold)
+        engine = InferenceEngine.from_manifest(args.manifest)
         if args.image:
             if not args.image.is_file():
                 raise RuntimeError(f"Imagem nao encontrada: {args.image}")

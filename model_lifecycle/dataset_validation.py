@@ -68,7 +68,7 @@ def _verify_image(path: Path) -> str | None:
 
         with Image.open(path) as image:
             image.verify()
-    except (OSError, ValueError) as exc:
+    except Exception as exc:
         return f"Imagem invalida {path}: {exc}"
     return None
 

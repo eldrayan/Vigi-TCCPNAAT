@@ -37,7 +37,7 @@ jobs:
         run: uv run --no-sync ruff check .
 
       - name: Testes automatizados
-        run: uv run --no-sync pytest -v --tb=short
+        run: uv run --no-sync python -m pytest -v --tb=short
 
       - name: Validar sintaxe Python
         run: git ls-files -z '*.py' | xargs -0 uv run --no-sync python -m py_compile # Verifica se todos os arquivos `.py` estão compiláveis
@@ -93,10 +93,14 @@ jobs:
         if: steps.dvc-artifacts.outputs.available == 'true'
         env:
           RPI_SSH_KEY: ${{ secrets.RPI_SSH_KEY }}
+          RPI_KNOWN_HOSTS: ${{ secrets.RPI_KNOWN_HOSTS }}
         run: |
           install -d -m 700 "$HOME/.ssh"
           printf '%s' "$RPI_SSH_KEY" > "$HOME/.ssh/dvc_key"
           chmod 600 "$HOME/.ssh/dvc_key"
+          printf '%s\n' "$RPI_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+          ssh -i "$HOME/.ssh/dvc_key" -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=10 alan@100.67.236.30 true
           dvc remote modify --local local_remote keyfile "$HOME/.ssh/dvc_key"
           dvc pull dataset/vigi-cls.dvc models.dvc
           dvc status -c
@@ -154,12 +158,16 @@ jobs:
         if: steps.dvc-artifacts.outputs.available == 'true'
         env:
           RPI_SSH_KEY: ${{ secrets.RPI_SSH_KEY }}
+          RPI_KNOWN_HOSTS: ${{ secrets.RPI_KNOWN_HOSTS }}
         run: |
           install -d -m 700 "$HOME/.ssh"
           printf '%s' "$RPI_SSH_KEY" > "$HOME/.ssh/dvc_key"
           chmod 600 "$HOME/.ssh/dvc_key"
-          dvc remote modify --local local_remote keyfile "$HOME/.ssh/dvc_key"
-          dvc pull dataset/vigi-cls.dvc models.dvc
+          printf '%s\n' "$RPI_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+          ssh -i "$HOME/.ssh/dvc_key" -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=10 alan@100.67.236.30 true
+          uv run --no-sync dvc remote modify --local local_remote keyfile "$HOME/.ssh/dvc_key"
+          uv run --no-sync dvc pull dataset/vigi-cls.dvc models.dvc
 
       - name: Executar quality gate
         if: steps.dvc-artifacts.outputs.available == 'true'

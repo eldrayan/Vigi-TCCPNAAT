@@ -4,12 +4,35 @@ from __future__ import annotations
 
 import csv
 import json
+import math
 from pathlib import Path
 from typing import Any
 
 from .dataset_validation import IMAGE_SUFFIXES
 from .inspection_classes import CLASS_NAMES, canonical_class
 from .quality_metrics import Prediction, QualityMetrics, calculate_metrics, gate_passes
+
+
+def load_calibration_threshold(path: Path) -> float:
+    """Carrega um threshold validado do relatorio produzido na calibracao."""
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise ValueError(f"Relatorio de calibracao nao encontrado: {path}") from exc
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"JSON de calibracao invalido: {path}") from exc
+    if not isinstance(payload, dict):
+        raise ValueError("Relatorio de calibracao deve ser um objeto JSON")
+    quality_gate = payload.get("quality_gate")
+    if not isinstance(quality_gate, dict):
+        raise ValueError("Relatorio de calibracao sem quality_gate valido")
+    threshold = quality_gate.get("confidence_threshold")
+    if isinstance(threshold, bool) or not isinstance(threshold, (int, float)):
+        raise ValueError("confidence_threshold deve ser numerico")
+    value = float(threshold)
+    if not math.isfinite(value) or not 0.0 <= value <= 1.0:
+        raise ValueError("confidence_threshold deve ser finito e estar entre 0 e 1")
+    return value
 
 
 def collect_predictions(

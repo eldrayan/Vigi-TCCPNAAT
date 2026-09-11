@@ -107,9 +107,13 @@ Referências oficiais:
   | `TS_OAUTH_CLIENT_ID` | Client ID do OAuth client do Tailscale |
   | `TS_OAUTH_SECRET` | Client Secret do OAuth client do Tailscale |
   | `RPI_SSH_KEY` | Conteúdo completo da chave privada `vigi_ci_ed25519` |
+  | `RPI_KNOWN_HOSTS` | Entrada confiável de `known_hosts` com a chave pública de host da Raspberry Pi |
 
 - [ ] Confirmar que `RPI_SSH_KEY` inclui as linhas `BEGIN OPENSSH PRIVATE KEY` e
   `END OPENSSH PRIVATE KEY`.
+- [ ] Obter `RPI_KNOWN_HOSTS` por um canal confiável, usando a chave pública de
+  host já existente na Raspberry Pi e o endereço configurado no remote DVC.
+- [ ] Não copiar a chave privada de host da Raspberry Pi para o GitHub.
 - [ ] Não criar secrets para host, usuário ou caminho do storage: esses valores
   não são credenciais e já estão definidos na configuração DVC do projeto.
 
@@ -146,7 +150,7 @@ opera em modo de bootstrap e informa que aguarda os artefatos.
   git add dataset/vigi-cls.dvc models.dvc .gitignore
   ```
 
-- [ ] Conferir antes do commit que nenhum `.pt`, `.tflite`, imagem do dataset ou
+- [ ] Conferir antes do commit que nenhum `.pt`, imagem do dataset ou
   chave privada aparece em `git status`.
 
 ## 6. Validar o workflow no GitHub
