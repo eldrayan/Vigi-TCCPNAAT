@@ -74,10 +74,10 @@ def test_engine_always_uses_manifest_threshold() -> None:
 
 
 def test_inference_cli_rejects_threshold_override() -> None:
-    from scripts import inferir
+    from scripts import infer
 
     with pytest.raises(SystemExit) as exc_info:
-        inferir.main(
+        infer.main(
             [
                 "--manifest",
                 "models/active/manifest.json",

@@ -282,11 +282,11 @@ A promoção suporta somente checkpoints PyTorch `.pt` e usa obrigatoriamente o
 Após `dvc pull`, classifique uma imagem ou capture um quadro da câmera CSI:
 
 ```bash
-uv run python scripts/inferir.py \
+uv run python scripts/infer.py \
   --manifest models/active/manifest.json \
   --image imagem.jpg
 
-uv run python scripts/inferir.py \
+uv run python scripts/infer.py \
   --manifest models/active/manifest.json \
   --camera 0 --backend picamera2
 ```

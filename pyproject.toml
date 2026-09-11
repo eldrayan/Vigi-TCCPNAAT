@@ -6,9 +6,10 @@ build-backend = "setuptools.build_meta"
 name = "vigi-tccpnaat"
 version = "0.1.0"
 description = "Pipeline de coleta, treinamento e inferencia Edge AI do Vigi"
-requires-python = ">=3.11,<3.13"
+requires-python = ">=3.11,<3.14"
 dependencies = [
     "numpy>=1.26,<3",
+    "paho-mqtt>=2.1,<3",
     "Pillow>=10,<13",
     "PyYAML>=6,<7",
     "ultralytics>=8.2,<9",
