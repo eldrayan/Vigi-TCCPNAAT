@@ -29,7 +29,8 @@ class InspectionCreateDTO(BaseModel):
     nonconformity_type: NonConformityType | None = None
     technical_failure_type: TechnicalFailureType | None = None
     confidence: float | None = Field(default=None, ge=0, le=1)
-    processing_time_ms: int = Field(ge=0)
+    processing_time_ms: float = Field(ge=0)
+    model_format: str = Field(min_length=1, max_length=30)
 
     @model_validator(mode="after")
     def validate_classification(self) -> Self:

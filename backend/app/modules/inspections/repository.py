@@ -34,6 +34,7 @@ class InspectionRepository:
             ),
             "confidence": dto.confidence,
             "processing_time_ms": dto.processing_time_ms,
+            "model_format": dto.model_format,
         }
 
         statement = (

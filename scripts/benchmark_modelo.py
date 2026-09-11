@@ -31,17 +31,19 @@ def build_report(
 ) -> dict[str, object]:
     """Consolida o benchmark sem tratar decisoes de negocio como falhas tecnicas."""
     warmup_errors = sum(
-        result.codigo == "ERRO_INFERENCIA" for result in warmup_results
+        result.technical_failure_type == "ERRO_INFERENCIA"
+        for result in warmup_results
     )
     inference_errors = sum(
-        result.codigo == "ERRO_INFERENCIA" for result in measured_results
+        result.technical_failure_type == "ERRO_INFERENCIA"
+        for result in measured_results
     )
     successful_results = [
         result
         for result in measured_results
-        if result.codigo != "ERRO_INFERENCIA"
+        if result.technical_failure_type != "ERRO_INFERENCIA"
     ]
-    latencies = [result.tempo_processamento_ms for result in successful_results]
+    latencies = [result.processing_time_ms for result in successful_results]
     within_500ms = sum(latency <= 500 for latency in latencies)
     within_500ms_ratio = within_500ms / requested_runs
 

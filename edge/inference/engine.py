@@ -22,30 +22,33 @@ def decide(
     class_name = canonical_class(classification.class_name)
     if classification.confidence < threshold:
         return InspectionDecision(
-            resultado="NAO_CONFORME",
-            categoria="FALHA_TECNICA",
-            codigo="BAIXA_CONFIANCA",
-            confianca=classification.confidence,
-            tempo_processamento_ms=elapsed_ms,
-            formato_modelo=model_format,
+            result="NAO_CONFORME",
+            category="FALHA_TECNICA",
+            nonconformity_type=None,
+            technical_failure_type="BAIXA_CONFIANCA",
+            confidence=classification.confidence,
+            processing_time_ms=elapsed_ms,
+            model_format=model_format,
         )
     code = CLASS_CODES[class_name]
     if code == "CONFORME":
         return InspectionDecision(
-            resultado="CONFORME",
-            categoria=None,
-            codigo=None,
-            confianca=classification.confidence,
-            tempo_processamento_ms=elapsed_ms,
-            formato_modelo=model_format,
+            result="CONFORME",
+            category=None,
+            nonconformity_type=None,
+            technical_failure_type=None,
+            confidence=classification.confidence,
+            processing_time_ms=elapsed_ms,
+            model_format=model_format,
         )
     return InspectionDecision(
-        resultado="NAO_CONFORME",
-        categoria="ANOMALIA_PRODUTO",
-        codigo=code,
-        confianca=classification.confidence,
-        tempo_processamento_ms=elapsed_ms,
-        formato_modelo=model_format,
+        result="NAO_CONFORME",
+        category="ANOMALIA_PRODUTO",
+        nonconformity_type=code,
+        technical_failure_type=None,
+        confidence=classification.confidence,
+        processing_time_ms=elapsed_ms,
+        model_format=model_format,
     )
 
 
@@ -74,12 +77,13 @@ class InferenceEngine:
             finished = time.perf_counter()
             elapsed_ms = (finished - started) * 1000
             return InspectionDecision(
-                resultado="NAO_CONFORME",
-                categoria="FALHA_TECNICA",
-                codigo="ERRO_INFERENCIA",
-                confianca=None,
-                tempo_processamento_ms=elapsed_ms,
-                formato_modelo=self.manifest.format,
+                result="NAO_CONFORME",
+                category="FALHA_TECNICA",
+                nonconformity_type=None,
+                technical_failure_type="ERRO_INFERENCIA",
+                confidence=None,
+                processing_time_ms=elapsed_ms,
+                model_format=self.manifest.format,
             )
 
         finished = time.perf_counter()

@@ -3,7 +3,7 @@ Descrição: Registra handlers assíncronos para inscrição em tópicos MQTT.
 Autor: Leôncio Ferreira
 """
 
-from .client import MQTTClient, MessageHandler
+from .client import MessageHandler, MQTTClient
 
 
 class MQTTSubscriber:

@@ -59,7 +59,7 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps({"erro": str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 1
     print(json.dumps(decision.as_dict(), indent=2, ensure_ascii=False))
-    return 0 if decision.codigo != "ERRO_INFERENCIA" else 1
+    return 0 if decision.technical_failure_type != "ERRO_INFERENCIA" else 1
 
 
 if __name__ == "__main__":

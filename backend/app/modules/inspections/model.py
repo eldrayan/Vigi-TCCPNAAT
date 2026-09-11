@@ -68,7 +68,8 @@ class Inspection(Base):
     nonconformity_type: Mapped[str | None] = mapped_column(String(30))
     technical_failure_type: Mapped[str | None] = mapped_column(String(30))
     confidence: Mapped[float | None] = mapped_column(Float)
-    processing_time_ms: Mapped[int] = mapped_column(Integer)
+    processing_time_ms: Mapped[float] = mapped_column(Float)
+    model_format: Mapped[str] = mapped_column(String(30))
     received_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.current_timestamp(),
