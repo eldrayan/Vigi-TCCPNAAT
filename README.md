@@ -141,6 +141,16 @@ Para o frontend, estão previstos **JavaScript** e **React**. O React permite di
 
 O código disponível nesta revisão implementa a **coleta de imagens**, organizada em aquisição, controle de coleta, armazenamento e interfaces. A inferência está em finalização na [issue #11](https://github.com/eldrayan/Vigi-TCCPNAAT/issues/11), conforme o andamento informado pela equipe, e ainda não está neste checkout. Sensor, persistência de inspeções, MQTT, API e dashboard são partes previstas; não há comandos de inicialização desses módulos disponíveis nesta revisão.
 
+### Operação local, case e supervisão
+
+A arquitetura prevê que a Raspberry Pi execute a inspeção, a decisão e o armazenamento dos eventos localmente, com funcionamento independente de internet e sem envio de imagens à nuvem para inferência. Conforme a [RN04](docs/requisitos/01-regras-de-negocio.md), essas funções deverão continuar operando mesmo sem conexão com uma rede externa. A operação offline será testada de acordo com o [RNF03](docs/requisitos/03-requisitos-nao-funcionais.md), incluindo a continuidade das inspeções e a preservação dos registros locais.
+
+Está prevista uma case para acomodar a Raspberry Pi e a câmera na bancada. A instalação também deverá considerar o sensor, a alimentação, os cabos, a fixação e a área necessária à captura das imagens. A disposição dos componentes e as dimensões do conjunto serão registradas durante a validação da montagem.
+
+O dashboard está previsto para reunir resultados, histórico e alarmes para operadores e supervisores. O acesso por outros dispositivos será feito pela rede local, mediante conexão com a Raspberry Pi, sem necessidade de internet. Sua implementação deverá incluir autenticação dos usuários e autorização para controlar o acesso às informações e às funções disponíveis. Esses controles e a integração do painel com os eventos de inspeção serão implementados e verificados nas etapas correspondentes do projeto.
+
+O [roteiro do pitch](docs/pitch/01-roteiro-pitch.md) e o [roteiro da PoC](docs/poc/01-roteiro-video-poc.md) organizam a apresentação dos componentes conforme o andamento da implementação.
+
 ### Hardware, plataformas e ferramentas
 
 | Recurso | Função | Preparação / estado |
@@ -148,6 +158,7 @@ O código disponível nesta revisão implementa a **coleta de imagens**, organiz
 | Raspberry Pi 5, fonte adequada e armazenamento para SO/dataset | Nó de borda | Plataforma alvo; validação física pendente nesta revisão documental |
 | Raspberry Pi OS de 64 bits e Python 3.10 ou superior | Ambiente do coletor | Base prevista para a Pi 5; registrar versões reais no ensaio |
 | Câmera CSI compatível ou webcam USB | Entrada de imagens | Backends implementados em [edge/acquisition](edge/acquisition) |
+| Case para Raspberry Pi e câmera | Acomodação do conjunto na bancada | Informada pela equipe; conteúdo, dimensões e montagem a confirmar no ensaio |
 | Bancada, recipientes e iluminação estável | Aquisição de amostras | Preparar antes da coleta e dos vídeos |
 | E18-D80NK e interface elétrica compatível com GPIO | Gatilho da inspeção | Integração prevista; coletor atual usa comandos manuais |
 | Wi-Fi/Ethernet e navegador | Supervisão na rede local | Previstos para acesso ao backend/dashboard |
