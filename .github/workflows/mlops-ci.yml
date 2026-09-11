@@ -47,14 +47,66 @@ jobs:
           uv run --no-sync python scripts/validar_dataset.py --help
           uv run --no-sync python scripts/treinar_modelo.py --help
           uv run --no-sync python scripts/avaliar_modelo.py --help
-          uv run --no-sync python scripts/inferir.py --help
+          uv run --no-sync python scripts/infer.py --help
           uv run --no-sync python scripts/benchmark_modelo.py --help
           uv run --no-sync python scripts/promover_modelo.py --help
           uv run --no-sync python scripts/quality_gate.py --help
 
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detectar backend
+        id: backend
+        run: |
+          if [ -f backend/pyproject.toml ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Backend aguardando merge na main."
+          fi
+
+      - name: Setup Python 3.12
+        if: steps.backend.outputs.available == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias do backend
+        if: steps.backend.outputs.available == 'true'
+        working-directory: backend
+        run: |
+          python -m pip install uv==0.12.9
+          uv sync --frozen
+
+      - name: Iniciar broker de teste
+        if: steps.backend.outputs.available == 'true'
+        run: |
+          docker run -d --name vigi-ci-mqtt -p 127.0.0.1:1883:1883 \
+            -v "$GITHUB_WORKSPACE/infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro" \
+            eclipse-mosquitto:2.0.22
+          timeout 30 sh -c 'until docker exec vigi-ci-mqtt mosquitto_pub -h 127.0.0.1 -t vigi/ci/ready -m ready; do sleep 1; done'
+
+      - name: Testar DTOs e fluxo MQTT ate a API
+        if: steps.backend.outputs.available == 'true'
+        working-directory: backend
+        env:
+          VIGI_TEST_MQTT: "1"
+        run: timeout 120 uv run --no-sync python -m pytest tests -v --tb=short
+
+      - name: Logs e limpeza do broker
+        if: always() && steps.backend.outputs.available == 'true'
+        run: |
+          docker logs vigi-ci-mqtt || true
+          docker rm -f vigi-ci-mqtt || true
+
   artifacts:
     name: ML Artifact Check
-    needs: quality
+    needs: [quality, backend-tests]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
