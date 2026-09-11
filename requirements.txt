@@ -1,0 +1,17 @@
+# Dependência Python externa usada pelo coletor atual em ambientes via pip.
+# Na Raspberry Pi com CSI, seguir o README e instalar python3-opencv e
+# python3-picamera2 via apt; não sobrepor OpenCV via pip nesse ambiente.
+# Lista inicial, sem versões fixadas: ainda não é um lock de ambiente validado.
+opencv-python
+
+# Dependências previstas, ainda não importadas pelo código disponível:
+# ultralytics  - opção de inferência YOLOv8n-cls; confirmar runtime na issue #11
+# gpiozero    - integração prevista do sensor; backend GPIO a validar na Pi 5
+# paho-mqtt   - publicação/consumo de eventos MQTT
+# fastapi     - API de supervisão
+# uvicorn     - servidor previsto da API
+# Não descomentar em bloco: incorporar por módulo quando houver implementação
+# e registrar as versões testadas no ambiente alvo.
+# Picamera2/libcamera: pacotes do Raspberry Pi OS, conforme README.
+# SQLite: módulo sqlite3 da biblioteca padrão do Python.
+# Mosquitto e frontend: dependências não Python inventariadas no README.
