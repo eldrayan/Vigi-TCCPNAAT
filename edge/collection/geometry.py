@@ -11,6 +11,9 @@ def guide_bounds(
     guide_height = max(1, int(frame_height * height_ratio))
     x1 = max(0, (frame_width - guide_width) // 2)
     y1 = max(0, (frame_height - guide_height) // 2)
-    return x1, y1, min(frame_width, x1 + guide_width), min(
-        frame_height, y1 + guide_height
+    return (
+        x1,
+        y1,
+        min(frame_width, x1 + guide_width),
+        min(frame_height, y1 + guide_height),
     )

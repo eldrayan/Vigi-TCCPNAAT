@@ -91,9 +91,7 @@ class DatasetCollectionController:
         elif key in (ord("c"), ord("C")):
             self.state.crop_guide = not self.state.crop_guide
             message = (
-                "Recorte da guia ligado"
-                if self.state.crop_guide
-                else "Quadro inteiro"
+                "Recorte da guia ligado" if self.state.crop_guide else "Quadro inteiro"
             )
             self.view.notify("INFO", message)
         return False

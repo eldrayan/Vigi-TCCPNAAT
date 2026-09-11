@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 
 def default_session_id() -> str:
-    return datetime.now(timezone.utc).strftime("sessao_%Y%m%dT%H%M%SZ")
+    return datetime.now(UTC).strftime("sessao_%Y%m%dT%H%M%SZ")
 
 
 @dataclass(frozen=True)
