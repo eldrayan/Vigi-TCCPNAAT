@@ -43,7 +43,7 @@ O sistema **Vigi** atua como uma estação intermediária de inspeção não-int
 Abaixo está representado o fluxo integrado de inspeção visual, processamento em borda, comunicação e consumo de dados do sistema **Vigi**:
 
 <p align="center">
-  <img src="docs/img/Fluxo.jpeg" alt="Fluxo Atualizado do Protótipo Vigi" width="850">
+  <img width="1448" height="1086" alt="image" src="https://github.com/user-attachments/assets/5762b59e-8d0c-4479-9b6d-737bdc7a3731" />
 </p>
 
 1. **Sensor Fotoelétrico (E18-D80NK):** Detecta a presença física do recipiente na esteira e dispara o gatilho de hardware.
