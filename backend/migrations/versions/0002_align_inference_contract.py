@@ -3,8 +3,8 @@ Descrição: Alinha a persistência ao contrato de saída do modelo de inferênc
 Autor: Leôncio Ferreira
 """
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 revision = "0002"
 down_revision = "0001"

@@ -3,8 +3,8 @@ Descrição: Cria a tabela e os índices iniciais do módulo de inspeções.
 Autor: Leôncio Ferreira
 """
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 revision = "0001"
 down_revision = None
