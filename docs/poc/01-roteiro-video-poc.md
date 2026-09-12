@@ -16,7 +16,9 @@ Este vídeo é a PoC da Entrega 2, com publicação prevista como não listado n
 
 A sequência proposta começa com o recipiente na bancada. A câmera fornece a imagem ao modelo na Raspberry Pi 5, e a decisão aparece no terminal. Essa montagem mostra a inferência funcionando com outro elemento da arquitetura, a câmera, e pode ser demonstrada antes da integração completa do sistema.
 
-O repositório já contém a CLI `scripts/inferir.py`, que executa uma inspeção por imagem ou captura de câmera e imprime a decisão em JSON. O coletor continua separado e não executa inferência. Para gravar, recupere os artefatos DVC, confira o manifesto do modelo ativo e teste a execução na bancada conforme o [README](../../README.md). A disponibilidade do código não comprova a validação física.
+O repositório já contém a CLI `scripts/infer.py`, que executa uma inspeção por imagem ou captura de câmera e imprime um evento em JSON e pode publicá-lo por MQTT. O coletor continua separado e não executa inferência. Para gravar, recupere os artefatos DVC, confira o manifesto do modelo ativo e teste a execução na bancada conforme o [README](../../README.md). A disponibilidade do código não comprova a validação física.
+
+O backend já recebe eventos MQTT, grava no SQLite e oferece consultas pela API. Para esta PoC, a demonstração mínima continua sendo câmera e inferência; a consulta do mesmo evento na API pode ocupar o bloco de leitura do resultado, se ensaiada. A página `/docs` é a documentação interativa da API, não o dashboard React.
 
 A case pode aparecer na apresentação da montagem. O dashboard cabe como saída adicional se já receber a inferência; sua ausência não impede este recorte da PoC. A explicação mais ampla sobre autonomia local, montagem compacta e supervisão fica no pitch final.
 
@@ -39,11 +41,17 @@ A case pode aparecer na apresentação da montagem. O dashboard cabe como saída
 | Equipamento que executa a inferência | Confirmar Raspberry Pi 5; registrar se for outro |
 | Câmera e forma de captura/acionamento | A confirmar |
 | Comando real de execução e diretório de trabalho | A preencher após teste na bancada |
-| Saída disponível | Conferir `resultado`, `categoria`, `codigo`, `confianca`, `tempo_processamento_ms` e `formato_modelo` no JSON |
+| Saída disponível | Conferir `inspection_id`, `timestamp`, `result`, `category`, `nonconformity_type`, `technical_failure_type`, `confidence`, `processing_time_ms` e `model_format` no JSON |
 | Evidência do ensaio | Registrar amostras, saídas reais e limitações observadas |
 | Case e montagem | Confirmar componentes internos e externos; medir dimensões se forem citadas |
 | Dashboard | Registrar se está integrado, se é interface com dados simulados ou se ainda está previsto |
 | Conectividade no ensaio | Registrar uso de internet, rede local e acesso remoto; só declarar offline para as funções testadas |
+
+### Escolha da execução no ensaio
+
+Seguir a preparação do README antes de gravar. Para a demonstração de inferência sem broker, executar `uv run --no-sync python scripts/infer.py --manifest models/active/manifest.json --camera 0 --backend picamera2`, sem `--mqtt-host`. Esse modo imprime o resultado sem persistir no banco.
+
+Se for mostrar o caminho até a API, iniciar os serviços com `make up`, verificar `http://localhost:8000/health` e executar `make infer-camera`. O alvo Make habilita MQTT. Anotar o `inspection_id` retornado e consultar `/api/inspecoes/{id_inspecao}` com esse valor. Uma publicação confirmada no broker ainda precisa ser conferida na API para comprovar a persistência. Os serviços devem estar prontos antes de iniciar os cinco minutos do vídeo.
 
 ## 3. Roteiro de gravação: 00:00 a 05:00
 
@@ -93,13 +101,13 @@ Em caso de erro ou instabilidade, descreva o que ocorreu e a limitação observa
 
 ### 03:30 a 04:15: Leitura do resultado e alcance da prova (45 s)
 
-Imagem/ação: manter a saída real visível e apontar seus campos. Se o dashboard já estiver integrado, mostrar o evento de uma das amostras e relacioná-lo à inferência por identificador ou horário, dentro destes 45 segundos. Se houver tempo disponível, repetir A, sem tratar a repetição como avaliação estatística.
+Imagem/ação: manter a saída real visível e apontar seus campos. Se a publicação estiver habilitada, consultar na API o `inspection_id` de uma amostra e mostrar o registro correspondente dentro destes 45 segundos. Identificar a tela como API, e não como dashboard. Se o dashboard vier a ser integrado, ele poderá ocupar esse espaço. Caso contrário, usar a saída da CLI ou repetir A, sem tratar a repetição como avaliação estatística.
 
 Se o painel tiver apenas dados simulados, reservá-lo para a explicação do pitch, onde será identificado como protótipo de interface. Na PoC, preservar a saída real da inferência. Se ainda estiver previsto, citar o dashboard no encerramento como parte a integrar.
 
 > A decisão resume a previsão para a imagem apresentada. [Se disponível: este score acompanha a previsão; ele não representa a acurácia global.] Nos ciclos que mostramos, observamos [resumo fiel dos resultados]. Esses testes mostram o funcionamento inicial da captura com a inferência nesta bancada. Para avaliar a qualidade do modelo, ainda precisamos considerar os testes com imagens que ficaram fora do treinamento.
 
-Na CLI atual, `resultado` informa conformidade, `codigo` identifica o defeito ou a falha técnica, e `confianca` informa o score. Em um resultado conforme, `codigo` pode ser nulo. `tempo_processamento_ms` mede a predição, sem a captura da câmera. Ajuste a leitura das falas a esses campos; baixa confiança é uma decisão de falha técnica, não uma classe de defeito. O RNF01 considera toda a inspeção, da detecção à disponibilização do resultado; medir apenas a inferência não comprova esse requisito. Os dois exemplos do vídeo também não bastam para comprovar a meta de acurácia do RNF06.
+Na CLI atual, `result` informa conformidade, `nonconformity_type` identifica o defeito do produto, `technical_failure_type` identifica a falha técnica, e `confidence` informa o score. Em um resultado conforme, `nonconformity_type` pode ser nulo. `processing_time_ms` mede a predição, sem a captura da câmera. Ajuste a leitura das falas a esses campos; baixa confiança é uma decisão de falha técnica, não uma classe de defeito. O RNF01 considera toda a inspeção, da detecção à disponibilização do resultado; medir apenas a inferência não comprova esse requisito. Os dois exemplos do vídeo também não bastam para comprovar a meta de acurácia do RNF06.
 
 ### 04:15 a 05:00: Limites e próxima etapa técnica (45 s)
 
@@ -107,7 +115,7 @@ Imagem/ação: voltar à bancada ou ao fluxo simplificado. Identificar visualmen
 
 Adaptar a fala ao que estiver funcionando:
 
-> Nesta PoC, usamos [componentes realmente usados] e mostramos os resultados das amostras. O próximo passo é [integração ainda pendente, por exemplo: ligar o gatilho do sensor à captura e à inferência]. Depois, estão previstos o registro dos eventos no SQLite e o envio por MQTT para o backend e o dashboard. [Citar somente o que de fato falta integrar.] Também precisamos ampliar os testes de classificação e medir o tempo do ciclo.
+> Nesta PoC, usamos [componentes realmente usados] e mostramos os resultados das amostras. O próximo passo é [integração ainda pendente, por exemplo: ligar o gatilho do sensor à captura e à inferência]. O código já permite enviar eventos por MQTT, gravá-los no SQLite e consultá-los pela API. [Informar se esse caminho foi demonstrado.] Ainda estão previstos o dashboard e a fila persistente no Edge para lidar com falhas de comunicação. [Citar somente o que de fato falta integrar.] Também precisamos ampliar os testes de classificação e medir o tempo do ciclo.
 
 Os atuadores estão fora do escopo atual do projeto. Por isso, a rejeição mecânica de recipientes não deve ser anunciada como próxima entrega.
 
@@ -141,7 +149,7 @@ Para atender ao nível Avançado, a gravação precisa mostrar as evidências pl
 - [ ] Confirmar a câmera integrada, ou declarar explicitamente a alternativa utilizada.
 - [ ] Ajustar as falas de resultado, limitações e próxima etapa ao estado observado.
 - [ ] Confirmar a apresentação da case e a função de cada componente mostrado.
-- [ ] Se usar o dashboard, verificar que o evento mostrado veio da inferência gravada.
+- [ ] Se usar a API ou, futuramente, o dashboard, relacionar o registro ao `inspection_id` da inferência gravada.
 - [ ] Identificar a conexão usada e evitar afirmações de segurança, acesso restrito ou autonomia offline sem verificação.
 - [ ] Ensaiar com cronômetro para aproximadamente 5 minutos, preservando o tempo de leitura das saídas.
 - [ ] Conferir áudio e legibilidade; manter cada ciclo sem cortes entre entrada e resultado.
@@ -160,4 +168,4 @@ Link do vídeo: pendente de gravação e publicação.
 - [Requisitos não funcionais: RNF01 e RNF06](../requisitos/03-requisitos-nao-funcionais.md).
 - Critérios da Entrega 2 fornecidos na solicitação desta atividade.
 
-A issue #13 pede uma demonstração com sensor e SQLite/MQTT/Node-RED. Para a Entrega 2, este roteiro cobre a inferência inicial; o fluxo completo da issue continua pendente. A apresentação segue a arquitetura documentada, com FastAPI e React para supervisão, sem Node-RED. Para concluir a issue #13, também será preciso finalizar os demais entregáveis e validá-los com a equipe.
+A issue #13 pede uma demonstração com sensor e SQLite/MQTT/Node-RED. Para a Entrega 2, este roteiro cobre a inferência inicial; a validação física do fluxo completo da issue continua pendente. A apresentação segue a arquitetura documentada, com FastAPI e React para supervisão, sem Node-RED. Para concluir a issue #13, também será preciso finalizar os demais entregáveis e validá-los com a equipe.

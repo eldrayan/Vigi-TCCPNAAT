@@ -12,7 +12,7 @@ A apresentação começa pelos desperdícios e pelas interrupções que recipien
 
 Este roteiro é para o vídeo final de até 15 minutos. O [vídeo da PoC da Entrega 2](../poc/01-roteiro-video-poc.md), de aproximadamente 5 minutos, é uma gravação separada. O pitch reserva um bloco para a demonstração dentro do tempo total. Nesse bloco, a equipe pode aproveitar a sequência ensaiada para a PoC, atualizando-a conforme o estado final do projeto.
 
-Antes de gravar, preencha os campos entre colchetes com os dados verificados. As falas descrevem a arquitetura proposta; anuncie como implementados e integrados apenas os componentes demonstrados.
+O código atual já inclui publicação MQTT, backend, SQLite e consultas HTTP. O dashboard React e o gatilho físico ainda estão previstos. Antes de gravar, preencha os campos entre colchetes com os dados verificados. As falas descrevem a arquitetura proposta; anuncie como implementados e integrados apenas os componentes demonstrados.
 
 ### Argumentos que orientam a apresentação
 
@@ -70,15 +70,15 @@ Mostrar: fluxo simplificado, case real e posição do conjunto na bancada. Apont
 
 Mostrar: [diagrama de blocos no README](../../README.md), destacando cada ligação durante a fala.
 
-> Na arquitetura proposta, o sensor E18-D80NK dispara a captura, e a Raspberry Pi 5 processa a imagem e executa o classificador. O resultado orienta a decisão e fica registrado no SQLite. Essas funções foram planejadas para continuar sem internet e sem rede externa. Os eventos seguem por MQTT ao Mosquitto e ao backend FastAPI. O dashboard React consulta o backend e reúne os resultados, o histórico e os alarmes para operadores e supervisores. Para acessá-lo em outro dispositivo, é preciso uma conexão com a Raspberry Pi pela rede local.
+> A Raspberry Pi processa a imagem e executa o classificador. No fluxo atual, iniciamos a captura manualmente e podemos enviar o resultado por MQTT ao Mosquitto. O backend FastAPI recebe esse evento, grava no SQLite e permite consultá-lo pela API. O sensor E18-D80NK deverá automatizar o disparo. Também estão previstos o dashboard React e a fila local para preservar eventos quando houver falha de comunicação. A proposta é operar sem internet; o acesso pela rede local permite que os responsáveis consultem os dados em outro dispositivo.
 
 Dividir os 90 segundos deste bloco: cerca de 40 segundos para percorrer o fluxo, 20 para explicar a autonomia local e 30 para o papel do dashboard. Ao apontar cada componente, explicar sua função e indicar o que ainda falta integrar. Não é necessário recitar nomes de bibliotecas além dos que ajudam a entender o caminho dos dados.
 
-A fala sobre offline descreve a proposta. Se houver teste, informar quais funções continuaram funcionando e qual conexão estava indisponível. O processamento local dispensa o envio de imagens à nuvem para inferência na arquitetura proposta; isso não equivale a comprovar segurança ou controle de acesso.
+A fala sobre offline descreve a proposta. Hoje, o banco é alimentado pelo consumidor MQTT: a gravação depende do broker, e o Edge ainda não guarda uma fila persistente quando a publicação falha. A inferência sem `--mqtt-host` gera apenas a saída local. Se houver teste, informar quais funções continuaram funcionando e qual conexão estava indisponível. O processamento local dispensa o envio de imagens à nuvem para inferência na arquitetura proposta; isso não equivale a comprovar segurança ou controle de acesso.
 
 ### 04:50 a 06:00: Tecnologia central e transição à prática
 
-Mostrar: classes do modelo efetivamente usado e identificação dos pesos; distinguir treinamento de inferência. A CLI `scripts/inferir.py` já está disponível e executa uma inspeção por chamada, com decisão em JSON. Recuperar o modelo pelo DVC e validar a câmera antes da gravação. A saída não inclui preview; filmar a entrada na bancada ou mostrar o arquivo usado.
+Mostrar: classes do modelo efetivamente usado e identificação dos pesos; distinguir treinamento de inferência. A CLI `scripts/infer.py` já está disponível e executa uma inspeção por chamada, com decisão em JSON. Recuperar o modelo pelo DVC e validar a câmera antes da gravação. A saída não inclui preview; filmar a entrada na bancada ou mostrar o arquivo usado.
 
 > O classificador previsto na issue 11 é o YOLOv8n-cls. No treinamento, usamos imagens rotuladas. Na inferência, o modelo recebe uma imagem e retorna uma previsão. As classes previstas são conforme, sem tampa, tampa torta e amassado. [Confirmar as classes e o modelo exportado.] Na bancada, vamos acompanhar a entrada e o resultado de duas amostras.
 
@@ -106,9 +106,11 @@ Ação: trocar pela amostra B, apontar o defeito e repetir todo o ciclo. Disting
 
 > Esta outra amostra apresenta [defeito]. Vamos repetir o processo nas mesmas condições da bancada para observar como o modelo responde a esse caso. A saída foi [resultado real].
 
-### 09:20 a 10:20: Integração e leitura do resultado
+### 09:20 a 10:20: Evento na API e leitura do resultado
 
-Ação: explicar os campos `resultado`, `codigo` e `confianca` da saída JSON. O código pode ser nulo para uma amostra conforme; baixa confiança indica falha técnica. O tempo exibido mede a predição, sem a captura. Usar este minuto conforme o estado do dashboard:
+Ação: explicar os campos `result`, `nonconformity_type` e `confidence` da saída JSON. O tipo de não conformidade é nulo para uma amostra conforme; baixa confiança aparece em `technical_failure_type`. O tempo exibido mede a predição, sem a captura. Se os serviços estiverem prontos, priorizar a consulta do evento na API: usar `make infer-camera` nos ciclos anteriores e consultar `/api/inspecoes/{id_inspecao}` com o `inspection_id` impresso. Esse registro comprova a passagem pelo MQTT e a gravação no banco. Mostrar `/docs` como documentação interativa da API, sem chamá-la de dashboard.
+
+O dashboard React continua previsto. Se seu estado mudar até a gravação, usar este minuto conforme a situação:
 
 | Estado na gravação | O que mostrar e dizer |
 | --- | --- |
@@ -116,7 +118,7 @@ Ação: explicar os campos `resultado`, `codigo` e `confianca` da saída JSON. O
 | Interface pronta com dados simulados | Apresentar como protótipo de interface e identificar os dados simulados na tela e na fala. Explicar o que o operador poderá consultar e que a ligação com a inferência ainda falta |
 | Ainda previsto | Explicar sua função no diagrama e usar o restante do minuto para repetir uma inferência ou mostrar uma integração existente |
 
-Se sensor, SQLite ou MQTT estiverem integrados, o gatilho ou o registro do mesmo ciclo também pode servir de evidência. O painel é opcional na demonstração: mantenha os dois ciclos de inferência e o limite de cinco minutos do bloco.
+O fluxo MQTT, SQLite e API já está implementado, mas precisa ser ensaiado na montagem. Se o sensor também vier a ser integrado, seu gatilho poderá ser mostrado. O painel é opcional na demonstração: mantenha os dois ciclos de inferência e o limite de cinco minutos do bloco.
 
 > O resultado deste ciclo é [resultado]. [Mostrar a evidência da integração disponível.] Aqui, [lista verificada] estão funcionando juntos. Os demais blocos do diagrama estão em [estado real].
 
@@ -144,7 +146,7 @@ Mostrar: quadro "demonstrado / pendente", preenchido antes da gravação.
 
 > Ainda precisamos [pendências verificadas]. O próximo passo é [ação concreta]. Depois, vamos verificar isso com [teste que verificará o resultado]. Também precisamos testar mais amostras, variar a iluminação e medir o tempo do ciclo completo.
 
-Exemplos para selecionar conforme o estado final: integrar gatilho do sensor à captura; persistir eventos; distribuir eventos e apresentar no dashboard; testar baixa confiança; medir inspeções ponta a ponta. Não anunciar essas funções como ausentes se já tiverem sido concluídas.
+Exemplos para selecionar conforme o estado final: integrar o gatilho do sensor; implementar fila persistente e reenvio no Edge; ligar a API ao dashboard; implementar autenticação e autorização; testar baixa confiança e medir inspeções ponta a ponta. Não anunciar essas funções como ausentes se já tiverem sido concluídas.
 
 ### 13:00 a 14:20: Resultado esperado e impacto no OEE
 
@@ -166,6 +168,7 @@ Mostrar: nome do projeto, equipe e endereço do repositório.
 - [ ] Preencher modelo, equipamento, comandos, resultados e pendências com evidências atuais.
 - [ ] Selecionar os apoios visuais e preparar a bancada e a captura de tela.
 - [ ] Conferir o conteúdo da case e registrar suas dimensões, se forem citadas; mostrar os elementos externos da instalação.
+- [ ] Ensaiar a consulta por `inspection_id` com backend e broker ativos; identificar `/docs` como documentação da API.
 - [ ] Registrar o estado do dashboard e escolher a apresentação correspondente: integrado, interface com dados simulados ou proposta.
 - [ ] Para qualquer afirmação de operação offline, registrar o teste, as funções verificadas e a conexão indisponível. Se houver acesso remoto, planejar a captura local antes de interromper a rede.
 - [ ] Conferir as falas sobre segurança e acesso: processamento local não comprova segurança; público previsto não comprova restrição de acesso.

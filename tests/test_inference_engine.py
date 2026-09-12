@@ -38,42 +38,46 @@ class StubClassifier:
 
 def test_conforming_decision() -> None:
     result = decide(Classification("01_conforme", 0.95), 0.70, 12.0, "pytorch")
-    assert result.resultado == "CONFORME"
-    assert result.categoria is None
+    assert result.result == "CONFORME"
+    assert result.category is None
+    assert result.nonconformity_type is None
+    assert result.technical_failure_type is None
 
 
 def test_defect_decision() -> None:
     result = decide(Classification("02_sem_tampa", 0.95), 0.70, 12.0, "pytorch")
-    assert result.resultado == "NAO_CONFORME"
-    assert result.categoria == "ANOMALIA_PRODUTO"
-    assert result.codigo == "SEM_TAMPA"
+    assert result.result == "NAO_CONFORME"
+    assert result.category == "ANOMALIA_PRODUTO"
+    assert result.nonconformity_type == "SEM_TAMPA"
+    assert result.technical_failure_type is None
 
 
 def test_low_confidence_is_technical_failure() -> None:
     result = decide(Classification("01_conforme", 0.40), 0.70, 12.0, "pytorch")
-    assert result.categoria == "FALHA_TECNICA"
-    assert result.codigo == "BAIXA_CONFIANCA"
+    assert result.category == "FALHA_TECNICA"
+    assert result.nonconformity_type is None
+    assert result.technical_failure_type == "BAIXA_CONFIANCA"
 
 
 def test_runtime_error_is_fail_safe() -> None:
     engine = InferenceEngine(manifest(), StubClassifier(fail=True))
     result = engine.inspect(object())
-    assert result.resultado == "NAO_CONFORME"
-    assert result.codigo == "ERRO_INFERENCIA"
+    assert result.result == "NAO_CONFORME"
+    assert result.technical_failure_type == "ERRO_INFERENCIA"
 
 
 def test_engine_always_uses_manifest_threshold() -> None:
     engine = InferenceEngine(
         manifest(), StubClassifier(Classification("01_conforme", 0.69))
     )
-    assert engine.inspect(object()).codigo == "BAIXA_CONFIANCA"
+    assert engine.inspect(object()).technical_failure_type == "BAIXA_CONFIANCA"
 
 
 def test_inference_cli_rejects_threshold_override() -> None:
-    from scripts import inferir
+    from scripts import infer
 
     with pytest.raises(SystemExit) as exc_info:
-        inferir.main(
+        infer.main(
             [
                 "--manifest",
                 "models/active/manifest.json",

@@ -72,7 +72,7 @@ A figura complementar abaixo representa o fluxo do projeto:
   <img src="https://github.com/user-attachments/assets/5762b59e-8d0c-4479-9b6d-737bdc7a3731" alt="Fluxo proposto do Vigi: sensor, câmera, Raspberry Pi, inferência, MQTT, persistência e supervisão" width="850">
 </p>
 
-A figura apresenta uma visão geral da proposta. O Mermaid acima detalha as relações: a visão computacional roda na Raspberry Pi, e a persistência local em SQLite deve funcionar independentemente da publicação MQTT. Os alertas sonoros e visuais são previstos na interface de supervisão; a ilustração não acrescenta torres luminosas ou buzzers físicos ao escopo.
+A figura e o Mermaid apresentam a arquitetura proposta, incluindo persistência independente do envio MQTT e alertas na interface. No código atual, o backend grava o evento após recebê-lo por MQTT; o fluxo implementado está descrito abaixo. Os alertas e a fila local no Edge ainda serão integrados. A ilustração não acrescenta torres luminosas ou buzzers físicos ao escopo.
 
 1. **Sensor Fotoelétrico (E18-D80NK):** Detecta a presença física do recipiente na esteira e dispara o gatilho de hardware.
 2. **Câmera Digital:** Realiza a captura sincronizada do quadro focal do frasco posicionado.
@@ -116,8 +116,20 @@ Para o frontend, estão previstos **JavaScript** e **React**. O React permite di
 │   ├── collection/                        # Controle, estado, imagens e manifesto
 │   │   └── views/                         # Interfaces gráfica e terminal
 │   ├── inference/                         # Adaptador, motor e decisão da inferência
+│   ├── messaging/                         # Evento de inspeção e publicação MQTT
 │   ├── tools/collect_dataset.py           # Composição do coletor
 │   └── tests/                             # Testes do coletor
+├── backend/
+│   ├── app/                               # API, consumidor MQTT e persistência
+│   ├── migrations/                        # Migrations Alembic do SQLite
+│   ├── tests/                             # DTOs e fluxo MQTT até a API
+│   ├── Dockerfile                         # Serviço Python 3.12
+│   ├── pyproject.toml                     # Dependências próprias do backend
+│   └── uv.lock                            # Lock do backend
+├── infra/mosquitto/mosquitto.conf          # Configuração do broker
+├── compose.yaml                           # Backend, broker e volumes
+├── Makefile                               # Atalhos de preparação e execução
+├── .env.example                           # Valores de configuração de exemplo
 ├── model_lifecycle/                       # Dataset, avaliação, métricas e promoção
 ├── scripts/
 │   ├── coletar_dataset.py
@@ -127,7 +139,7 @@ Para o frontend, estão previstos **JavaScript** e **React**. O React permite di
 │   ├── avaliar_modelo.py
 │   ├── quality_gate.py
 │   ├── promover_modelo.py
-│   ├── inferir.py
+│   ├── infer.py
 │   └── benchmark_modelo.py
 ├── tests/                                # Testes do modelo e das CLIs
 ├── training_configuration/               # Configurações baseline e tuned
@@ -149,7 +161,22 @@ Para o frontend, estão previstos **JavaScript** e **React**. O React permite di
 
 O repositório contém o coletor de imagens, o ciclo de treinamento, avaliação e promoção do modelo, além da inferência por imagem ou captura de câmera e do benchmark. Os módulos estão em `edge/`, `model_lifecycle/` e `scripts/`. Dataset e modelos são versionados por DVC; os ponteiros estão no Git, e os arquivos precisam ser recuperados do armazenamento remoto. A existência do código não substitui a validação física da inferência na Raspberry Pi.
 
-A integração do sensor ao ciclo, a persistência das inspeções em SQLite, o MQTT, a API e o dashboard continuam previstos. A captura disponível na CLI é iniciada manualmente e executa uma inspeção por chamada.
+Também estão implementados a publicação MQTT no Edge, o consumidor no backend, a persistência SQLite com migrations e as consultas HTTP. O fluxo atual é captura manual → inferência → evento MQTT → backend → SQLite → consulta pela API. Cada chamada da CLI executa uma inspeção. O dashboard React, os alarmes na interface, o SSE, a autenticação/autorização, o gatilho do sensor e a fila persistente de eventos no Edge continuam previstos.
+
+O caminho disponível para demonstração é:
+
+```mermaid
+flowchart LR
+    C["Câmera ou imagem"] --> E["Edge: infer.py"]
+    E --> J["Evento JSON no terminal"]
+    E -->|"com --mqtt-host"| M["Mosquitto local"]
+    M --> B["Backend: validação do evento"]
+    B --> S[("SQLite")]
+    S --> A["API: inspeções e resumo"]
+    A --> D["Consulta por curl ou /docs"]
+```
+
+A API oferece `GET /health`, `GET /api/inspecoes` com paginação, `GET /api/inspecoes/resumo` e `GET /api/inspecoes/{id_inspecao}`. A página `/docs` permite explorar a API; ela não é o dashboard React.
 
 ### Operação local, case e supervisão
 
@@ -157,7 +184,9 @@ A arquitetura prevê que a Raspberry Pi execute a inspeção, a decisão e o arm
 
 Está prevista uma case para acomodar a Raspberry Pi e a câmera na bancada. A instalação também deverá considerar o sensor, a alimentação, os cabos, a fixação e a área necessária à captura das imagens. A disposição dos componentes e as dimensões do conjunto serão registradas durante a validação da montagem.
 
-O dashboard está previsto para reunir resultados, histórico e alarmes para operadores e supervisores. O acesso por outros dispositivos será feito pela rede local, mediante conexão com a Raspberry Pi, sem necessidade de internet. Sua implementação deverá incluir autenticação dos usuários e autorização para controlar o acesso às informações e às funções disponíveis. Esses controles e a integração do painel com os eventos de inspeção serão implementados e verificados nas etapas correspondentes do projeto.
+A execução prevista é independente de internet depois da preparação do ambiente, mas o fluxo atual de persistência requer o broker local funcionando. Sem `--mqtt-host`, a CLI imprime o evento sem gravá-lo em SQLite. Com publicação habilitada, uma falha no MQTT encerra a chamada com erro, sem fila persistente para reenvio no Edge. O RNF03 ainda precisa de implementação complementar e validação.
+
+O dashboard está previsto para reunir resultados, histórico e alarmes para operadores e supervisores. O acesso por outros dispositivos será feito pela rede local, mediante conexão com a Raspberry Pi, sem necessidade de internet. Sua implementação deverá incluir autenticação dos usuários e autorização para controlar o acesso às informações e às funções disponíveis. A API já permite consultar os eventos, mas seus endpoints atuais não exigem autenticação. Os controles de acesso e a integração do painel serão implementados e verificados nas etapas correspondentes do projeto. O Compose publica a API na porta 8000 e o MQTT apenas no loopback do host por padrão.
 
 O [roteiro do pitch](docs/pitch/01-roteiro-pitch.md) e o [roteiro da PoC](docs/poc/01-roteiro-video-poc.md) organizam a apresentação dos componentes conforme o andamento da implementação.
 
@@ -166,13 +195,14 @@ O [roteiro do pitch](docs/pitch/01-roteiro-pitch.md) e o [roteiro da PoC](docs/p
 | Recurso | Função | Preparação / estado |
 | --- | --- | --- |
 | Raspberry Pi 5, fonte adequada e armazenamento para SO/dataset | Nó de borda | Plataforma alvo; validação física pendente nesta revisão documental |
-| Raspberry Pi OS de 64 bits e Python 3.11 ou 3.12 | Ambiente do coletor | Faixa do projeto: `>=3.11,<3.13`; usar Python 3.12 para treinamento e registrar a versão do sistema na Pi |
+| Raspberry Pi OS de 64 bits e Python 3.11 a 3.13 no Edge | Ambiente do coletor | Edge: `>=3.11,<3.14`; backend: `>=3.12,<3.13`. Registrar as versões usadas na Pi |
 | Câmera CSI compatível ou webcam USB | Entrada de imagens | Backends implementados em [edge/acquisition](edge/acquisition) |
 | Case para Raspberry Pi e câmera | Acomodação do conjunto na bancada | Informada pela equipe; conteúdo, dimensões e montagem a confirmar no ensaio |
 | Bancada, recipientes e iluminação estável | Aquisição de amostras | Preparar antes da coleta e dos vídeos |
 | E18-D80NK e interface elétrica compatível com GPIO | Gatilho da inspeção | Integração prevista; coletor atual usa comandos manuais |
 | Wi-Fi/Ethernet e navegador | Supervisão na rede local | Previstos para acesso ao backend/dashboard |
 | Git | Obtenção e versionamento do código | Instalação inicial abaixo |
+| GNU Make, Docker Engine com Compose e curl | Atalhos, backend/broker em containers e consultas de verificação | Necessários para o fluxo integrado; comandos de verificação abaixo |
 | uv | Gerenciamento do ambiente Python | Dependências em `pyproject.toml` e versões em `uv.lock` |
 | DVC com suporte SSH e acesso ao storage | Recuperação e versionamento de dataset/modelos | Extra `mlops`; acesso e chave configurados localmente |
 | GitHub Actions e Tailscale | CI e acesso do workflow aos artefatos | Workflow em `.github/workflows/mlops-ci.yml`; requer os secrets descritos abaixo |
@@ -189,18 +219,18 @@ O [roteiro do pitch](docs/pitch/01-roteiro-pitch.md) e o [roteiro da PoC](docs/p
 | Picamera2 / libcamera | Captura CSI | Atual, para CSI; `python3-picamera2` via apt e dependências do sistema |
 | `unittest`, `csv`, `pathlib` e demais módulos padrão | Testes, manifesto e arquivos | Incluídos no Python, sem instalação pip |
 | Ultralytics / YOLOv8n-cls | Treinamento e inferência | Implementados; runtime atual usa checkpoints `.pt`. TFLite não é suportado pelo fluxo atual de promoção |
-| NumPy, Pillow e PyYAML | Arrays, imagens e configurações | Dependências diretas em `pyproject.toml` |
+| NumPy, Pillow, PyYAML, PyTorch e Torchvision | Dados, configurações e execução do modelo | Dependências diretas em `pyproject.toml`; PyTorch CPU selecionado no Linux e Windows |
 | Matplotlib | Gráficos do treinamento | Extra `train` |
 | DVC (`dvc[ssh]`) | Artefatos no storage remoto | Extra `mlops` |
 | pytest e Ruff | Testes e lint | Grupo `dev` |
 | GPIO Zero (`gpiozero`) | Leitura do sensor | Previsto; backend e compatibilidade com Pi 5 a validar na integração |
-| SQLite / `sqlite3` | Persistência dos eventos e fila de sincronização | Previsto; módulo incluído no Python, sem pacote pip `sqlite3` |
-| Paho MQTT (`paho-mqtt`) | Publicação e consumo dos eventos | Previsto; pacote Python |
-| Mosquitto | Broker local de mensagens | Previsto; serviço do sistema, não pacote Python |
-| FastAPI e Uvicorn | API e servidor para supervisão | Previstos; pacotes Python |
+| SQLite, SQLAlchemy, aiosqlite e Alembic | Persistência das inspeções recebidas e migrations | Implementados no backend; fila persistente no Edge ainda prevista |
+| Paho MQTT (`paho-mqtt`) | Publicação no Edge e consumo no backend | Implementados nos dois projetos Python |
+| Mosquitto | Broker local de mensagens | Configurado no Compose, imagem `eclipse-mosquitto:2.0.22` |
+| FastAPI, Uvicorn e pydantic-settings | API, servidor e configuração | Implementados; dependências em `backend/pyproject.toml` |
 | React, Chart.js, Lucide e Sass/SCSS | Interface, gráficos, ícones e estilos | Previstos; dependências do futuro manifesto do frontend |
 
-O [pyproject.toml](pyproject.toml) é a fonte das dependências Python do projeto; o [uv.lock](uv.lock) registra as versões resolvidas. O [requirements.txt](requirements.txt) aponta para o projeto local como alternativa de instalação via pip, sem duplicar a lista. Para reproduzir o ambiente, use os comandos com `uv sync --frozen` abaixo. Picamera2 e libcamera continuam sendo pacotes do sistema. As dependências dos serviços futuros serão incorporadas quando seus módulos forem implementados.
+O [pyproject.toml](pyproject.toml) é a fonte das dependências Python do Edge e do ciclo do modelo; o [uv.lock](uv.lock) registra as versões resolvidas. O [requirements.txt](requirements.txt) aponta para o projeto local como alternativa de instalação via pip, sem duplicar a lista. Para reproduzir o ambiente, use os comandos com `uv sync --frozen` abaixo. Picamera2 e libcamera continuam sendo pacotes do sistema. O backend mantém seu próprio [pyproject.toml](backend/pyproject.toml) e [uv.lock](backend/uv.lock). O `requirements.txt` da raiz não instala o backend. O Compose prepara esse serviço pelo seu Dockerfile; as dependências do frontend serão incorporadas com sua implementação.
 
 ### Preparação do coletor na Raspberry Pi
 
@@ -249,7 +279,18 @@ uv run --no-sync python -m pytest
 uv run --no-sync ruff check .
 ```
 
-Os testes não substituem a captura física, a avaliação do modelo nem o teste do sistema completo. O requisito RNF12 de preparação em até 60 minutos ainda exige um ensaio em ambiente limpo com outra pessoa. A preparação do coletor está acima; treinamento, inferência e recuperação dos artefatos estão nas seções seguintes. As instruções dos serviços de supervisão serão acrescentadas com suas implementações.
+Para os testes do backend em seu ambiente próprio:
+
+```bash
+cd backend
+uv sync --frozen
+uv run --no-sync python -m pytest tests -q
+cd ..
+```
+
+O teste MQTT até a API exige um broker local e `VIGI_TEST_MQTT=1`; sem isso, ele é ignorado. Use um broker de teste separado, pois o teste publica no tópico de inspeções. O workflow já prepara esse ambiente isolado.
+
+Os testes não substituem a captura física, a avaliação do modelo nem o teste do sistema completo. O requisito RNF12 de preparação em até 60 minutos ainda exige um ensaio em ambiente limpo com outra pessoa. A preparação do coletor está acima; treinamento, inferência e recuperação dos artefatos estão nas seções seguintes. As instruções do backend e do broker estão abaixo; as do dashboard serão acrescentadas quando ele for implementado.
 
 ---
 
@@ -332,8 +373,7 @@ uv sync --frozen --python 3.12 --extra train --extra mlops --group dev
 uv run python scripts/verificar_ambiente.py
 ```
 
-O preflight confirma a versão do Python, a disponibilidade de CUDA no PyTorch,
-o DVC e o SSH antes de iniciar um treinamento longo.
+O preflight verifica Python, CUDA, DVC e SSH. O lock atual seleciona PyTorch CPU no Linux e Windows, enquanto o preflight exige CUDA para retornar sucesso. Portanto, esse comando sinalizará indisponibilidade de CUDA nesse ambiente; treinamento com GPU exige um ambiente/configuração compatível, ainda a validar. Isso não impede por si só o uso do runtime CPU para inferência.
 
 ### Versionamento dos artefatos
 
@@ -424,32 +464,76 @@ A promoção suporta somente checkpoints PyTorch `.pt` e usa obrigatoriamente o
 
 ### Inferência e benchmark na Raspberry Pi 5
 
-Para câmera CSI, o ambiente precisa acessar Picamera2 e libcamera instalados no SO. Use o Python do sistema, na faixa 3.11 ou 3.12 exigida pelo projeto. Se a versão do SO estiver fora dessa faixa, a compatibilidade precisa ser resolvida antes da execução; instalar outro interpretador não transfere os bindings da câmera.
+Para câmera CSI, instale os pacotes do sistema conforme a seção do coletor e use o Python de `/usr/bin/python3`, na faixa 3.11 a 3.13 aceita pelo Edge. O backend usa Python 3.12 em seu próprio ambiente/container. O `make setup-rpi` cria `.venv` com acesso aos pacotes do sistema apenas se o diretório ainda não existir; um ambiente criado antes sem esse acesso precisa ser revisto antes de usar Picamera2.
 
-Em um checkout novo na Pi, sem `.venv`, após instalar os pacotes de câmera e o `uv`:
+A [documentação do uv](https://docs.astral.sh/uv/reference/cli/#uv-venv) descreve `--system-site-packages`. Instalar outro interpretador não transfere os bindings da câmera. A compatibilidade das bibliotecas deve ser testada na Pi.
+
+Antes de iniciar o fluxo integrado, confira as ferramentas instaladas:
 
 ```bash
-/usr/bin/python3 --version
-uv venv --python /usr/bin/python3 --system-site-packages
-uv sync --frozen --extra mlops
-uv run --no-sync python -c "import cv2; from picamera2 import Picamera2; print('Bibliotecas disponíveis')"
+make --version
+docker --version
+docker compose version
+curl --version
+uv --version
 ```
 
-Se já existir um ambiente de treinamento, use outro checkout para preparar o ambiente da câmera. A opção `--system-site-packages` permite acessar os pacotes do sistema, conforme a [documentação do uv](https://docs.astral.sh/uv/reference/cli/#uv-venv). A importação e a compatibilidade entre as bibliotecas devem ser verificadas na Pi; estes comandos ainda precisam de ensaio físico.
+A instalação do Docker deve seguir a [documentação oficial](https://docs.docker.com/engine/install/) para o sistema da Pi. `make setup-rpi` instala dependências Python, não Docker nem os drivers de câmera. Execute o Compose a partir da raiz. Os valores padrão estão em [.env.example](.env.example); um `.env` local pode sobrescrevê-los. Se alterar portas ou tópicos, ajuste também os parâmetros `HOST`, `PORT` e `MODEL_TOPIC` dos comandos Make e as URLs de consulta.
 
-Recupere os artefatos pelo DVC como descrito acima. Com `models/active/manifest.json` e os pesos disponíveis, classifique uma imagem ou capture um quadro da câmera CSI:
+Principais comandos `make`:
+
+- `make help` — lista os comandos disponíveis.
+- `make setup-rpi` — instala as dependências para executar na Raspberry.
+- `make up` — constrói e inicia o backend e o Mosquitto.
+- `make ps` — mostra o estado dos containers.
+- `make logs` — acompanha os logs dos serviços.
+- `make infer-camera` — captura uma imagem, executa a inferência e publica o resultado no MQTT.
+- `make infer-image IMAGE=/caminho/imagem.jpg` — executa a inferência em uma imagem e publica o resultado no MQTT.
+- `make mqtt-sub TOPIC=vigi/esteira/inspecoes` — acompanha os eventos de inspeção no MQTT.
+- `make mqtt-pub TOPIC=vigi/teste MSG='Olá MQTT'` — envia uma mensagem de teste.
+- `make migrate` — aplica as migrations pendentes do banco.
+- `make down` — para e remove os containers, preservando os volumes de dados.
 
 ```bash
-uv run python scripts/inferir.py \
+make setup-rpi
+
+# Com acesso ao remote DVC da equipe:
+uv sync --frozen --no-dev --extra mlops
+uv run --no-sync dvc pull models.dvc
+
+make up
+make ps
+# Aguarde o health retornar healthy antes de capturar:
+curl -f http://localhost:8000/health
+# Captura uma imagem, executa a inferência e publica o resultado no MQTT
+make infer-camera
+
+# Alternativa: executar uma imagem existente
+make infer-image IMAGE=/caminho/imagem.jpg
+
+curl -f 'http://localhost:8000/api/inspecoes?limit=1&offset=0'
+curl -f http://localhost:8000/api/inspecoes/resumo
+hostname -I
+# No navegador do PC: http://IP_DA_RASPBERRY:8000/docs
+```
+
+Para executar somente a inferência, sem publicação MQTT, use diretamente a CLI sem `--mqtt-host`:
+
+```bash
+uv run python scripts/infer.py \
   --manifest models/active/manifest.json \
   --image imagem.jpg
 
-uv run python scripts/inferir.py \
+uv run python scripts/infer.py \
   --manifest models/active/manifest.json \
   --camera 0 --backend picamera2
 ```
 
-A CLI executa uma inspeção por chamada e imprime a decisão em JSON. Ela não inicia um fluxo contínuo, uma janela de preview ou um dashboard.
+A CLI executa uma inspeção por chamada e imprime um evento JSON com `inspection_id`, `timestamp`, `result`, `category`, `nonconformity_type`, `technical_failure_type`, `confidence`, `processing_time_ms` e `model_format`. Os valores de domínio continuam em português, como `CONFORME` e `SEM_TAMPA`. `--mqtt-host` habilita a publicação com QoS 1, e os alvos `make infer-camera` e `make infer-image` já passam essa opção. A CLI não abre preview ou dashboard.
+
+A confirmação de publicação no broker não comprova a gravação no SQLite. Consulte `/api/inspecoes/{id_inspecao}` com o `inspection_id` da saída para verificar o mesmo evento no banco. O backend aplica as migrations ao iniciar e usa um volume de dados no Compose. `make down` preserva os volumes; não use remoção de volumes para encerrar a demonstração.
+
+Os contratos executáveis atuais estão em [edge/messaging/event.py](edge/messaging/event.py) e [DTOs do backend](backend/app/modules/inspections/dto). Os exemplos em português e a fila offline do [diagrama arquitetural](docs/arquitetura/diagrama-arquitetural.md) descrevem a proposta e ainda precisam ser atualizados para refletir integralmente a implementação.
 
 O benchmark mede o tempo da chamada de predição do classificador, sem a detecção pelo sensor, a captura da câmera e a entrega ao dashboard. Portanto, é uma medição parcial e não comprova sozinho o RNF01 ponta a ponta. Ele descarta o aquecimento das estatísticas, reprova qualquer erro de
 inferência e exige que pelo menos 95% das medições terminem em até 500 ms, sem
@@ -480,7 +564,7 @@ produzido e utilizado no ciclo de treinamento, avaliação e promoção do model
 
 ### Pipeline do GitHub Actions
 
-O workflow `.github/workflows/mlops-ci.yml` executa três gates encadeados:
+O workflow `.github/workflows/mlops-ci.yml` executa a cadeia de qualidade, artefatos e modelo abaixo, além de um job separado de testes do backend com broker MQTT:
 
 1. **Lint & Tests:** Ruff, testes e smoke das CLIs, sem acessar o Pi.
 2. **ML Artifact Check:** conecta ao Tailscale, recupera dataset/modelos pelo
@@ -493,8 +577,7 @@ Configure no GitHub os secrets `TS_OAUTH_CLIENT_ID`, `TS_OAUTH_SECRET`,
 do cliente de CI; o segundo contém a chave pública de host da Raspberry Pi no
 formato de `known_hosts`. Enquanto `dataset/vigi-cls.dvc` e `models.dvc` ainda não
 existirem, os dois gates de ML informam que aguardam os primeiros artefatos e
-encerram com sucesso. Não há Docker, publicação no GHCR ou deploy automático na
-Raspberry Pi nesta etapa.
+encerram com sucesso. O job do backend inicia um broker Docker de teste; a execução local usa Compose. O workflow não publica uma imagem do projeto no GHCR nem faz deploy automático na Raspberry Pi.
 
 ---
 
@@ -509,7 +592,7 @@ Raspberry Pi nesta etapa.
 **São dois vídeos diferentes:** a demonstração da PoC e o pitch final. A Entrega 3 solicita o texto que planeja o pitch; sua demonstração ocupa um bloco próprio dentro dos 15 minutos. Os documentos integram o trabalho da [issue #13](https://github.com/eldrayan/Vigi-TCCPNAAT/issues/13), sem declarar sua conclusão ou a validação pelo squad. A menção a Node-RED no texto da issue não corresponde à arquitetura atual, que prevê FastAPI e React.
 
 Para localizar os materiais por tópico: regras em [01-regras-de-negocio.md](docs/requisitos/01-regras-de-negocio.md), comportamento em [02-requisitos-funcionais.md](docs/requisitos/02-requisitos-funcionais.md), critérios de validação em [03-requisitos-nao-funcionais.md](docs/requisitos/03-requisitos-nao-funcionais.md) e recursos em [05-requisitos-tecnicos.md](docs/requisitos/05-requisitos-tecnicos.md).
-Os módulos de aquisição, coleta e inferência estão em `edge/`, e o ciclo do modelo está em `model_lifecycle/`. As imagens brutas da coleta são geradas em execução; o dataset de classificação e os modelos têm ponteiros DVC versionados, com binários fora do Git. Não há pastas de backend ou frontend implementadas neste checkout.
+Os módulos de aquisição, coleta e inferência estão em `edge/`, e o ciclo do modelo está em `model_lifecycle/`. As imagens brutas da coleta são geradas em execução; o dataset de classificação e os modelos têm ponteiros DVC versionados, com binários fora do Git. O backend está em `backend/`; o frontend ainda não está implementado neste checkout.
 
 ---
 
