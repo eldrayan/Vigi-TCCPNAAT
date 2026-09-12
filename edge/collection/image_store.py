@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -38,7 +38,7 @@ class ImageStore:
             x1, y1, x2, y2 = guide
             image = frame[y1:y2, x1:x2]
 
-        captured_at = datetime.now(timezone.utc)
+        captured_at = datetime.now(UTC)
         class_dir = self.config.output / state.class_name
         class_dir.mkdir(parents=True, exist_ok=True)
         sequence = state.saved_by_class[state.selected_class] + 1

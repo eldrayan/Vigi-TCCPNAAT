@@ -78,7 +78,7 @@ A fala sobre offline descreve a proposta. Se houver teste, informar quais funç�
 
 ### 04:50 a 06:00: Tecnologia central e transição à prática
 
-Mostrar: classes do modelo efetivamente usado e identificação dos pesos; distinguir treinamento de inferência.
+Mostrar: classes do modelo efetivamente usado e identificação dos pesos; distinguir treinamento de inferência. A CLI `scripts/inferir.py` já está disponível e executa uma inspeção por chamada, com decisão em JSON. Recuperar o modelo pelo DVC e validar a câmera antes da gravação. A saída não inclui preview; filmar a entrada na bancada ou mostrar o arquivo usado.
 
 > O classificador previsto na issue 11 é o YOLOv8n-cls. No treinamento, usamos imagens rotuladas. Na inferência, o modelo recebe uma imagem e retorna uma previsão. As classes previstas são conforme, sem tampa, tampa torta e amassado. [Confirmar as classes e o modelo exportado.] Na bancada, vamos acompanhar a entrada e o resultado de duas amostras.
 

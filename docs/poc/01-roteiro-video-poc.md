@@ -16,7 +16,7 @@ Este vídeo é a PoC da Entrega 2, com publicação prevista como não listado n
 
 A sequência proposta começa com o recipiente na bancada. A câmera fornece a imagem ao modelo na Raspberry Pi 5, e a classe prevista aparece na tela ou no terminal. Essa montagem mostra a inferência funcionando com outro elemento da arquitetura, a câmera, e pode ser demonstrada antes da integração completa do sistema.
 
-A preparação do roteiro pode seguir enquanto a equipe finaliza a issue #11. Para gravar, será preciso verificar o modelo e sua execução na bancada. O código disponível nesta revisão contém o coletor de dataset, que não executa inferência. Seu comando não deve ser usado para apresentar o classificador.
+O repositório já contém a CLI `scripts/inferir.py`, que executa uma inspeção por imagem ou captura de câmera e imprime a decisão em JSON. O coletor continua separado e não executa inferência. Para gravar, recupere os artefatos DVC, confira o manifesto do modelo ativo e teste a execução na bancada conforme o [README](../../README.md). A disponibilidade do código não comprova a validação física.
 
 A case pode aparecer na apresentação da montagem. O dashboard cabe como saída adicional se já receber a inferência; sua ausência não impede este recorte da PoC. A explicação mais ampla sobre autonomia local, montagem compacta e supervisão fica no pitch final.
 
@@ -26,10 +26,10 @@ A case pode aparecer na apresentação da montagem. O dashboard cabe como saída
 - Manter iluminação, fundo e enquadramento consistentes. Identificar as amostras como A e B para relacionar cada entrada à respectiva saída.
 - Mostrar a case e confirmar como a Raspberry Pi e a câmera estão acomodadas. Apontar também os elementos externos, sem dizer que toda a instalação ocupa apenas a case. Explicar onde o processamento acontece. Se houver notebook conectado por acesso remoto, identificá-lo como tela de acesso, quando esse for seu papel real.
 - Organizar a gravação para mostrar a bancada e a saída legível, por enquadramento conjunto ou captura de tela com imagem da bancada sobreposta. Mostrar o quadro realmente usado pelo modelo, quando disponível.
-- Usar o terminal ou a janela de inferência existente. O vídeo pode ser gravado sem criar um dashboard.
+- Usar o terminal da CLI de inferência. Cada chamada produz uma decisão JSON, sem preview ou janela de inferência. Para tornar a entrada identificável, filmar o recipiente e o momento da captura, ou mostrar o arquivo de imagem usado. O vídeo pode ser gravado sem criar um dashboard.
 - Ensaiar o acionamento real, manual ou contínuo, e declará-lo na fala. Só atribuir a captura ao sensor E18-D80NK se essa integração estiver funcionando.
 
-### Dados a preencher após a entrega da issue #11
+### Dados a confirmar antes da gravação
 
 | Item | Registro para o ensaio |
 | --- | --- |
@@ -97,9 +97,9 @@ Imagem/ação: manter a saída real visível e apontar seus campos. Se o dashboa
 
 Se o painel tiver apenas dados simulados, reservá-lo para a explicação do pitch, onde será identificado como protótipo de interface. Na PoC, preservar a saída real da inferência. Se ainda estiver previsto, citar o dashboard no encerramento como parte a integrar.
 
-> A classe é a previsão do modelo para a imagem apresentada. [Se disponível: este score acompanha a previsão; ele não representa a acurácia global.] Nos ciclos que mostramos, observamos [resumo fiel dos resultados]. Esses testes mostram o funcionamento inicial da captura com a inferência nesta bancada. Para avaliar a qualidade do modelo, ainda precisamos considerar os testes com imagens que ficaram fora do treinamento.
+> A decisão resume a previsão para a imagem apresentada. [Se disponível: este score acompanha a previsão; ele não representa a acurácia global.] Nos ciclos que mostramos, observamos [resumo fiel dos resultados]. Esses testes mostram o funcionamento inicial da captura com a inferência nesta bancada. Para avaliar a qualidade do modelo, ainda precisamos considerar os testes com imagens que ficaram fora do treinamento.
 
-Se a saída mostrar um tempo medido, explique a que intervalo ele se refere. O RNF01 considera toda a inspeção, da detecção à disponibilização do resultado; medir apenas a inferência não comprova esse requisito. Os dois exemplos do vídeo também não bastam para comprovar a meta de acurácia do RNF06.
+Na CLI atual, `resultado` informa conformidade, `codigo` identifica o defeito ou a falha técnica, e `confianca` informa o score. Em um resultado conforme, `codigo` pode ser nulo. `tempo_processamento_ms` mede a predição, sem a captura da câmera. Ajuste a leitura das falas a esses campos; baixa confiança é uma decisão de falha técnica, não uma classe de defeito. O RNF01 considera toda a inspeção, da detecção à disponibilização do resultado; medir apenas a inferência não comprova esse requisito. Os dois exemplos do vídeo também não bastam para comprovar a meta de acurácia do RNF06.
 
 ### 04:15 a 05:00: Limites e próxima etapa técnica (45 s)
 

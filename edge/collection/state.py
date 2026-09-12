@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-
 CLASSES = {
     1: "01_conforme",
     2: "02_sem_tampa",
@@ -54,8 +53,7 @@ class CaptureState:
     @property
     def group_id(self) -> str:
         return (
-            f"{self.session_id}__{self.class_name}"
-            f"__frasco_{self.physical_sample:03d}"
+            f"{self.session_id}__{self.class_name}__frasco_{self.physical_sample:03d}"
         )
 
     def select_class(self, class_id: int) -> None:

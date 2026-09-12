@@ -6,7 +6,6 @@ import csv
 import os
 from pathlib import Path
 
-
 MANIFEST_FIELDS = (
     "arquivo",
     "classe",
@@ -44,7 +43,7 @@ class ManifestWriter:
     def close(self) -> None:
         self.handle.close()
 
-    def __enter__(self) -> "ManifestWriter":
+    def __enter__(self) -> ManifestWriter:
         return self
 
     def __exit__(self, *_: object) -> None:
