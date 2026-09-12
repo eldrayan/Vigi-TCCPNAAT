@@ -1,0 +1,9 @@
+# Entrada pip para instalar o projeto a partir da raiz do repositório.
+# Fonte das dependências: pyproject.toml. Para versões reproduzíveis, use
+# uv sync --frozen com uv.lock, conforme os perfis descritos no README.
+-e .
+
+# Picamera2/libcamera são instalados pelo Raspberry Pi OS via apt.
+# Para apenas coletar imagens, siga o preparo do coletor no README.
+# O backend usa backend/pyproject.toml e backend/uv.lock, separadamente.
+# MQTT já é dependência do Edge; GPIO e dashboard permanecem previstos.

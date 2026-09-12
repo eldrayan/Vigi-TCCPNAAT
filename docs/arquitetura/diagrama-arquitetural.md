@@ -19,6 +19,16 @@
 
 ## 🏛️ Visão Geral da Arquitetura
 
+### Organização do software
+
+O backend é organizado como um monólito modular: uma aplicação FastAPI com responsabilidades separadas em módulos, compartilhando a infraestrutura de configuração, banco e MQTT. O módulo de inspeções está em `backend/app/modules/inspections/`, com rotas, DTOs, serviços, repositório e modelo de persistência. Essa separação facilita localizar, documentar e manter cada responsabilidade.
+
+A implantação da PoC também inclui o processo de inferência no Edge e o broker Mosquitto, executados separadamente. Portanto, monólito modular descreve o backend, não a execução de todo o sistema em um único processo. O dashboard React permanece previsto para o navegador.
+
+### Visão por fluxo de dados
+
+Os blocos abaixo descrevem a arquitetura proposta. O fluxo já implementado e as integrações pendentes estão detalhados no [README](../../README.md), incluindo a persistência atual pelo consumidor MQTT e a fila local no Edge ainda prevista.
+
 A arquitetura do sistema **Vigi** adota o modelo de **Design Orientado ao Fluxo de Dados** (*Roger S. Pressman*), estruturada em três camadas modulares e desacopladas:
 
 1. **Camada de Entradas (*Inputs*):** Detecção de presença física pelo sensor fotoelétrico infravermelho **E18-D80NK** e aquisição instantânea de imagem sob demanda pela câmera digital.
