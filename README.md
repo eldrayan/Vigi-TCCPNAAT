@@ -83,6 +83,14 @@ A figura e o Mermaid apresentam a arquitetura proposta, incluindo persistência 
    * **Backend Python:** O FastAPI consome MQTT, acessa o SQLite e fornece dados ao dashboard por REST/SSE. A camada de dados permanece em Python para manter o mesmo ecossistema do modelo de visão computacional.
    * **Frontend JavaScript:** O React apresenta indicadores, gráficos e alarmes no navegador, sem acessar diretamente o broker ou o banco de dados.
 
+### Organização em monólito modular
+
+O backend do Vigi adota a organização de um monólito modular: uma única aplicação FastAPI reúne as funções de negócio, separadas em módulos com responsabilidades definidas. O módulo de inspeções concentra rotas, validação dos dados, serviços e persistência em `backend/app/modules/inspections/`. Configuração, banco e comunicação MQTT ficam na infraestrutura compartilhada.
+
+Essa organização permite documentar cada responsabilidade junto do código correspondente e facilita a manutenção, sem exigir um serviço independente para cada função de negócio. A divisão por fluxo de dados dos diagramas complementa essa visão, mostrando como as informações passam entre os componentes.
+
+Na execução da PoC, o Edge é um processo separado que publica eventos, e o Mosquitto é um serviço de infraestrutura. O termo monólito modular descreve a organização do backend; o sistema completo inclui esses componentes e o futuro frontend no navegador.
+
 ### Separação da stack
 
 A arquitetura prevê **Python** para processamento de imagens, inferência do modelo, comunicação MQTT, persistência e API. Essa escolha reduz a quantidade de tecnologias na camada de dados e facilita o compartilhamento de modelos, validações e contratos entre o processamento em borda e o backend.
