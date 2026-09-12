@@ -279,14 +279,51 @@ A promoção suporta somente checkpoints PyTorch `.pt` e usa obrigatoriamente o
 
 ### Inferência e benchmark na Raspberry Pi 5
 
+Principais comandos `make`:
+
+- `make help` — lista os comandos disponíveis.
+- `make setup-rpi` — instala as dependências para executar na Raspberry.
+- `make up` — constrói e inicia o backend e o Mosquitto.
+- `make ps` — mostra o estado dos containers.
+- `make logs` — acompanha os logs dos serviços.
+- `make infer-camera` — captura uma imagem, executa a inferência e publica o resultado no MQTT.
+- `make infer-image IMAGE=/caminho/imagem.jpg` — executa a inferência em uma imagem e publica o resultado no MQTT.
+- `make mqtt-sub TOPIC=vigi/esteira/inspecoes` — acompanha os eventos de inspeção no MQTT.
+- `make mqtt-pub TOPIC=vigi/teste MSG='Olá MQTT'` — envia uma mensagem de teste.
+- `make migrate` — aplica as migrations pendentes do banco.
+- `make down` — para e remove os containers, preservando os volumes de dados.
+
+```bash
+make setup-rpi
+
+# Com acesso ao remote DVC da equipe:
+uv sync --frozen --no-dev --extra mlops
+uv run --no-sync dvc pull models.dvc
+
+make up
+make ps
+# Aguarde o health retornar healthy antes de capturar:
+curl -f http://localhost:8000/health
+# Captura uma imagem, executa a inferência e publica o resultado no MQTT
+make infer-camera
+
+# Alternativa: executar uma imagem existente
+make infer-image IMAGE=/caminho/imagem.jpg
+
+curl -f 'http://localhost:8000/api/inspecoes?limit=1&offset=0'
+curl -f http://localhost:8000/api/inspecoes/resumo
+hostname -I
+# No navegador do PC: http://IP_DA_RASPBERRY:8000/docs
+```
+
 Após `dvc pull`, classifique uma imagem ou capture um quadro da câmera CSI:
 
 ```bash
-uv run python scripts/inferir.py \
+uv run python scripts/infer.py \
   --manifest models/active/manifest.json \
   --image imagem.jpg
 
-uv run python scripts/inferir.py \
+uv run python scripts/infer.py \
   --manifest models/active/manifest.json \
   --camera 0 --backend picamera2
 ```

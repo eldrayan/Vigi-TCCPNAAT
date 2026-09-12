@@ -16,6 +16,7 @@ __pycache__/
 .env
 .env.local
 *.secret
+backend/data/
 venv/
 .venv/
 env/

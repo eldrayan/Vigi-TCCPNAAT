@@ -13,12 +13,13 @@ class Classification:
 
 @dataclass(frozen=True)
 class InspectionDecision:
-    resultado: str
-    categoria: str | None
-    codigo: str | None
-    confianca: float | None
-    tempo_processamento_ms: float
-    formato_modelo: str
+    result: str
+    category: str | None
+    nonconformity_type: str | None
+    technical_failure_type: str | None
+    confidence: float | None
+    processing_time_ms: float
+    model_format: str
 
     def as_dict(self) -> dict[str, object]:
         return asdict(self)

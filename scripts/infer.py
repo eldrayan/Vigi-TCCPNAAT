@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Executa uma inspecao por imagem ou por captura de camera."""
+"""Executa uma inspeção por imagem ou por captura de câmera."""
 
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from edge.inference import InferenceEngine  # noqa: E402
+from edge.messaging import InspectionEvent, MQTTInspectionPublisher  # noqa: E402
 
 
 def capture_frame(backend: str, camera_id: int, width: int, height: int):
@@ -44,6 +45,12 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--width", type=int, default=1280)
     parser.add_argument("--height", type=int, default=720)
+    parser.add_argument("--mqtt-host")
+    parser.add_argument("--mqtt-port", type=int, default=1883)
+    parser.add_argument(
+        "--mqtt-topic",
+        default="vigi/esteira/inspecoes",
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -55,11 +62,19 @@ def main(argv: list[str] | None = None) -> int:
         else:
             image = capture_frame(args.backend, args.camera, args.width, args.height)
         decision = engine.inspect(image)
+        event = InspectionEvent.from_decision(decision)
+        if args.mqtt_host:
+            publisher = MQTTInspectionPublisher(
+                host=args.mqtt_host,
+                port=args.mqtt_port,
+                topic=args.mqtt_topic,
+            )
+            publisher.publish(event)
     except Exception as exc:
         print(json.dumps({"erro": str(exc)}, ensure_ascii=False), file=sys.stderr)
         return 1
-    print(json.dumps(decision.as_dict(), indent=2, ensure_ascii=False))
-    return 0 if decision.codigo != "ERRO_INFERENCIA" else 1
+    print(json.dumps(event.as_dict(), indent=2, ensure_ascii=False))
+    return 0 if decision.technical_failure_type != "ERRO_INFERENCIA" else 1
 
 
 if __name__ == "__main__":
