@@ -90,15 +90,15 @@ Reserve a bancada com câmera, Raspberry Pi e amostras. A tela de execução dev
 
 ### 06:00 a 06:40: Montagem e início
 
-Ação: mostrar a case na bancada e identificar equipamento, câmera, modelo e modo de captura. Informar onde o processamento roda e qual é a conexão usada para visualizar a saída. Mostrar o comando validado, ou identificar um novo ciclo do processo já iniciado.
+Ação: mostrar a case na bancada e identificar equipamento, câmera, modelo e modo de captura. Informar onde o processamento roda e qual é a conexão usada para visualizar a saída. Mostrar o comando validado; a CLI atual inicia uma inspeção por chamada.
 
 > Esta é a montagem usada no teste. [Identificar os elementos reais.] A captura é [modo real], e o processamento roda em [equipamento real]. A entrada e o resultado correspondente vão ficar visíveis durante a execução.
 
 ### 06:40 a 08:00: Amostra conforme
 
-Ação: mostrar a amostra A, posicioná-la, mostrar a imagem, executar a inferência e manter a saída visível. Preservar a continuidade entre entrada e resultado.
+Ação: mostrar a amostra A e mantê-la visível diante da câmera durante a captura; se usar arquivo, abrir a imagem de entrada. Executar a CLI e manter a saída JSON visível. Preservar a continuidade entre entrada e resultado.
 
-> Esta amostra apresenta [condição observada]. A imagem na tela é a entrada deste ciclo. O modelo retornou [resultado real]. [Explicar se corresponde ou diverge da condição da amostra.]
+> Esta amostra apresenta [condição observada]. Vamos usar a imagem deste recipiente neste ciclo. [Se usar arquivo: mostrar a imagem de entrada.] O modelo retornou [resultado real]. [Explicar se corresponde ou diverge da condição da amostra.]
 
 ### 08:00 a 09:20: Amostra com defeito
 
@@ -108,7 +108,7 @@ Ação: trocar pela amostra B, apontar o defeito e repetir todo o ciclo. Disting
 
 ### 09:20 a 10:20: Integração e leitura do resultado
 
-Ação: explicar a classe e os campos disponíveis. Usar este minuto conforme o estado do dashboard:
+Ação: explicar os campos `resultado`, `codigo` e `confianca` da saída JSON. O código pode ser nulo para uma amostra conforme; baixa confiança indica falha técnica. O tempo exibido mede a predição, sem a captura. Usar este minuto conforme o estado do dashboard:
 
 | Estado na gravação | O que mostrar e dizer |
 | --- | --- |

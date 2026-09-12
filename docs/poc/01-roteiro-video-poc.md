@@ -14,7 +14,7 @@ Mostrar a classificação visual de recipientes em funcionamento. Quem assistir 
 
 Este vídeo é a PoC da Entrega 2, com publicação prevista como não listado no YouTube. O [pitch final de até 15 minutos: Entrega 3](../pitch/01-roteiro-pitch.md) é outro vídeo, com roteiro próprio. O [README: Entrega 4](../../README.md) organiza o esboço da documentação. Esses materiais também fazem parte da issue #13.
 
-A sequência proposta começa com o recipiente na bancada. A câmera fornece a imagem ao modelo na Raspberry Pi 5, e a classe prevista aparece na tela ou no terminal. Essa montagem mostra a inferência funcionando com outro elemento da arquitetura, a câmera, e pode ser demonstrada antes da integração completa do sistema.
+A sequência proposta começa com o recipiente na bancada. A câmera fornece a imagem ao modelo na Raspberry Pi 5, e a decisão aparece no terminal. Essa montagem mostra a inferência funcionando com outro elemento da arquitetura, a câmera, e pode ser demonstrada antes da integração completa do sistema.
 
 O repositório já contém a CLI `scripts/inferir.py`, que executa uma inspeção por imagem ou captura de câmera e imprime a decisão em JSON. O coletor continua separado e não executa inferência. Para gravar, recupere os artefatos DVC, confira o manifesto do modelo ativo e teste a execução na bancada conforme o [README](../../README.md). A disponibilidade do código não comprova a validação física.
 
@@ -27,7 +27,7 @@ A case pode aparecer na apresentação da montagem. O dashboard cabe como saída
 - Mostrar a case e confirmar como a Raspberry Pi e a câmera estão acomodadas. Apontar também os elementos externos, sem dizer que toda a instalação ocupa apenas a case. Explicar onde o processamento acontece. Se houver notebook conectado por acesso remoto, identificá-lo como tela de acesso, quando esse for seu papel real.
 - Organizar a gravação para mostrar a bancada e a saída legível, por enquadramento conjunto ou captura de tela com imagem da bancada sobreposta. Mostrar o quadro realmente usado pelo modelo, quando disponível.
 - Usar o terminal da CLI de inferência. Cada chamada produz uma decisão JSON, sem preview ou janela de inferência. Para tornar a entrada identificável, filmar o recipiente e o momento da captura, ou mostrar o arquivo de imagem usado. O vídeo pode ser gravado sem criar um dashboard.
-- Ensaiar o acionamento real, manual ou contínuo, e declará-lo na fala. Só atribuir a captura ao sensor E18-D80NK se essa integração estiver funcionando.
+- Ensaiar o acionamento manual da CLI, com uma chamada por amostra. Só apresentar captura contínua ou acionada pelo sensor E18-D80NK se essa integração estiver implementada e funcionando na versão usada.
 
 ### Dados a confirmar antes da gravação
 
@@ -39,7 +39,7 @@ A case pode aparecer na apresentação da montagem. O dashboard cabe como saída
 | Equipamento que executa a inferência | Confirmar Raspberry Pi 5; registrar se for outro |
 | Câmera e forma de captura/acionamento | A confirmar |
 | Comando real de execução e diretório de trabalho | A preencher após teste na bancada |
-| Saída disponível | Confirmar classe, score e eventual tempo medido |
+| Saída disponível | Conferir `resultado`, `categoria`, `codigo`, `confianca`, `tempo_processamento_ms` e `formato_modelo` no JSON |
 | Evidência do ensaio | Registrar amostras, saídas reais e limitações observadas |
 | Case e montagem | Confirmar componentes internos e externos; medir dimensões se forem citadas |
 | Dashboard | Registrar se está integrado, se é interface com dados simulados ou se ainda está previsto |
@@ -61,7 +61,7 @@ Imagem/ação: mostrar a case na bancada e apontar o recipiente, a câmera, a Ra
 
 Após confirmar a montagem, adaptar a fala:
 
-> Esta case acomoda [componentes confirmados]. A câmera fornece a imagem do recipiente, e a Raspberry Pi 5 executa localmente o modelo [nome e versão], treinado para distinguir [classes disponíveis]. A imagem e o resultado aparecem nesta tela. A captura é [manual/contínua/acionada pelo sensor]. Assim, acompanhamos a câmera e a inferência funcionando juntas.
+> Esta case acomoda [componentes confirmados]. A câmera fornece a imagem do recipiente, e a Raspberry Pi 5 executa localmente o modelo [nome e versão], treinado para distinguir [classes disponíveis]. O resultado aparece neste terminal. A captura é [manual na CLI; adaptar se outra integração tiver sido validada]. Assim, acompanhamos a câmera e a inferência funcionando juntas.
 
 Usar apenas a modalidade real de captura e as informações exibidas. Processamento local não comprova segurança nem funcionamento offline. Se o resultado for visualizado por acesso remoto, informar que essa visualização usa a rede local.
 
@@ -70,11 +70,11 @@ Usar apenas a modalidade real de captura e as informações exibidas. Processame
 Imagem/ação, em sequência contínua:
 
 1. Mostrar a amostra A e explicar por que ela é visualmente conforme.
-2. Posicioná-la diante da câmera e mostrar sua imagem de entrada.
-3. Iniciar a execução pelo comando validado ou evidenciar o próximo ciclo, caso o processo já esteja rodando.
+2. Posicioná-la diante da câmera, mantendo o recipiente visível na gravação até a captura. Se usar arquivo, abrir a imagem que será processada.
+3. Iniciar uma chamada da CLI pelo comando validado, mostrando o momento da execução.
 4. Acompanhar o processamento e manter o resultado legível por alguns segundos, sem corte entre entrada e saída.
 
-> Esta é a amostra A, com a tampa posicionada e sem o defeito que vamos mostrar depois. A imagem na tela será usada nesta execução. Agora [ação real que inicia o ciclo]. O programa passa a imagem ao modelo, que retorna a classificação [classe observada] para essa amostra. [Se disponível: o score exibido foi valor observado.]
+> Esta é a amostra A, com a tampa posicionada e sem o defeito que vamos mostrar depois. Vamos capturar a imagem deste recipiente. [Se usar arquivo: esta é a imagem que será processada.] Agora [ação real que inicia o ciclo]. O programa passa a imagem ao modelo e mostra a decisão [resultado observado] para essa amostra. [Se disponível: o score exibido foi valor observado.]
 
 Compare a previsão com a condição da amostra. Se houver divergência, descreva o erro em vez de ler a fala prevista para um acerto. O score de uma previsão não é a acurácia do modelo.
 
@@ -87,7 +87,7 @@ Imagem/ação, em sequência contínua:
 3. Repetir o ciclo e mostrar a nova saída, distinguindo-a do resultado anterior.
 4. Comparar a classe retornada com o defeito apresentado.
 
-> Esta é a amostra B, que apresenta [defeito visível]. Vamos fazer uma nova inferência com a mesma câmera e o mesmo enquadramento. Para esta imagem, o modelo retornou [classe observada]. [Se houver acerto: a classificação corresponde ao defeito mostrado.]
+> Esta é a amostra B, que apresenta [defeito visível]. Vamos fazer uma nova inferência com a mesma câmera e o mesmo enquadramento. Para esta imagem, a saída informa [resultado observado e código, quando houver]. [Se houver acerto: a classificação corresponde ao defeito mostrado.]
 
 Em caso de erro ou instabilidade, descreva o que ocorreu e a limitação observada. Ao repetir o teste, mostre novamente a entrada e a execução. Preserve a saída real na gravação, sem substituí-la por texto na edição.
 
@@ -123,7 +123,7 @@ O teste com arquivo demonstra a inferência sobre uma imagem. Para mostrar a câ
 | --- | --- |
 | Entrada ou início da execução identificável | Amostras A e B, imagem de entrada e acionamento visível |
 | Tecnologia principal funcionando | Execução real do modelo durante os dois ciclos |
-| Resultado produzido | Classe prevista legível e vinculada à amostra correspondente |
+| Resultado produzido | Decisão JSON legível e vinculada à amostra correspondente |
 | Entrada, execução e resultado em uma sequência acompanhável | Ciclos contínuos de 01:10 a 03:30, sem cortes internos |
 | Tecnologia central com outro elemento da arquitetura | Câmera fornecendo a imagem ao pipeline de inferência |
 | Explicação da entrada, funcionamento, resultado e função dos elementos | Apresentação da montagem e narração dos ciclos |
