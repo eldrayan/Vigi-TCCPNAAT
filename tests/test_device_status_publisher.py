@@ -44,7 +44,7 @@ def test_status_publisher_uses_lwt_and_retains_current_state() -> None:
         host="mqtt.local", device_id="leocio-raspberry", client=client
     )
 
-    publisher.start(camera="ONLINE", processing="ONLINE")
+    publisher.start(sensor="ONLINE", camera="ONLINE", processing="ONLINE")
     publisher.stop()
 
     assert client.will[0] == "vigi/dispositivos/leocio-raspberry/status"

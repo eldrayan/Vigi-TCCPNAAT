@@ -2,18 +2,25 @@ name: vigi
 
 services:
   mqtt:
-    image: eclipse-mosquitto:2.0.22
+    build:
+      context: ./infra/mosquitto
     restart: unless-stopped
+    environment:
+      MQTT_EDGE_USERNAME: ${MQTT_EDGE_USERNAME:?Defina MQTT_EDGE_USERNAME no .env}
+      MQTT_EDGE_PASSWORD: ${MQTT_EDGE_PASSWORD:?Defina MQTT_EDGE_PASSWORD no .env}
+      MQTT_BACKEND_USERNAME: ${MQTT_BACKEND_USERNAME:?Defina MQTT_BACKEND_USERNAME no .env}
+      MQTT_BACKEND_PASSWORD: ${MQTT_BACKEND_PASSWORD:?Defina MQTT_BACKEND_PASSWORD no .env}
     ports:
       - "127.0.0.1:${MQTT_PORT:-1883}:1883"
     volumes:
       - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mqtt_auth:/mosquitto/auth
       - mqtt_data:/mosquitto/data
       - mqtt_logs:/mosquitto/log
     healthcheck:
       test:
         - CMD-SHELL
-        - mosquitto_sub -h 127.0.0.1 -p 1883 -t '$$SYS/broker/uptime' -C 1 -W 3 >/dev/null 2>&1
+        - mosquitto_sub -h 127.0.0.1 -p 1883 -u "$$MQTT_BACKEND_USERNAME" -P "$$MQTT_BACKEND_PASSWORD" -t '$$SYS/broker/uptime' -C 1 -W 3 >/dev/null 2>&1
       interval: 30s
       timeout: 5s
       retries: 3
@@ -40,6 +47,8 @@ services:
       DATABASE_URL: sqlite+aiosqlite:////app/data/vigi.db
       MQTT_HOST: mqtt
       MQTT_PORT: 1883
+      MQTT_USERNAME: ${MQTT_BACKEND_USERNAME:?Defina MQTT_BACKEND_USERNAME no .env}
+      MQTT_PASSWORD: ${MQTT_BACKEND_PASSWORD:?Defina MQTT_BACKEND_PASSWORD no .env}
       MQTT_TOPIC_INSPECTIONS: ${MQTT_TOPIC_INSPECTIONS:-vigi/estacoes/+/inspecoes}
       FRONTEND_ORIGINS: ${FRONTEND_ORIGINS:-http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:8080,http://localhost:8080}
     ports:
@@ -94,4 +103,5 @@ services:
 volumes:
   backend_data:
   mqtt_data:
+  mqtt_auth:
   mqtt_logs:

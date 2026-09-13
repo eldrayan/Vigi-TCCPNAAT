@@ -3,6 +3,8 @@
 	monitor-edge sync-outbox mqtt-sub mqtt-pub test-backend
 
 MQTT_IMAGE ?= eclipse-mosquitto:2.0.22
+-include .env
+export MQTT_EDGE_USERNAME MQTT_EDGE_PASSWORD
 HOST ?= localhost
 PORT ?= 1883
 TOPIC ?= vigi/teste
