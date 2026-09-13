@@ -50,7 +50,7 @@ test-backend:
 	cd backend && uv run --frozen pytest -q
 
 lint:
-	$(UV_RUN) ruff check backend/app backend/migrations edge scripts tests
+	$(UV_RUN) ruff check backend/app backend/migrations backend/tests edge scripts tests
 
 up:
 	docker compose up --build --detach

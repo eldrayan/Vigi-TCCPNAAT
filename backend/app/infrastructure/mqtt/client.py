@@ -22,7 +22,9 @@ class MQTTClient:
         self.connection = MQTTConnection(settings)
         self.client = self.connection.client
         self.subscriptions = MQTTSubscriptions()
-        self.dispatcher = MQTTMessageDispatcher(self.client)
+        self.dispatcher = MQTTMessageDispatcher(
+            self.client, max_retries=settings.mqtt_max_retries
+        )
         self.loop = None
         self.client.on_connect = self._on_connect
         self.client.on_message = self._on_message

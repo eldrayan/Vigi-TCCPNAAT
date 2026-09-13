@@ -15,8 +15,9 @@ logger = logging.getLogger(__name__)
 
 
 class MQTTMessageDispatcher:
-    def __init__(self, client: Any) -> None:
+    def __init__(self, client: Any, max_retries: int = 5) -> None:
         self.client = client
+        self.max_retries = max(1, max_retries)
         self.pending: set[Future[None]] = set()
 
     def dispatch(
@@ -31,13 +32,23 @@ class MQTTMessageDispatcher:
         future.add_done_callback(self._handle_processing_result)
 
     async def process(self, message: Any, handlers: list[MessageHandler]) -> None:
-        while True:
+        for attempt in range(1, self.max_retries + 1):
             try:
                 for handler in handlers:
                     await handler(message.payload)
+            except asyncio.CancelledError:
+                raise
             except Exception:
-                logger.exception("Falha ao salvar mensagem; nova tentativa em 5s.")
-                await asyncio.sleep(5)
+                if attempt == self.max_retries:
+                    logger.exception(
+                        "Mensagem descartada após %s tentativas.", self.max_retries
+                    )
+                    return
+                delay = min(5 * (2 ** (attempt - 1)), 30)
+                logger.exception(
+                    "Falha ao salvar mensagem; nova tentativa em %ss.", delay
+                )
+                await asyncio.sleep(delay)
             else:
                 self.client.ack(message.mid, message.qos)
                 return

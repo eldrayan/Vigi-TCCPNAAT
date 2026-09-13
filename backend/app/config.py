@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     mqtt_port: int = 1883
     mqtt_client_id: str = "vigi-backend"
     mqtt_qos: int = 1
+    mqtt_max_retries: int = 5
     mqtt_topic_inspections: str = "vigi/estacoes/+/inspecoes"
     mqtt_topic_device_status: str = "vigi/dispositivos/+/status"
 

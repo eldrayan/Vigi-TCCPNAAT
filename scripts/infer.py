@@ -12,7 +12,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from edge.inference import InferenceEngine  # noqa: E402
+from edge.inference import InferenceEngine, InspectionDecision  # noqa: E402
 from edge.messaging import (  # noqa: E402
     InspectionEvent,
     InspectionOutbox,
@@ -71,13 +71,29 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         engine = InferenceEngine.from_manifest(args.manifest)
+        capture_error = False
         if args.image:
             if not args.image.is_file():
                 raise RuntimeError(f"Imagem nao encontrada: {args.image}")
             image = str(args.image)
         else:
-            image = capture_frame(args.backend, args.camera, args.width, args.height)
-        decision = engine.inspect(image)
+            try:
+                image = capture_frame(
+                    args.backend, args.camera, args.width, args.height
+                )
+            except Exception:
+                capture_error = True
+                decision = InspectionDecision(
+                    result="NAO_CONFORME",
+                    category="FALHA_TECNICA",
+                    nonconformity_type=None,
+                    technical_failure_type="ERRO_CAPTURA",
+                    confidence=None,
+                    processing_time_ms=0,
+                    model_format=engine.manifest.format,
+                )
+        if not capture_error:
+            decision = engine.inspect(image)
         context = None
         outbox = None
         if args.mqtt_host:
