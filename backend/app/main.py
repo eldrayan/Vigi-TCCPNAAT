@@ -14,6 +14,7 @@ from app.events.routes import router as events_router
 from app.infrastructure.database import engine
 from app.infrastructure.events import EventBus
 from app.infrastructure.mqtt import MQTTClient, MQTTProducer, MQTTSubscriber
+from app.modules.alarms.routes import router as alarms_router
 from app.modules.inspections.messaging import InspectionMessageHandler
 from app.modules.inspections.routes import router as inspections_router
 from app.modules.operations.messaging import DeviceStatusMessageHandler
@@ -56,6 +57,7 @@ app = FastAPI(
 app.include_router(inspections_router)
 app.include_router(operations_router)
 app.include_router(events_router)
+app.include_router(alarms_router)
 
 
 @app.get("/health", tags=["system"])
