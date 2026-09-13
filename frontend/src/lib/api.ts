@@ -1,6 +1,6 @@
 /** Cliente HTTP do dashboard para a API local do Vigi. */
 
-const apiUrl = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
+const apiUrl = import.meta.env.VITE_API_URL ?? window.location.origin;
 
 export interface Inspection {
   inspection_id: number;
