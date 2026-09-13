@@ -10,6 +10,7 @@ from .dto import (
     BatchResponseDTO,
     DeviceStatusDTO,
     OperationalContextDTO,
+    SetNonconformityLimitDTO,
     StationCreateDTO,
     StationResponseDTO,
 )
@@ -93,3 +94,15 @@ class OperationsService:
             station_code=station.code, batch_code=batch.code
         )
         return context, station.device_id
+
+    async def set_nonconformity_limit(
+        self,
+        session: AsyncSession,
+        station_id: int,
+        batch_id: int,
+        dto: SetNonconformityLimitDTO,
+    ) -> BatchResponseDTO:
+        batch = await self.repository.set_nonconformity_limit(
+            session, station_id, batch_id, dto
+        )
+        return BatchResponseDTO.model_validate(batch)

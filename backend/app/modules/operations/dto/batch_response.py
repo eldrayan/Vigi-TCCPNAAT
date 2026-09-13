@@ -18,3 +18,4 @@ class BatchResponseDTO(BaseModel):
     started_at: datetime | None
     finished_at: datetime | None
     created_at: datetime
+    max_nonconformity_rate: float | None

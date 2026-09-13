@@ -8,7 +8,12 @@ from datetime import UTC, datetime
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .dto import BatchCreateDTO, DeviceStatusDTO, StationCreateDTO
+from .dto import (
+    BatchCreateDTO,
+    DeviceStatusDTO,
+    SetNonconformityLimitDTO,
+    StationCreateDTO,
+)
 from .model import Batch, Station, StationStatus
 
 
@@ -98,6 +103,21 @@ class OperationsRepository:
 
     async def find_batch(self, session: AsyncSession, batch_id: int) -> Batch | None:
         return await session.get(Batch, batch_id)
+
+    async def set_nonconformity_limit(
+        self,
+        session: AsyncSession,
+        station_id: int,
+        batch_id: int,
+        dto: SetNonconformityLimitDTO,
+    ) -> Batch:
+        async with session.begin():
+            batch = await session.get(Batch, batch_id)
+            if batch is None or batch.station_id != station_id:
+                raise LookupError("Lote não encontrado para a estação.")
+            batch.max_nonconformity_rate = dto.max_nonconformity_rate
+            await session.flush()
+        return batch
 
     async def activate_batch(
         self, session: AsyncSession, station_id: int, batch_id: int

@@ -17,6 +17,7 @@ from .dto import (
     DeviceStatusDTO,
     OperationalContextDTO,
     SetActiveBatchDTO,
+    SetNonconformityLimitDTO,
     StationCreateDTO,
     StationResponseDTO,
 )
@@ -95,6 +96,24 @@ async def list_batches(
 ) -> list[BatchResponseDTO]:
     try:
         return await service.list_batches(session, station_id)
+    except LookupError as error:
+        raise not_found(str(error)) from error
+
+
+@router.put(
+    "/{station_id}/lotes/{batch_id}/limite",
+    response_model=BatchResponseDTO,
+)
+async def set_nonconformity_limit(
+    station_id: int,
+    batch_id: int,
+    dto: SetNonconformityLimitDTO,
+    session: SessionDependency,
+) -> BatchResponseDTO:
+    try:
+        return await service.set_nonconformity_limit(
+            session, station_id, batch_id, dto
+        )
     except LookupError as error:
         raise not_found(str(error)) from error
 
