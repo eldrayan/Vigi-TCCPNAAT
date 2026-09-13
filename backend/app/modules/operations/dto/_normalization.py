@@ -1,4 +1,7 @@
-"""Normaliza identificadores operacionais usados em URLs e tópicos MQTT."""
+"""
+Descrição: Normaliza identificadores operacionais usados em URLs e tópicos MQTT.
+Autor: Leôncio Ferreira
+"""
 
 import re
 import unicodedata

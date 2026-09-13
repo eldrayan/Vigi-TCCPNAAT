@@ -1,4 +1,7 @@
-"""Representa uma estação retornada pela API."""
+"""
+Descrição: Representa uma estação retornada pela API.
+Autor: Leôncio Ferreira
+"""
 
 from datetime import datetime
 

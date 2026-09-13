@@ -1,4 +1,7 @@
-"""Expõe as rotas de configuração de estações e lotes."""
+"""
+Descrição: Expõe as rotas de configuração de estações e lotes.
+Autor: Leôncio Ferreira
+"""
 
 from typing import Annotated
 

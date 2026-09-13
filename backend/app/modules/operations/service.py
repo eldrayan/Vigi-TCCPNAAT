@@ -1,10 +1,14 @@
-"""Coordena os casos de uso de estações, lotes e contexto operacional."""
+"""
+Descrição: Coordena os casos de uso de estações, lotes e contexto operacional.
+Autor: Leôncio Ferreira
+"""
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .dto import (
     BatchCreateDTO,
     BatchResponseDTO,
+    DeviceStatusDTO,
     OperationalContextDTO,
     StationCreateDTO,
     StationResponseDTO,
@@ -35,6 +39,33 @@ class OperationsService:
         if station is None:
             return None
         return StationResponseDTO.model_validate(station)
+
+    async def report_device_status(
+        self,
+        session: AsyncSession,
+        device_id: str,
+        dto: DeviceStatusDTO,
+    ) -> DeviceStatusDTO:
+        status = await self.repository.update_device_status(session, device_id, dto)
+        return DeviceStatusDTO(
+            connection=status.connection,
+            camera=status.camera,
+            processing=status.processing,
+            timestamp=status.reported_at,
+        )
+
+    async def find_station_status(
+        self, session: AsyncSession, station_id: int
+    ) -> DeviceStatusDTO | None:
+        status = await self.repository.find_station_status(session, station_id)
+        if status is None:
+            return None
+        return DeviceStatusDTO(
+            connection=status.connection,
+            camera=status.camera,
+            processing=status.processing,
+            timestamp=status.reported_at,
+        )
 
     async def create_batch(
         self, session: AsyncSession, station_id: int, dto: BatchCreateDTO

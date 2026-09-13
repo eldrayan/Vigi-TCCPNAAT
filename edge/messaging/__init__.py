@@ -4,6 +4,7 @@ from .context import MQTTOperationalContextReceiver, OperationalContext
 from .event import InspectionEvent
 from .outbox import InspectionOutbox
 from .publisher import MQTTInspectionPublisher
+from .status import MQTTDeviceStatusPublisher
 from .synchronizer import InspectionOutboxSynchronizer
 
 __all__ = [
@@ -11,6 +12,7 @@ __all__ = [
     "InspectionOutbox",
     "MQTTOperationalContextReceiver",
     "MQTTInspectionPublisher",
+    "MQTTDeviceStatusPublisher",
     "InspectionOutboxSynchronizer",
     "OperationalContext",
 ]

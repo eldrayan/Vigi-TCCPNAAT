@@ -1,4 +1,7 @@
-"""Representa a configuração operacional entregue ao dispositivo Edge."""
+"""
+Descrição: Representa a configuração operacional entregue ao dispositivo Edge.
+Autor: Leôncio Ferreira
+"""
 
 from pydantic import BaseModel, ConfigDict, Field
 

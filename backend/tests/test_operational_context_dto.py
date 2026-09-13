@@ -1,4 +1,7 @@
-"""Valida os contratos de estação, lote e contexto operacional."""
+"""
+Descrição: Valida os contratos de estação, lote e contexto operacional.
+Autor: Leôncio Ferreira
+"""
 
 import pytest
 from app.modules.operations.dto import (

@@ -1,4 +1,7 @@
-"""Valida a seleção do lote ativo de uma estação."""
+"""
+Descrição: Valida a seleção do lote ativo de uma estação.
+Autor: Leôncio Ferreira
+"""
 
 from pydantic import BaseModel, ConfigDict, Field
 

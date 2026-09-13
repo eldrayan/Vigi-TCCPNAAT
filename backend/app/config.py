@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     mqtt_client_id: str = "vigi-backend"
     mqtt_qos: int = 1
     mqtt_topic_inspections: str = "vigi/estacoes/+/inspecoes"
+    mqtt_topic_device_status: str = "vigi/dispositivos/+/status"
 
 
 @lru_cache

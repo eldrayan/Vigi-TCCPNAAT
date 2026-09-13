@@ -1,4 +1,7 @@
-"""Mapeia estações e lotes para o banco de dados."""
+"""
+Descrição: Mapeia estações, lotes e status para o banco de dados.
+Autor: Leôncio Ferreira
+"""
 
 from datetime import datetime
 
@@ -31,6 +34,20 @@ class Station(Base):
         DateTime(timezone=True),
         server_default=func.current_timestamp(),
         onupdate=func.current_timestamp(),
+    )
+
+
+class StationStatus(Base):
+    __tablename__ = "station_statuses"
+
+    station_id: Mapped[int] = mapped_column(
+        ForeignKey("stations.id", ondelete="CASCADE"), primary_key=True
+    )
+    connection: Mapped[str] = mapped_column(String(20), nullable=False)
+    camera: Mapped[str] = mapped_column(String(20), nullable=False)
+    processing: Mapped[str] = mapped_column(String(20), nullable=False)
+    reported_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
     )
 
 

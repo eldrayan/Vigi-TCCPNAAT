@@ -1,4 +1,5 @@
-"""Descrição: Verifica o processamento confiável das mensagens MQTT.
+"""
+Descrição: Verifica o processamento confiável das mensagens MQTT.
 Autor: Leôncio Ferreira
 """
 

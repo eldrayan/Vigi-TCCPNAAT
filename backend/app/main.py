@@ -14,6 +14,7 @@ from app.infrastructure.database import engine
 from app.infrastructure.mqtt import MQTTClient, MQTTProducer, MQTTSubscriber
 from app.modules.inspections.messaging import InspectionMessageHandler
 from app.modules.inspections.routes import router as inspections_router
+from app.modules.operations.messaging import DeviceStatusMessageHandler
 from app.modules.operations.routes import router as operations_router
 
 settings = get_settings()
@@ -23,6 +24,11 @@ mqtt_producer = MQTTProducer(mqtt_client)
 mqtt_subscriber.subscribe(
     topic=settings.mqtt_topic_inspections,
     handler=InspectionMessageHandler(),
+    qos=settings.mqtt_qos,
+)
+mqtt_subscriber.subscribe(
+    topic=settings.mqtt_topic_device_status,
+    handler=DeviceStatusMessageHandler(),
     qos=settings.mqtt_qos,
 )
 

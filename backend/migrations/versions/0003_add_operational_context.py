@@ -1,4 +1,7 @@
-"""Adiciona estações, lotes e vínculos às inspeções."""
+"""
+Descrição: Adiciona estações, lotes e vínculos às inspeções.
+Autor: Leôncio Ferreira
+"""
 
 import sqlalchemy as sa
 from alembic import op

@@ -1,4 +1,7 @@
-"""Valida os dados necessários para abrir um lote."""
+"""
+Descrição: Valida os dados necessários para abrir um lote.
+Autor: Leôncio Ferreira
+"""
 
 from pydantic import BaseModel, ConfigDict, Field
 

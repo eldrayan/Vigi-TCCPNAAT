@@ -1,4 +1,7 @@
-"""Representa um lote retornado pela API."""
+"""
+Descrição: Representa um lote retornado pela API.
+Autor: Leôncio Ferreira
+"""
 
 from datetime import datetime
 

@@ -1,4 +1,7 @@
-"""Valida os filtros disponíveis nas consultas de inspeções."""
+"""
+Descrição: Valida os filtros disponíveis nas consultas de inspeções.
+Autor: Leôncio Ferreira
+"""
 
 from datetime import datetime
 from typing import Self

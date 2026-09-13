@@ -1,12 +1,15 @@
-"""Implementa a persistência de estações, lotes e contexto operacional."""
+"""
+Descrição: Implementa a persistência de estações, lotes e contexto operacional.
+Autor: Leôncio Ferreira
+"""
 
 from datetime import UTC, datetime
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .dto import BatchCreateDTO, StationCreateDTO
-from .model import Batch, Station
+from .dto import BatchCreateDTO, DeviceStatusDTO, StationCreateDTO
+from .model import Batch, Station, StationStatus
 
 
 class OperationsRepository:
@@ -27,6 +30,42 @@ class OperationsRepository:
         self, session: AsyncSession, station_id: int
     ) -> Station | None:
         return await session.get(Station, station_id)
+
+    async def update_device_status(
+        self,
+        session: AsyncSession,
+        device_id: str,
+        dto: DeviceStatusDTO,
+    ) -> StationStatus:
+        async with session.begin():
+            station = await session.scalar(
+                select(Station).where(Station.device_id == device_id)
+            )
+            if station is None:
+                raise LookupError("Dispositivo sem estação cadastrada.")
+
+            status = await session.get(StationStatus, station.id)
+            if status is None:
+                status = StationStatus(
+                    station_id=station.id,
+                    connection=dto.connection,
+                    camera=dto.camera,
+                    processing=dto.processing,
+                    reported_at=dto.timestamp,
+                )
+                session.add(status)
+            else:
+                status.connection = dto.connection
+                status.camera = dto.camera
+                status.processing = dto.processing
+                status.reported_at = dto.timestamp
+            await session.flush()
+        return status
+
+    async def find_station_status(
+        self, session: AsyncSession, station_id: int
+    ) -> StationStatus | None:
+        return await session.get(StationStatus, station_id)
 
     async def create_batch(
         self, session: AsyncSession, station_id: int, dto: BatchCreateDTO

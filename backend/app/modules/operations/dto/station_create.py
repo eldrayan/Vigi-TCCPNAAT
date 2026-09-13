@@ -1,4 +1,7 @@
-"""Valida os dados necessários para cadastrar uma estação."""
+"""
+Descrição: Valida os dados necessários para cadastrar uma estação.
+Autor: Leôncio Ferreira
+"""
 
 from typing import Annotated
 

@@ -1,4 +1,7 @@
-"""Valida persistência e troca do contexto operacional."""
+"""
+Descrição: Valida persistência e troca do contexto operacional.
+Autor: Leôncio Ferreira
+"""
 
 import asyncio
 from datetime import UTC, datetime

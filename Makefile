@@ -1,5 +1,5 @@
 .PHONY: help setup setup-dev setup-rpi test lint up down build ps logs \
-	migrate infer-help infer-image infer-camera sync-outbox mqtt-sub mqtt-pub test-backend
+	migrate infer-help infer-image infer-camera monitor-edge sync-outbox mqtt-sub mqtt-pub test-backend
 
 MQTT_IMAGE ?= eclipse-mosquitto:2.0.22
 HOST ?= localhost
@@ -26,6 +26,7 @@ help:
 	@echo "make infer-help                    Mostra as opções do modelo"
 	@echo "make infer-image IMAGE=imagem.jpg Executa o modelo e publica no MQTT"
 	@echo "make infer-camera                  Captura da câmera e publica no MQTT"
+	@echo "make monitor-edge                  Mantém o estado da Raspberry publicado"
 	@echo "make mqtt-sub                      Escuta mensagens MQTT"
 	@echo "make mqtt-pub MSG='mensagem'       Publica uma mensagem MQTT"
 	@echo "make sync-outbox                    Reenvia continuamente a fila offline"
@@ -85,6 +86,11 @@ infer-camera:
 		--manifest "$(MANIFEST)" \
 		--camera "$(CAMERA)" \
 		--backend "$(CAMERA_BACKEND)" \
+		--mqtt-host "$(HOST)" \
+		--mqtt-port "$(PORT)"
+
+monitor-edge:
+	$(UV_RUN) python scripts/monitor_edge.py \
 		--mqtt-host "$(HOST)" \
 		--mqtt-port "$(PORT)"
 

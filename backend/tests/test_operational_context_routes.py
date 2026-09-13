@@ -1,4 +1,7 @@
-"""Valida as rotas usadas pelo dashboard para configurar a operação."""
+"""
+Descrição: Valida as rotas usadas pelo dashboard para configurar a operação.
+Autor: Leôncio Ferreira
+"""
 
 import asyncio
 from unittest.mock import Mock
