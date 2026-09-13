@@ -10,7 +10,9 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.config import get_settings
+from app.events.routes import router as events_router
 from app.infrastructure.database import engine
+from app.infrastructure.events import EventBus
 from app.infrastructure.mqtt import MQTTClient, MQTTProducer, MQTTSubscriber
 from app.modules.inspections.messaging import InspectionMessageHandler
 from app.modules.inspections.routes import router as inspections_router
@@ -21,14 +23,15 @@ settings = get_settings()
 mqtt_client = MQTTClient(settings)
 mqtt_subscriber = MQTTSubscriber(mqtt_client)
 mqtt_producer = MQTTProducer(mqtt_client)
+event_bus = EventBus()
 mqtt_subscriber.subscribe(
     topic=settings.mqtt_topic_inspections,
-    handler=InspectionMessageHandler(),
+    handler=InspectionMessageHandler(event_bus),
     qos=settings.mqtt_qos,
 )
 mqtt_subscriber.subscribe(
     topic=settings.mqtt_topic_device_status,
-    handler=DeviceStatusMessageHandler(),
+    handler=DeviceStatusMessageHandler(event_bus),
     qos=settings.mqtt_qos,
 )
 
@@ -36,6 +39,7 @@ mqtt_subscriber.subscribe(
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.mqtt_producer = mqtt_producer
+    app.state.event_bus = event_bus
     mqtt_client.start()
     try:
         yield
@@ -51,6 +55,7 @@ app = FastAPI(
 )
 app.include_router(inspections_router)
 app.include_router(operations_router)
+app.include_router(events_router)
 
 
 @app.get("/health", tags=["system"])
