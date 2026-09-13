@@ -97,9 +97,7 @@ def test_calibrate_uses_val_and_calibration_default_output(
         "collect_predictions",
         collect,
     )
-    monkeypatch.setattr(
-        avaliar_modelo, "choose_threshold", lambda _: (0.72, metrics())
-    )
+    monkeypatch.setattr(avaliar_modelo, "choose_threshold", lambda _: (0.72, metrics()))
 
     def write_predictions(path: Path, _: list[object]) -> None:
         captured["output"] = path.parent

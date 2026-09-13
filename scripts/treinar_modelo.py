@@ -28,9 +28,7 @@ def load_config(path: Path) -> dict[str, object]:
     return data
 
 
-def create_no_augmentation_trainer(
-    trainer_base: type, dataset_type: type
-) -> type:
+def create_no_augmentation_trainer(trainer_base: type, dataset_type: type) -> type:
     """Cria o trainer que carrega o dataset exportado sem augmentation adicional."""
 
     class NoAugmentationClassificationTrainer(trainer_base):

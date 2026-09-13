@@ -98,3 +98,18 @@ mqtt-pub:
 	@test -n "$(MSG)" || (echo "Informe MSG. Exemplo: make mqtt-pub MSG='Olá MQTT'" && exit 1)
 	docker run --rm --network host $(MQTT_IMAGE) \
 		mosquitto_pub -h $(HOST) -p $(PORT) -t '$(TOPIC)' -m '$(MSG)'
+
+GPIO_PIN ?= 17
+DEBOUNCE_MS ?= 50
+
+run-esteira:
+	$(UV_RUN) python scripts/executar_esteira.py \
+		--manifest "$(MANIFEST)" \
+		--backend "$(CAMERA_BACKEND)" \
+		--camera-id "$(CAMERA)" \
+		--gpio-pin "$(GPIO_PIN)" \
+		--debounce-ms "$(DEBOUNCE_MS)" \
+		--mqtt-host "$(HOST)" \
+		--mqtt-port "$(PORT)" \
+		--mqtt-topic "$(MODEL_TOPIC)"
+
