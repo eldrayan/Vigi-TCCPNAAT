@@ -1,5 +1,6 @@
 .PHONY: help setup setup-dev setup-rpi test lint up down build ps logs \
-	migrate infer-help infer-image infer-camera mqtt-sub mqtt-pub test-backend
+	migrate infer-help infer-image infer-camera preview-camera run-esteira \
+	mqtt-sub mqtt-pub test-backend
 
 MQTT_IMAGE ?= eclipse-mosquitto:2.0.22
 HOST ?= localhost
@@ -27,6 +28,8 @@ help:
 	@echo "make infer-help                    Mostra as opções do modelo"
 	@echo "make infer-image IMAGE=imagem.jpg Executa o modelo e publica no MQTT"
 	@echo "make infer-camera                  Captura da câmera e publica no MQTT"
+	@echo "make preview-camera                Inicia streaming HTTP de preview da câmera na porta 8080"
+	@echo "make run-esteira                   Inicia laço contínuo da esteira (sensor + câmera + MQTT)"
 	@echo "make mqtt-sub                      Escuta mensagens MQTT"
 	@echo "make mqtt-pub MSG='mensagem'       Publica uma mensagem MQTT"
 	@echo ""
@@ -101,6 +104,13 @@ mqtt-pub:
 
 GPIO_PIN ?= 17
 DEBOUNCE_MS ?= 50
+PREVIEW_PORT ?= 8080
+
+preview-camera:
+	$(UV_RUN) python scripts/preview_camera.py \
+		--backend "$(CAMERA_BACKEND)" \
+		--camera-id "$(CAMERA)" \
+		--port "$(PREVIEW_PORT)"
 
 run-esteira:
 	$(UV_RUN) python scripts/executar_esteira.py \
@@ -112,4 +122,5 @@ run-esteira:
 		--mqtt-host "$(HOST)" \
 		--mqtt-port "$(PORT)" \
 		--mqtt-topic "$(MODEL_TOPIC)"
+
 
