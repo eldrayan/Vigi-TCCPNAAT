@@ -10,7 +10,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.infrastructure.database import get_session
 
-from .dto import InspectionResponseDTO, InspectionSummaryDTO
+from .dto import (
+    InspectionFilterDTO,
+    InspectionResponseDTO,
+    InspectionSummaryDTO,
+)
 from .repository import InspectionRepository
 from .service import InspectionService
 
@@ -23,17 +27,19 @@ SessionDependency = Annotated[AsyncSession, Depends(get_session)]
 @router.get("", response_model=list[InspectionResponseDTO])
 async def list_inspections(
     session: SessionDependency,
+    filters: Annotated[InspectionFilterDTO, Query()],
     limit: int = Query(default=50, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
 ) -> list[InspectionResponseDTO]:
-    return await service.find_all(session, limit, offset)
+    return await service.find_all(session, limit, offset, filters)
 
 
 @router.get("/resumo", response_model=InspectionSummaryDTO)
 async def get_summary(
     session: SessionDependency,
+    filters: Annotated[InspectionFilterDTO, Query()],
 ) -> InspectionSummaryDTO:
-    return await service.get_summary(session)
+    return await service.get_summary(session, filters)
 
 
 @router.get("/{id_inspecao}", response_model=InspectionResponseDTO)

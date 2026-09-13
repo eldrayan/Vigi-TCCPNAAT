@@ -24,6 +24,8 @@ class InspectionCreateDTO(BaseModel):
 
     inspection_id: int = Field(gt=0)
     timestamp: datetime
+    station_code: str | None = Field(default=None, min_length=1, max_length=50)
+    batch_code: str | None = Field(default=None, min_length=1, max_length=100)
     result: InspectionResult
     category: InspectionCategory | None = None
     nonconformity_type: NonConformityType | None = None
@@ -34,6 +36,9 @@ class InspectionCreateDTO(BaseModel):
 
     @model_validator(mode="after")
     def validate_classification(self) -> Self:
+        if (self.station_code is None) != (self.batch_code is None):
+            raise ValueError("Estação e lote devem ser informados juntos.")
+
         if self.result == InspectionResult.CONFORME:
             if any(
                 value is not None

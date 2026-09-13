@@ -1,0 +1,64 @@
+"""Coordena os casos de uso de estações, lotes e contexto operacional."""
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from .dto import (
+    BatchCreateDTO,
+    BatchResponseDTO,
+    OperationalContextDTO,
+    StationCreateDTO,
+    StationResponseDTO,
+)
+from .repository import OperationsRepository
+
+
+class OperationsService:
+    def __init__(self, repository: OperationsRepository) -> None:
+        self.repository = repository
+
+    async def create_station(
+        self, session: AsyncSession, dto: StationCreateDTO
+    ) -> StationResponseDTO:
+        station = await self.repository.create_station(session, dto)
+        return StationResponseDTO.model_validate(station)
+
+    async def list_stations(self, session: AsyncSession) -> list[StationResponseDTO]:
+        return [
+            StationResponseDTO.model_validate(item)
+            for item in await self.repository.list_stations(session)
+        ]
+
+    async def find_station(
+        self, session: AsyncSession, station_id: int
+    ) -> StationResponseDTO | None:
+        station = await self.repository.find_station(session, station_id)
+        if station is None:
+            return None
+        return StationResponseDTO.model_validate(station)
+
+    async def create_batch(
+        self, session: AsyncSession, station_id: int, dto: BatchCreateDTO
+    ) -> BatchResponseDTO:
+        batch = await self.repository.create_batch(session, station_id, dto)
+        return BatchResponseDTO.model_validate(batch)
+
+    async def list_batches(
+        self, session: AsyncSession, station_id: int
+    ) -> list[BatchResponseDTO]:
+        if await self.repository.find_station(session, station_id) is None:
+            raise LookupError("Estação não encontrada.")
+        return [
+            BatchResponseDTO.model_validate(item)
+            for item in await self.repository.list_batches(session, station_id)
+        ]
+
+    async def activate_batch(
+        self, session: AsyncSession, station_id: int, batch_id: int
+    ) -> tuple[OperationalContextDTO, str]:
+        batch, station = await self.repository.activate_batch(
+            session, station_id, batch_id
+        )
+        context = OperationalContextDTO(
+            station_code=station.code, batch_code=batch.code
+        )
+        return context, station.device_id

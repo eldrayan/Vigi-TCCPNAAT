@@ -14,6 +14,7 @@ from app.infrastructure.database import engine
 from app.infrastructure.mqtt import MQTTClient, MQTTProducer, MQTTSubscriber
 from app.modules.inspections.messaging import InspectionMessageHandler
 from app.modules.inspections.routes import router as inspections_router
+from app.modules.operations.routes import router as operations_router
 
 settings = get_settings()
 mqtt_client = MQTTClient(settings)
@@ -43,6 +44,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 app.include_router(inspections_router)
+app.include_router(operations_router)
 
 
 @app.get("/health", tags=["system"])
@@ -55,9 +57,7 @@ async def health(response: Response) -> dict[str, str]:
     except SQLAlchemyError:
         database_status = "disconnected"
 
-    mqtt_status = (
-        "connected" if mqtt_client.is_connected() else "disconnected"
-    )
+    mqtt_status = "connected" if mqtt_client.is_connected() else "disconnected"
     is_healthy = database_status == "connected" and mqtt_status == "connected"
 
     if not is_healthy:

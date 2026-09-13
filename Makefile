@@ -5,7 +5,6 @@ MQTT_IMAGE ?= eclipse-mosquitto:2.0.22
 HOST ?= localhost
 PORT ?= 1883
 TOPIC ?= vigi/teste
-MODEL_TOPIC ?= vigi/esteira/inspecoes
 MANIFEST ?= models/active/manifest.json
 CAMERA ?= 0
 CAMERA_BACKEND ?= picamera2
@@ -30,7 +29,7 @@ help:
 	@echo "make mqtt-sub                      Escuta mensagens MQTT"
 	@echo "make mqtt-pub MSG='mensagem'       Publica uma mensagem MQTT"
 	@echo ""
-	@echo "Opções: HOST, PORT, TOPIC, MODEL_TOPIC, MANIFEST, CAMERA e CAMERA_BACKEND"
+	@echo "Opções: HOST, PORT, TOPIC, MANIFEST, CAMERA e CAMERA_BACKEND"
 
 setup:
 	uv sync --frozen --no-dev
@@ -78,8 +77,7 @@ infer-image:
 		--manifest "$(MANIFEST)" \
 		--image "$(IMAGE)" \
 		--mqtt-host "$(HOST)" \
-		--mqtt-port "$(PORT)" \
-		--mqtt-topic "$(MODEL_TOPIC)"
+		--mqtt-port "$(PORT)"
 
 infer-camera:
 	$(UV_RUN) python scripts/infer.py \
@@ -87,8 +85,7 @@ infer-camera:
 		--camera "$(CAMERA)" \
 		--backend "$(CAMERA_BACKEND)" \
 		--mqtt-host "$(HOST)" \
-		--mqtt-port "$(PORT)" \
-		--mqtt-topic "$(MODEL_TOPIC)"
+		--mqtt-port "$(PORT)"
 
 mqtt-sub:
 	docker run --rm --network host $(MQTT_IMAGE) \

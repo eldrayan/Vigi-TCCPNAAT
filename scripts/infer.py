@@ -5,13 +5,25 @@ from __future__ import annotations
 
 import argparse
 import json
+import socket
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from edge.inference import InferenceEngine  # noqa: E402
-from edge.messaging import InspectionEvent, MQTTInspectionPublisher  # noqa: E402
+from edge.messaging import (  # noqa: E402
+    InspectionEvent,
+    MQTTInspectionPublisher,
+    MQTTOperationalContextReceiver,
+    OperationalContext,
+)
+
+
+def load_operational_context(
+    host: str, port: int, device_id: str
+) -> OperationalContext:
+    return MQTTOperationalContextReceiver(host, port, device_id).receive()
 
 
 def capture_frame(backend: str, camera_id: int, width: int, height: int):
@@ -47,10 +59,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--height", type=int, default=720)
     parser.add_argument("--mqtt-host")
     parser.add_argument("--mqtt-port", type=int, default=1883)
-    parser.add_argument(
-        "--mqtt-topic",
-        default="vigi/esteira/inspecoes",
-    )
+    parser.add_argument("--device-id", default=socket.gethostname())
     args = parser.parse_args(argv)
 
     try:
@@ -62,12 +71,17 @@ def main(argv: list[str] | None = None) -> int:
         else:
             image = capture_frame(args.backend, args.camera, args.width, args.height)
         decision = engine.inspect(image)
-        event = InspectionEvent.from_decision(decision)
+        context = None
         if args.mqtt_host:
+            context = load_operational_context(
+                args.mqtt_host, args.mqtt_port, args.device_id
+            )
+        event = InspectionEvent.from_decision(decision, context=context)
+        if args.mqtt_host and context is not None:
             publisher = MQTTInspectionPublisher(
                 host=args.mqtt_host,
                 port=args.mqtt_port,
-                topic=args.mqtt_topic,
+                topic=context.inspections_topic,
             )
             publisher.publish(event)
     except Exception as exc:

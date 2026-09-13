@@ -8,11 +8,15 @@ from datetime import UTC, datetime
 
 from edge.inference.schemas import InspectionDecision
 
+from .context import OperationalContext
+
 
 @dataclass(frozen=True)
 class InspectionEvent:
     inspection_id: int
     timestamp: str
+    station_code: str | None
+    batch_code: str | None
     result: str
     category: str | None
     nonconformity_type: str | None
@@ -26,6 +30,7 @@ class InspectionEvent:
         cls,
         decision: InspectionDecision,
         *,
+        context: OperationalContext | None = None,
         timestamp: datetime | None = None,
         inspection_id: int | None = None,
     ) -> InspectionEvent:
@@ -34,6 +39,8 @@ class InspectionEvent:
         return cls(
             inspection_id=event_id,
             timestamp=occurred_at.isoformat(),
+            station_code=context.station_code if context else None,
+            batch_code=context.batch_code if context else None,
             **decision.as_dict(),
         )
 

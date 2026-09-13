@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     mqtt_port: int = 1883
     mqtt_client_id: str = "vigi-backend"
     mqtt_qos: int = 1
-    mqtt_topic_inspections: str = "vigi/esteira/inspecoes"
+    mqtt_topic_inspections: str = "vigi/estacoes/+/inspecoes"
 
 
 @lru_cache

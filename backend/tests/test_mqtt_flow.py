@@ -42,6 +42,8 @@ def test_mqtt_message_is_persisted_and_exposed_by_api(caplog) -> None:
     payload = {
         "inspection_id": 101,
         "timestamp": "2026-09-11T10:00:00-03:00",
+        "station_code": "envase-01",
+        "batch_code": "LOTE-001",
         "result": "NAO_CONFORME",
         "category": "ANOMALIA_PRODUTO",
         "nonconformity_type": "TAMPA_TORTA",
@@ -54,13 +56,28 @@ def test_mqtt_message_is_persisted_and_exposed_by_api(caplog) -> None:
     with TestClient(app) as api:
         wait_until(mqtt_client.is_connected)
 
-        publisher = mqtt.Client(
-            callback_api_version=mqtt.CallbackAPIVersion.VERSION2
+        station = api.post(
+            "/api/estacoes",
+            json={
+                "code": "envase-01",
+                "name": "Estação de envase 01",
+                "device_id": "raspberry-test",
+            },
+        ).json()
+        batch = api.post(
+            f"/api/estacoes/{station['id']}/lotes",
+            json={"code": "LOTE-001"},
+        ).json()
+        api.put(
+            f"/api/estacoes/{station['id']}/lote-ativo",
+            json={"batch_id": batch["id"]},
         )
+
+        publisher = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
         publisher.connect("127.0.0.1", int(os.environ["MQTT_PORT"]))
         publisher.loop_start()
         publication = publisher.publish(
-            "vigi/esteira/inspecoes",
+            "vigi/estacoes/envase-01/inspecoes",
             json.dumps(payload),
             qos=1,
         )
@@ -68,14 +85,14 @@ def test_mqtt_message_is_persisted_and_exposed_by_api(caplog) -> None:
         publisher.disconnect()
         publisher.loop_stop()
 
-        wait_until(
-            lambda: api.get("/api/inspecoes/101").status_code == 200
-        )
+        wait_until(lambda: api.get("/api/inspecoes/101").status_code == 200)
         response = api.get("/api/inspecoes/101")
         health = api.get("/health")
 
     assert response.status_code == 200
     assert response.json()["nonconformity_type"] == "TAMPA_TORTA"
+    assert response.json()["station_code"] == "envase-01"
+    assert response.json()["batch_code"] == "LOTE-001"
     assert response.json()["processing_time_ms"] == 180.5
     assert response.json()["model_format"] == "pytorch"
     assert health.status_code == 200
