@@ -16,7 +16,10 @@ logger = logging.getLogger(__name__)
 
 
 class DeviceStatusMessageHandler:
-    """Consome a última telemetria de disponibilidade de cada dispositivo."""
+    """
+    Descrição: Consome a última telemetria de disponibilidade de cada dispositivo.
+    Autor: Leôncio Ferreira
+    """
 
     def __init__(self) -> None:
         self.service = OperationsService(OperationsRepository())

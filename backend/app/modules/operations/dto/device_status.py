@@ -10,7 +10,10 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class ComponentStatus(StrEnum):
-    """Define os estados possíveis dos componentes monitorados."""
+    """
+    Descrição: Define os estados possíveis dos componentes monitorados.
+    Autor: Leôncio Ferreira
+    """
 
     ONLINE = "ONLINE"
     OFFLINE = "OFFLINE"
@@ -18,7 +21,10 @@ class ComponentStatus(StrEnum):
 
 
 class DeviceStatusDTO(BaseModel):
-    """Valida a conectividade, captura e processamento de uma estação."""
+    """
+    Descrição: Valida a conectividade, captura e processamento de uma estação.
+    Autor: Leôncio Ferreira
+    """
 
     model_config = ConfigDict(extra="forbid")
 
@@ -29,6 +35,9 @@ class DeviceStatusDTO(BaseModel):
 
 
 class DeviceStatusMessageDTO(DeviceStatusDTO):
-    """Valida a mensagem MQTT de estado, identificada pelo dispositivo."""
+    """
+    Descrição: Valida a mensagem MQTT de estado, identificada pelo dispositivo.
+    Autor: Leôncio Ferreira
+    """
 
     device_id: str = Field(min_length=1, max_length=100)
