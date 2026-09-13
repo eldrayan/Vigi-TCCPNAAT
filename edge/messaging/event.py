@@ -46,3 +46,13 @@ class InspectionEvent:
 
     def as_dict(self) -> dict[str, object]:
         return asdict(self)
+
+    @classmethod
+    def from_dict(cls, payload: dict[str, object]) -> InspectionEvent:
+        return cls(**payload)
+
+    @property
+    def inspections_topic(self) -> str:
+        if self.station_code is None:
+            raise ValueError("Evento sem estação não pode ser publicado na fila.")
+        return f"vigi/estacoes/{self.station_code}/inspecoes"

@@ -27,12 +27,12 @@ class MQTTInspectionPublisher:
         self.topic = topic
         self.client = client or create_mqtt_client()
 
-    def publish(self, event: InspectionEvent) -> None:
+    def publish(self, event: InspectionEvent, topic: str | None = None) -> None:
         self.client.connect(self.host, self.port)
         self.client.loop_start()
         try:
             publication = self.client.publish(
-                self.topic,
+                topic or self.topic,
                 json.dumps(event.as_dict(), ensure_ascii=False),
                 qos=1,
                 retain=False,
