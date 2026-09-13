@@ -14,6 +14,7 @@ from app.infrastructure.database import get_session
 from .dto import (
     BatchCreateDTO,
     BatchResponseDTO,
+    DeviceStatusDTO,
     OperationalContextDTO,
     SetActiveBatchDTO,
     StationCreateDTO,
@@ -57,6 +58,16 @@ async def get_station(
     if station is None:
         raise not_found("Estação não encontrada.")
     return station
+
+
+@router.get("/{station_id}/status", response_model=DeviceStatusDTO)
+async def get_station_status(
+    station_id: int, session: SessionDependency
+) -> DeviceStatusDTO:
+    device_status = await service.find_station_status(session, station_id)
+    if device_status is None:
+        raise not_found("Estado da estação ainda não recebido.")
+    return device_status
 
 
 @router.post(
