@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Inicia a inspeção contínua da Estação 01 pelo sensor E18-D80NK."""
+"""
+Descrição: Inicia a inspeção contínua acionada pelo sensor fotoelétrico.
+Autor: Leôncio Ferreira
+"""
 
 from __future__ import annotations
 
@@ -39,13 +42,15 @@ def check_broker(host: str, port: int) -> None:
         return
 
 
-def main(argv: list[str] | None = None) -> int:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--manifest", type=Path, default=Path("models/active/manifest.json")
     )
     parser.add_argument("--mqtt-host", default="localhost")
     parser.add_argument("--mqtt-port", type=int, default=1883)
+    parser.add_argument("--station-code", default="ESTACAO_01")
+    parser.add_argument("--device-id", default="ESTACAO_01")
     parser.add_argument("--batch-code", default="LOTE_01")
     parser.add_argument("--gpio-pin", type=int, default=17)
     parser.add_argument("--debounce-ms", type=float, default=50)
@@ -57,7 +62,11 @@ def main(argv: list[str] | None = None) -> int:
         "--outbox-path", type=Path, default=Path("data/edge-outbox.db")
     )
     parser.add_argument("--max-inspections", type=int)
-    args = parser.parse_args(argv)
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
 
     print("\nDiagnóstico de prontidão — Estação 01")
     print("-" * 42)
@@ -112,10 +121,10 @@ def main(argv: list[str] | None = None) -> int:
 
     print("Sistema pronto. Aguardando recipientes no sensor...\n")
     context = OperationalContext(
-        station_code="ESTACAO_01", batch_code=args.batch_code
+        station_code=args.station_code, batch_code=args.batch_code
     )
     status = MQTTDeviceStatusPublisher(
-        args.mqtt_host, device_id="ESTACAO_01", port=args.mqtt_port
+        args.mqtt_host, device_id=args.device_id, port=args.mqtt_port
     )
     status.start(sensor="ONLINE", camera="ONLINE", processing="ONLINE")
 

@@ -10,8 +10,9 @@ services:
       MQTT_EDGE_PASSWORD: ${MQTT_EDGE_PASSWORD:?Defina MQTT_EDGE_PASSWORD no .env}
       MQTT_BACKEND_USERNAME: ${MQTT_BACKEND_USERNAME:?Defina MQTT_BACKEND_USERNAME no .env}
       MQTT_BACKEND_PASSWORD: ${MQTT_BACKEND_PASSWORD:?Defina MQTT_BACKEND_PASSWORD no .env}
+      MQTT_STATION_CODES: ${MQTT_STATION_CODES:-ESTACAO_01}
     ports:
-      - "127.0.0.1:${MQTT_PORT:-1883}:1883"
+      - "${MQTT_BIND_HOST:-0.0.0.0}:${MQTT_PORT:-1883}:1883"
     volumes:
       - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
       - mqtt_auth:/mosquitto/auth
