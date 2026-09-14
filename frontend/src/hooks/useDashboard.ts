@@ -63,5 +63,10 @@ export function useDashboard() {
     await refresh();
   }, [refresh]);
 
-  return { data, error, loading, refresh, filterInspections, acknowledgeAlarm };
+  const configureAlarm = useCallback(async (name: string, limit: number) => {
+    await api.configureAlarm(1, 1, name, limit);
+    await refresh();
+  }, [refresh]);
+
+  return { data, error, loading, refresh, filterInspections, acknowledgeAlarm, configureAlarm };
 }

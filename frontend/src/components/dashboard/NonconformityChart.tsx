@@ -1,7 +1,15 @@
-import { Chart, ArcElement, Legend, Tooltip, type ChartConfiguration } from "chart.js";
+import {
+  ArcElement,
+  Chart,
+  DoughnutController,
+  Legend,
+  Tooltip,
+  type ChartConfiguration,
+} from "chart.js";
 import { useEffect, useRef } from "react";
 
-Chart.register(ArcElement, Legend, Tooltip);
+import styles from "./NonconformityChart.module.scss";
+Chart.register(DoughnutController, ArcElement, Legend, Tooltip);
 
 interface NonconformityChartProps { data: Record<string, number>; }
 
@@ -21,11 +29,11 @@ export function NonconformityChart({ data }: NonconformityChartProps) {
           borderWidth: 0,
         }],
       },
-      options: { cutout: "68%", plugins: { legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 10 } } } } },
+      options: { cutout: "68%", aspectRatio: 1, plugins: { legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 10 } } } } },
     };
     const chart = new Chart(canvasRef.current, configuration);
     return () => chart.destroy();
   }, [data]);
 
-  return <canvas ref={canvasRef} aria-label="Distribuição de não conformidades" role="img" />;
+  return <div className={styles.chart}><canvas ref={canvasRef} aria-label="Distribuição de não conformidades" role="img" /></div>;
 }

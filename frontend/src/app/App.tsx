@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { AlarmsPage, InspectionsPage, OverviewPage, StationsPage } from "./pages";
 import { ErrorState } from "../components/feedback/ErrorState";
+import { ActiveAlarmModal } from "../components/alarms/ActiveAlarmModal";
 import { useDashboard } from "../hooks/useDashboard";
 
 import styles from "./App.module.scss";
@@ -29,9 +30,9 @@ export function App() {
   const [activePage, setActivePage] = useState("Visão geral");
   const dashboard = useDashboard();
   const pageActions = {
-    onRefresh: () => void dashboard.refresh(),
     onFilterInspections: (filters: Parameters<typeof dashboard.filterInspections>[0]) => void dashboard.filterInspections(filters),
     onAcknowledgeAlarm: dashboard.acknowledgeAlarm,
+    onConfigureAlarm: dashboard.configureAlarm,
   };
   const pages = dashboard.data ? {
     "Visão geral": <OverviewPage {...dashboard.data} {...pageActions} />,
@@ -39,6 +40,7 @@ export function App() {
     Estações: <StationsPage {...dashboard.data} {...pageActions} />,
     Alarmes: <AlarmsPage {...dashboard.data} {...pageActions} />,
   } : null;
+  const activeAlarm = dashboard.data?.alarms.find((alarm) => alarm.status === "ABERTO");
 
   return (
     <div className={styles.shell}>
@@ -72,6 +74,7 @@ export function App() {
 
         {dashboard.error ? <ErrorState message={dashboard.error} onRetry={() => void dashboard.refresh()} /> : dashboard.loading || pages === null ? <section className={styles.loading}>Carregando dados operacionais…</section> : pages[activePage as keyof typeof pages]}
       </main>
+      {activeAlarm && <ActiveAlarmModal alarm={activeAlarm} onConfirm={dashboard.acknowledgeAlarm} />}
     </div>
   );
 }
