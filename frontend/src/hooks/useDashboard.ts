@@ -1,9 +1,14 @@
+/**
+ * Descrição: Gerencia os dados, eventos e ações do dashboard Vigi.
+ * Autor: Leôncio Ferreira
+ */
+
 import { useCallback, useEffect, useState } from "react";
 
 import { api, type Alarm, type DeviceStatus, type Inspection, type InspectionFilters, type InspectionSummary, type Station } from "../lib/api";
 
 export interface StationWithStatus extends Station { status: DeviceStatus | null; }
-interface DashboardData { summary: InspectionSummary; inspections: Inspection[]; stations: StationWithStatus[]; alarms: Alarm[]; }
+interface DashboardData { summary: InspectionSummary; inspections: Inspection[]; inspectionTotal: number; inspectionLimit: number; inspectionOffset: number; stations: StationWithStatus[]; alarms: Alarm[]; }
 
 function playAlarmSound() {
   const AudioContextConstructor = window.AudioContext;
@@ -27,12 +32,12 @@ export function useDashboard() {
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const [summary, inspections, stations, alarms] = await Promise.all([api.summary(), api.inspections(), api.stations(), api.alarms()]);
+      const [summary, inspectionPage, stations, alarms] = await Promise.all([api.summary(), api.inspectionsPage(), api.stations(), api.alarms()]);
       const stationsWithStatus = await Promise.all(stations.map(async (station) => {
         try { return { ...station, status: await api.stationStatus(station.id) }; }
         catch { return { ...station, status: null }; }
       }));
-      setData({ summary, inspections, stations: stationsWithStatus, alarms });
+      setData({ summary, inspections: inspectionPage.items, inspectionTotal: inspectionPage.total, inspectionLimit: inspectionPage.limit, inspectionOffset: inspectionPage.offset, stations: stationsWithStatus, alarms });
       setError(null);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Não foi possível carregar o dashboard.");
@@ -49,10 +54,10 @@ export function useDashboard() {
     return () => events.close();
   }, [refresh]);
 
-  const filterInspections = useCallback(async (filters: InspectionFilters) => {
+  const filterInspections = useCallback(async (filters: InspectionFilters, limit = 10, offset = 0) => {
     try {
-      const inspections = await api.inspections(filters);
-      setData((current) => current ? { ...current, inspections } : current);
+      const page = await api.inspectionsPage(filters, limit, offset);
+      setData((current) => current ? { ...current, inspections: page.items, inspectionTotal: page.total, inspectionLimit: page.limit, inspectionOffset: page.offset } : current);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Não foi possível filtrar as inspeções.");
     }

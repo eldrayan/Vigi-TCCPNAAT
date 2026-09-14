@@ -1,4 +1,7 @@
-/** Cliente HTTP do dashboard para a API local do Vigi. */
+/**
+ * Descrição: Centraliza as chamadas HTTP do dashboard para a API local do Vigi.
+ * Autor: Leôncio Ferreira
+ */
 
 const apiUrl = import.meta.env.VITE_API_URL ?? window.location.origin;
 
@@ -21,6 +24,8 @@ export interface InspectionPage {
   offset: number;
 }
 
+type InspectionListResponse = Inspection[] | InspectionPage;
+
 export interface InspectionSummary {
   total: number;
   compliant: number;
@@ -41,12 +46,35 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  summary: () => request<InspectionSummary>("/api/inspecoes/resumo"),
-  inspections: (filters: InspectionFilters = {}) => {
-    const params = new URLSearchParams({ limit: "50" });
+  summary: (filters: InspectionFilters = {}) => {
+    const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => { if (value) params.set(key, value); });
-    return request<InspectionPage>(`/api/inspecoes?${params.toString()}`).then((page) => page.items);
+    const query = params.toString();
+    return request<InspectionSummary>(`/api/inspecoes/resumo${query ? `?${query}` : ""}`);
   },
+  inspectionsPage: async (filters: InspectionFilters = {}, limit = 10, offset = 0): Promise<InspectionPage> => {
+    const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+    const summaryParams = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) {
+        params.set(key, value);
+        summaryParams.set(key, value);
+      }
+    });
+    const summaryQuery = summaryParams.toString();
+    const [items, summary] = await Promise.all([
+      request<InspectionListResponse>(`/api/inspecoes?${params.toString()}`),
+      request<InspectionSummary>(`/api/inspecoes/resumo${summaryQuery ? `?${summaryQuery}` : ""}`),
+    ]);
+    const list = Array.isArray(items) ? items : items.items;
+    return {
+      items: list,
+      total: summary.total,
+      limit,
+      offset,
+    };
+  },
+  inspections: (filters: InspectionFilters = {}) => api.inspectionsPage(filters).then((page) => page.items),
   stations: () => request<Station[]>("/api/estacoes"),
   stationStatus: (id: number) => request<DeviceStatus>(`/api/estacoes/${id}/status`),
   alarms: () => request<Alarm[]>("/api/alarmes"),
