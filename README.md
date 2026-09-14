@@ -89,7 +89,7 @@ O backend do Vigi adota a organização de um monólito modular: uma única apli
 
 Essa organização permite documentar cada responsabilidade junto do código correspondente e facilita a manutenção, sem exigir um serviço independente para cada função de negócio. A divisão por fluxo de dados dos diagramas complementa essa visão, mostrando como as informações passam entre os componentes.
 
-Na execução da PoC, o Edge é um processo separado que publica eventos, e o Mosquitto é um serviço de infraestrutura. O termo monólito modular descreve a organização do backend; o sistema completo inclui esses componentes e o futuro frontend no navegador.
+O Edge é um processo separado que publica eventos, e o Mosquitto é um serviço de infraestrutura. O termo monólito modular descreve a organização do backend; o sistema completo inclui esses componentes e o frontend React no navegador.
 
 ### Separação da stack
 
@@ -194,7 +194,7 @@ Está prevista uma case para acomodar a Raspberry Pi e a câmera na bancada. A i
 
 A execução prevista é independente de internet depois da preparação do ambiente, mas o fluxo atual de persistência requer o broker local funcionando. Sem `--mqtt-host`, a CLI imprime o evento sem gravá-lo em SQLite. Com publicação habilitada, uma falha no MQTT encerra a chamada com erro, sem fila persistente para reenvio no Edge. O RNF03 ainda precisa de implementação complementar e validação.
 
-O dashboard está previsto para reunir resultados, histórico e alarmes para operadores e supervisores. O acesso por outros dispositivos será feito pela rede local, mediante conexão com a Raspberry Pi, sem necessidade de internet. Sua implementação deverá incluir autenticação dos usuários e autorização para controlar o acesso às informações e às funções disponíveis. A API já permite consultar os eventos, mas seus endpoints atuais não exigem autenticação. Os controles de acesso e a integração do painel serão implementados e verificados nas etapas correspondentes do projeto. O Compose publica a API na porta 8000 e o MQTT apenas no loopback do host por padrão.
+O dashboard reúne resultados, histórico e alarmes para operadores e supervisores. O acesso por outros dispositivos é feito pela rede local, mediante conexão com a Raspberry Pi, sem necessidade de internet. A API ainda não exige autenticação; os controles de acesso serão implementados e verificados na etapa correspondente. O Compose publica o dashboard na porta 8080, a API na 8000 e o MQTT apenas no loopback do host por padrão.
 
 O [roteiro do pitch](docs/pitch/01-roteiro-pitch.md) e o [roteiro da PoC](docs/poc/01-roteiro-video-poc.md) organizam a apresentação dos componentes conforme o andamento da implementação.
 
@@ -486,44 +486,124 @@ curl --version
 uv --version
 ```
 
-A instalação do Docker deve seguir a [documentação oficial](https://docs.docker.com/engine/install/) para o sistema da Pi. `make setup-rpi` instala dependências Python, não Docker nem os drivers de câmera. Execute o Compose a partir da raiz. Os valores padrão estão em [.env.example](.env.example); um `.env` local pode sobrescrevê-los. Se alterar portas ou tópicos, ajuste também os parâmetros `HOST`, `PORT` e `MODEL_TOPIC` dos comandos Make e as URLs de consulta.
+## Reprodução ponta a ponta
 
-Principais comandos `make`:
+Este roteiro reproduz o fluxo completo na Raspberry Pi: sensor → câmera →
+inferência no Edge → MQTT autenticado → FastAPI/SQLite → dashboard React.
+Execute todos os comandos a partir da raiz do repositório.
 
-- `make help` — lista os comandos disponíveis.
-- `make setup-rpi` — instala as dependências para executar na Raspberry.
-- `make up` — constrói e inicia o backend e o Mosquitto.
-- `make ps` — mostra o estado dos containers.
-- `make logs` — acompanha os logs dos serviços.
-- `make infer-camera` — captura uma imagem, executa a inferência e publica o resultado no MQTT.
-- `make infer-image IMAGE=/caminho/imagem.jpg` — executa a inferência em uma imagem e publica o resultado no MQTT.
-- `make mqtt-sub TOPIC=vigi/esteira/inspecoes` — acompanha os eventos de inspeção no MQTT.
-- `make mqtt-pub TOPIC=vigi/teste MSG='Olá MQTT'` — envia uma mensagem de teste.
-- `make migrate` — aplica as migrations pendentes do banco.
-- `make down` — para e remove os containers, preservando os volumes de dados.
+### 1. Preparar a Raspberry e o modelo
+
+Instale Docker com Compose, `uv`, Git e os drivers da câmera CSI. A instalação
+do Docker deve seguir a [documentação oficial](https://docs.docker.com/engine/install/).
+Depois, prepare o ambiente Python do Edge e recupere os artefatos DVC da equipe:
 
 ```bash
 make setup-rpi
-
-# Com acesso ao remote DVC da equipe:
 uv sync --frozen --no-dev --extra mlops
 uv run --no-sync dvc pull models.dvc
+```
 
+Confirme que `models/active/manifest.json` existe antes de continuar.
+
+### 2. Configurar as credenciais locais
+
+Crie o arquivo local de configuração. Ele é ignorado pelo Git e nunca deve ser
+enviado ao repositório:
+
+```bash
+cp .env.example .env
+nano .env
+```
+
+Mantenha os nomes de usuário distintos e troque as duas senhas de exemplo por
+valores fortes:
+
+```env
+MQTT_BACKEND_USERNAME=vigi-backend
+MQTT_BACKEND_PASSWORD=troque-por-uma-senha-forte
+MQTT_EDGE_USERNAME=vigi-edge
+MQTT_EDGE_PASSWORD=troque-por-outra-senha-forte
+```
+
+O broker não aceita conexões sem credenciais. O Edge publica somente nos tópicos
+da `ESTACAO_01`; o backend consome inspeções e estados do dispositivo.
+
+### 3. Subir dashboard, API e broker
+
+```bash
 make up
 make ps
-# Aguarde o health retornar healthy antes de capturar:
 curl -f http://localhost:8000/health
-# Captura uma imagem, executa a inferência e publica o resultado no MQTT
-make infer-camera
-
-# Alternativa: executar uma imagem existente
-make infer-image IMAGE=/caminho/imagem.jpg
-
-curl -f 'http://localhost:8000/api/inspecoes?limit=1&offset=0'
-curl -f http://localhost:8000/api/inspecoes/resumo
-hostname -I
-# No navegador do PC: http://IP_DA_RASPBERRY:8000/docs
 ```
+
+O Compose aplica as migrations automaticamente, mantém o SQLite em volume e
+inicia o dashboard, FastAPI e Mosquitto. Na rede local, acesse:
+
+```text
+Dashboard: http://leocio-raspberry.local:8080
+Swagger:   http://leocio-raspberry.local:8000/docs
+```
+
+Se o mDNS não estiver disponível, obtenha o endereço com `hostname -I` e use
+`http://IP_DA_RASPBERRY:8080`. O dashboard encaminha API e SSE internamente;
+por isso não exige configuração adicional de CORS nesse fluxo em containers.
+
+O CORS só é necessário para desenvolvimento separado com Vite. Nesse caso,
+inicie a API com `FRONTEND_ORIGINS=http://IP_DA_RASPBERRY:5173 make backend-up`
+e o dashboard com `make frontend-up API_URL=http://IP_DA_RASPBERRY:8000`.
+
+### 4. Iniciar a inspeção contínua
+
+Em outro terminal na Raspberry, conecte o sensor E18-D80NK e a câmera e execute:
+
+```bash
+make edge-up HOST=localhost
+```
+
+O diagnóstico inicial confirma modelo, sensor, câmera e broker. Depois, cada
+detecção do sensor captura uma imagem, executa a inferência, salva o evento na
+outbox SQLite do Edge e o publica no MQTT. A migration cria a estação fixa
+`ESTACAO_01` e o lote ativo `LOTE_01`.
+
+### 5. Verificar a inspeção no dashboard e na API
+
+Após passar um recipiente na esteira, confira a nova inspeção no dashboard ou
+consulte a API:
+
+```bash
+curl -f 'http://localhost:8000/api/inspecoes?limit=10&offset=0'
+curl -f http://localhost:8000/api/inspecoes/resumo
+```
+
+O histórico persistido inclui resultado, confiança e, quando não conforme, o
+tipo da não conformidade. O dashboard recebe atualizações por SSE.
+
+### 6. Testar sem o sensor ou a câmera
+
+Para demonstrar o restante da esteira com uma imagem existente, sem hardware
+de captura, execute:
+
+```bash
+make infer-image IMAGE=/caminho/imagem.jpg HOST=localhost
+```
+
+Para inspecionar os tópicos MQTT com autenticação, use:
+
+```bash
+make mqtt-sub TOPIC='vigi/estacoes/#' HOST=localhost
+```
+
+### 7. Parar com segurança
+
+Interrompa o Edge com `Ctrl+C` e pare os containers sem remover os volumes:
+
+```bash
+make down
+```
+
+O histórico do backend e a outbox local do Edge são preservados. Para consultar
+todos os atalhos disponíveis, execute `make help`.
 
 Para executar somente a inferência, sem publicação MQTT, use diretamente a CLI sem `--mqtt-host`:
 
@@ -539,50 +619,7 @@ uv run python scripts/infer.py \
 
 A CLI executa uma inspeção por chamada e imprime um evento JSON com `inspection_id`, `timestamp`, `result`, `category`, `nonconformity_type`, `technical_failure_type`, `confidence`, `processing_time_ms` e `model_format`. Os valores de domínio continuam em português, como `CONFORME` e `SEM_TAMPA`. `--mqtt-host` habilita a publicação com QoS 1, e os alvos `make infer-camera` e `make infer-image` já passam essa opção. A CLI não abre preview ou dashboard.
 
-### Operação contínua da esteira e alinhamento da câmera
-
-Para operação física em bancada na Raspberry Pi 5, o sistema disponibiliza dois utilitários integrados de hardware:
-
-#### 1. Alinhamento e foco da câmera (preview ao vivo)
-
-Inicia um servidor web leve com streaming MJPEG e retângulos guia de enquadramento da garrafa:
-
-```bash
-# Via Makefile:
-make preview-camera
-
-# Ou diretamente via Python:
-python scripts/preview_camera.py --backend picamera2 --port 8080
-```
-
-- Acesse no navegador do seu notebook: `http://IP_DA_RASPBERRY:8080`
-- Permite ajustar o anel de foco da lente e a posição mecânica do sensor fotoelétrico.
-- **Importante**: Pressione `Ctrl+C` no terminal para liberar a câmera antes de iniciar a esteira.
-
-#### 2. Supervisão contínua da esteira (sensor + câmera + Edge AI + MQTT)
-
-Executa o laço de inspeção contínua em tempo real com o sensor infravermelho E18-D80NK no GPIO 17:
-
-```bash
-# Via Makefile (configurações padrão):
-make run-esteira
-
-# Ou diretamente via CLI com opções avançadas:
-python scripts/executar_esteira.py \
-  --manifest models/active/manifest.json \
-  --backend picamera2 \
-  --gpio-pin 17 \
-  --debounce-ms 50 \
-  --threshold 0.70 \
-  --save-dir captures \
-  --verbose
-```
-
-- **Ciclo operacional**: A cada passagem física do frasco, o sensor fotoelétrico dispara a captura instantânea (< 15 ms), processa a inferência YOLOv8n-cls (~48 ms) e publica o evento de telemetria em `vigi/esteira/inspecoes` e alarmes em `vigi/esteira/alarmes`.
-- **Feedback no terminal**: Imprime bloco visual destacado com o status (`CONFORME` ou `NÃO CONFORME`), tipo de defeito (`SEM_TAMPA`, `TAMPA_TORTA`, `AMASSADO`), confiança percentual e latência total ponta a ponta (RNF01 < 500 ms).
-- **Parada limpa**: Pressione `Ctrl+C` para encerrar a sessão MQTT com envio de status offline (LWT), desalocar a câmera e liberar o pino GPIO.
-
-A confirmação de publicação no broker não comprova a gravação no SQLite. Consulte `/api/inspecoes/{id_inspecao}` com o `inspection_id` da saída para verificar o mesmo evento no banco. O backend aplica as migrations ao iniciar e usa um volume de dados no Compose. `make down` preserva os volumes; não use remoção de volumes para encerrar a demonstração.
+A confirmação de publicação no broker não comprova a gravação no SQLite. Consulte `/api/inspecoes/{id_inspecao}` com o `inspection_id` da saída para verificar o mesmo evento no banco. `make backend-up` aplica as migrations e o Compose usa um volume de dados persistente. `make backend-down` preserva os volumes; não use remoção de volumes para encerrar a demonstração.
 
 Os contratos executáveis atuais estão em [edge/messaging/event.py](edge/messaging/event.py) e [DTOs do backend](backend/app/modules/inspections/dto). Os exemplos em português e a fila offline do [diagrama arquitetural](docs/arquitetura/diagrama-arquitetural.md) descrevem a proposta e ainda precisam ser atualizados para refletir integralmente a implementação.
 

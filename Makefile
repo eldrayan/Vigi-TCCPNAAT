@@ -106,12 +106,16 @@ sync-outbox:
 
 mqtt-sub:
 	docker run --rm --network host $(MQTT_IMAGE) \
-		mosquitto_sub -h $(HOST) -p $(PORT) -t '$(TOPIC)' -v
+		mosquitto_sub -h $(HOST) -p $(PORT) \
+		-u "$(MQTT_EDGE_USERNAME)" -P "$(MQTT_EDGE_PASSWORD)" \
+		-t '$(TOPIC)' -v
 
 mqtt-pub:
 	@test -n "$(MSG)" || (echo "Informe MSG. Exemplo: make mqtt-pub MSG='Olá MQTT'" && exit 1)
 	docker run --rm --network host $(MQTT_IMAGE) \
-		mosquitto_pub -h $(HOST) -p $(PORT) -t '$(TOPIC)' -m '$(MSG)'
+		mosquitto_pub -h $(HOST) -p $(PORT) \
+		-u "$(MQTT_EDGE_USERNAME)" -P "$(MQTT_EDGE_PASSWORD)" \
+		-t '$(TOPIC)' -m '$(MSG)'
 
 GPIO_PIN ?= 17
 DEBOUNCE_MS ?= 50
