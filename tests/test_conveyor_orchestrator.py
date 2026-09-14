@@ -1,8 +1,7 @@
 """Testes do orquestrador ponta a ponta da esteira de inspeção."""
 
+from typing import Any
 from unittest.mock import MagicMock
-
-import numpy as np
 
 from edge.acquisition.sensor import SimulatedPhotoelectricSensor
 from edge.inference.schemas import InspectionDecision
@@ -19,9 +18,9 @@ class CameraStub:
     def is_opened(self) -> bool:
         return not self.released
 
-    def read(self) -> tuple[bool, np.ndarray]:
+    def read(self) -> tuple[bool, Any]:
         self.read_count += 1
-        dummy_frame = np.zeros((224, 224, 3), dtype=np.uint8)
+        dummy_frame = MagicMock()
         return True, dummy_frame
 
     def release(self) -> None:
