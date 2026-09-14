@@ -105,3 +105,12 @@ def test_simulated_photoelectric_sensor() -> None:
     assert sim_sensor.wait_for_trigger(timeout=0.1)
 
     sim_sensor.close()
+
+
+def test_sensor_close_unblocks_and_returns_false() -> None:
+    mock_gpio = MockGPIODevice(initial_value=1)
+    sensor = PhotoelectricSensor(pin=17, debounce_ms=50.0, gpio_device=mock_gpio)
+
+    # Ao fechar o sensor, qualquer espera deve retornar False
+    sensor.close()
+    assert not sensor.wait_for_trigger(timeout=0.1)

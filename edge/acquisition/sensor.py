@@ -123,7 +123,11 @@ class PhotoelectricSensor:
 
     def wait_for_trigger(self, timeout: float | None = None) -> bool:
         """Bloqueia até o sensor detectar um frasco ou o timeout expirar."""
+        if self._closed:
+            return False
         triggered = self._trigger_event.wait(timeout=timeout)
+        if self._closed:
+            return False
         if triggered:
             self._trigger_event.clear()
         return triggered

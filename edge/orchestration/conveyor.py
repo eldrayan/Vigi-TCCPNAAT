@@ -162,6 +162,8 @@ class ConveyorOrchestrator:
 
                 # Aguarda o sensor disparar
                 triggered = self.sensor.wait_for_trigger(timeout=poll_interval)
+                if self._stop_event.is_set():
+                    break
                 if not triggered:
                     continue
 
