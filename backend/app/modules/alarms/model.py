@@ -22,6 +22,7 @@ class Alarm(Base):
         ForeignKey("batches.id", ondelete="RESTRICT"), nullable=False
     )
     alarm_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
     rate: Mapped[float] = mapped_column(Float, nullable=False)
     threshold: Mapped[float] = mapped_column(Float, nullable=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False)

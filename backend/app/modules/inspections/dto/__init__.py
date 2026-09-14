@@ -11,6 +11,7 @@ from .enums import (
 )
 from .inspection_create import InspectionCreateDTO
 from .inspection_filter import InspectionFilterDTO
+from .inspection_page import InspectionPageDTO
 from .inspection_response import InspectionResponseDTO
 from .inspection_summary import InspectionSummaryDTO
 
@@ -18,6 +19,7 @@ __all__ = [
     "InspectionCategory",
     "InspectionCreateDTO",
     "InspectionFilterDTO",
+    "InspectionPageDTO",
     "InspectionResponseDTO",
     "InspectionSummaryDTO",
     "InspectionResult",

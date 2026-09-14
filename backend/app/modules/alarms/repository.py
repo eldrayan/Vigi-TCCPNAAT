@@ -29,12 +29,14 @@ class AlarmRepository:
         batch_id: int,
         rate: float,
         threshold: float,
+        name: str = "Alarme de qualidade",
         created_at,
     ) -> Alarm:
         alarm = Alarm(
             station_id=station_id,
             batch_id=batch_id,
             alarm_type="LIMITE_NAO_CONFORMIDADE",
+            name=name,
             rate=rate,
             threshold=threshold,
             status="ABERTO",

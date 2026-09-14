@@ -53,6 +53,7 @@ class AlarmService:
             batch_id=batch.id,
             rate=rate,
             threshold=batch.max_nonconformity_rate,
+            name=batch.alarm_name or "Alarme de qualidade",
             created_at=datetime.now(UTC),
         )
         return AlarmResponseDTO.model_validate(alarm)

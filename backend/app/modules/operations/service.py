@@ -50,6 +50,7 @@ class OperationsService:
         status = await self.repository.update_device_status(session, device_id, dto)
         return DeviceStatusDTO(
             connection=status.connection,
+            sensor=status.sensor,
             camera=status.camera,
             processing=status.processing,
             timestamp=status.reported_at,
@@ -63,6 +64,7 @@ class OperationsService:
             return None
         return DeviceStatusDTO(
             connection=status.connection,
+            sensor=status.sensor,
             camera=status.camera,
             processing=status.processing,
             timestamp=status.reported_at,

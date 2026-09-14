@@ -86,6 +86,17 @@ class InspectionRepository:
         )
         return list(result.scalars().all())
 
+    async def count(
+        self,
+        session: AsyncSession,
+        filters: InspectionFilterDTO | None = None,
+    ) -> int:
+        statement = self.apply_filters(
+            select(func.count(Inspection.inspection_id)), filters
+        )
+        result = await session.execute(statement)
+        return result.scalar_one()
+
     async def find_by_id(
         self,
         session: AsyncSession,

@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .dto import (
     InspectionCreateDTO,
     InspectionFilterDTO,
+    InspectionPageDTO,
     InspectionResponseDTO,
     InspectionSummaryDTO,
 )
@@ -33,12 +34,18 @@ class InspectionService:
         limit: int,
         offset: int,
         filters: InspectionFilterDTO | None = None,
-    ) -> list[InspectionResponseDTO]:
+    ) -> InspectionPageDTO:
         inspections = await self.repository.find_all(session, limit, offset, filters)
-        return [
-            InspectionResponseDTO.model_validate(inspection)
-            for inspection in inspections
-        ]
+        total = await self.repository.count(session, filters)
+        return InspectionPageDTO(
+            items=[
+                InspectionResponseDTO.model_validate(inspection)
+                for inspection in inspections
+            ],
+            total=total,
+            limit=limit,
+            offset=offset,
+        )
 
     async def find_by_id(
         self,

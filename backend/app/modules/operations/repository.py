@@ -54,6 +54,7 @@ class OperationsRepository:
                 status = StationStatus(
                     station_id=station.id,
                     connection=dto.connection,
+                    sensor=dto.sensor,
                     camera=dto.camera,
                     processing=dto.processing,
                     reported_at=dto.timestamp,
@@ -61,6 +62,7 @@ class OperationsRepository:
                 session.add(status)
             else:
                 status.connection = dto.connection
+                status.sensor = dto.sensor
                 status.camera = dto.camera
                 status.processing = dto.processing
                 status.reported_at = dto.timestamp
@@ -116,6 +118,8 @@ class OperationsRepository:
             if batch is None or batch.station_id != station_id:
                 raise LookupError("Lote não encontrado para a estação.")
             batch.max_nonconformity_rate = dto.max_nonconformity_rate
+            if dto.alarm_name is not None:
+                batch.alarm_name = dto.alarm_name
             await session.flush()
         return batch
 

@@ -45,6 +45,7 @@ class StationStatus(Base):
         ForeignKey("stations.id", ondelete="CASCADE"), primary_key=True
     )
     connection: Mapped[str] = mapped_column(String(20), nullable=False)
+    sensor: Mapped[str] = mapped_column(String(20), nullable=False)
     camera: Mapped[str] = mapped_column(String(20), nullable=False)
     processing: Mapped[str] = mapped_column(String(20), nullable=False)
     reported_at: Mapped[datetime] = mapped_column(
@@ -76,6 +77,7 @@ class Batch(Base):
     max_nonconformity_rate: Mapped[float | None] = mapped_column(
         Float, nullable=True
     )
+    alarm_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.current_timestamp()
     )

@@ -12,6 +12,7 @@ from app.infrastructure.database import get_session
 
 from .dto import (
     InspectionFilterDTO,
+    InspectionPageDTO,
     InspectionResponseDTO,
     InspectionSummaryDTO,
 )
@@ -24,13 +25,13 @@ service = InspectionService(InspectionRepository())
 SessionDependency = Annotated[AsyncSession, Depends(get_session)]
 
 
-@router.get("", response_model=list[InspectionResponseDTO])
+@router.get("", response_model=InspectionPageDTO)
 async def list_inspections(
     session: SessionDependency,
-    filters: Annotated[InspectionFilterDTO, Query()],
+    filters: Annotated[InspectionFilterDTO, Depends()],
     limit: int = Query(default=50, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
-) -> list[InspectionResponseDTO]:
+) -> InspectionPageDTO:
     return await service.find_all(session, limit, offset, filters)
 
 

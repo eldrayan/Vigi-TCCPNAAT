@@ -15,6 +15,7 @@ class AlarmResponseDTO(BaseModel):
     station_id: int
     batch_id: int
     alarm_type: str
+    name: str
     rate: float
     threshold: float
     status: str

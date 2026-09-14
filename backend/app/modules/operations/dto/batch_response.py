@@ -19,3 +19,4 @@ class BatchResponseDTO(BaseModel):
     finished_at: datetime | None
     created_at: datetime
     max_nonconformity_rate: float | None
+    alarm_name: str | None

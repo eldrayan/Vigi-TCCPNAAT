@@ -16,6 +16,7 @@ class ComponentStatus(StrEnum):
     """
 
     ONLINE = "ONLINE"
+    IDLE = "IDLE"
     OFFLINE = "OFFLINE"
     ERROR = "ERROR"
 
@@ -29,6 +30,7 @@ class DeviceStatusDTO(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     connection: ComponentStatus
+    sensor: ComponentStatus = ComponentStatus.OFFLINE
     camera: ComponentStatus
     processing: ComponentStatus
     timestamp: datetime

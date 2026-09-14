@@ -10,7 +10,12 @@ from app.infrastructure.database import Base, SessionFactory, engine
 from app.modules.inspections.dto import InspectionCreateDTO, InspectionFilterDTO
 from app.modules.inspections.repository import InspectionRepository
 from app.modules.inspections.service import InspectionService
-from app.modules.operations.dto import BatchCreateDTO, StationCreateDTO
+from app.modules.operations.dto import (
+    BatchCreateDTO,
+    ComponentStatus,
+    DeviceStatusDTO,
+    StationCreateDTO,
+)
 from app.modules.operations.repository import OperationsRepository
 from app.modules.operations.service import OperationsService
 
@@ -76,8 +81,42 @@ async def exercise_context_change() -> None:
     assert [batch.status for batch in batches] == ["ENCERRADO", "ATIVO"]
     assert inspection.station_code == "envase-01"
     assert inspection.batch_code == "LOTE-002"
-    assert [item.inspection_id for item in filtered] == [9001]
+    assert [item.inspection_id for item in filtered.items] == [9001]
 
 
 def test_only_one_batch_remains_active_per_station() -> None:
     asyncio.run(exercise_context_change())
+
+
+async def exercise_device_status() -> None:
+    await reset_database()
+    service = OperationsService(OperationsRepository())
+
+    async with SessionFactory() as session:
+        station = await service.create_station(
+            session,
+            StationCreateDTO(
+                code="envase-01",
+                name="Estação de envase 01",
+                device_id="leocio-raspberry",
+            ),
+        )
+        await service.report_device_status(
+            session,
+            station.device_id,
+            DeviceStatusDTO(
+                connection=ComponentStatus.ONLINE,
+                sensor=ComponentStatus.ONLINE,
+                camera=ComponentStatus.ONLINE,
+                processing=ComponentStatus.IDLE,
+                timestamp=datetime.now(UTC),
+            ),
+        )
+        status = await service.find_station_status(session, station.id)
+
+    assert status is not None
+    assert status.sensor == ComponentStatus.ONLINE
+
+
+def test_device_status_preserves_sensor_state() -> None:
+    asyncio.run(exercise_device_status())
