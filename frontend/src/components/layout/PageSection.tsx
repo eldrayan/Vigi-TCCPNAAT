@@ -14,12 +14,7 @@ interface PageSectionProps {
   action?: ReactNode;
 }
 
-export function PageSection({
-  title,
-  description,
-  children,
-  action,
-}: PageSectionProps) {
+export function PageSection({ title, description, children, action }: PageSectionProps) {
   return (
     <section className={styles.pageSection}>
       <header className={styles.pageIntro}>

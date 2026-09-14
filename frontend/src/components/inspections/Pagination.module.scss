@@ -18,7 +18,9 @@
     color: #64748b;
     background: transparent;
     cursor: pointer;
-    transition: background-color .15s ease, color .15s ease;
+    transition:
+      background-color 0.15s ease,
+      color 0.15s ease;
 
     &:hover:not(:disabled):not(.selected) {
       color: #0b3b59;

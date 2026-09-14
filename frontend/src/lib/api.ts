@@ -34,10 +34,40 @@ export interface InspectionSummary {
   nonconformities: Record<string, number>;
 }
 
-export interface Station { id: number; code: string; name: string; device_id: string; }
-export interface DeviceStatus { connection: string; sensor: string; camera: string; processing: string; timestamp: string; }
-export interface Alarm { id: number; station_id: number; batch_id: number; alarm_type: string; name: string; rate: number; threshold: number; status: string; created_at: string; acknowledged_at: string | null; acknowledged_by: string | null; }
-export interface InspectionFilters { station_code?: string; batch_code?: string; result?: string; nonconformity_type?: string; start_at?: string; end_at?: string; }
+export interface Station {
+  id: number;
+  code: string;
+  name: string;
+  device_id: string;
+}
+export interface DeviceStatus {
+  connection: string;
+  sensor: string;
+  camera: string;
+  processing: string;
+  timestamp: string;
+}
+export interface Alarm {
+  id: number;
+  station_id: number;
+  batch_id: number;
+  alarm_type: string;
+  name: string;
+  rate: number;
+  threshold: number;
+  status: string;
+  created_at: string;
+  acknowledged_at: string | null;
+  acknowledged_by: string | null;
+}
+export interface InspectionFilters {
+  station_code?: string;
+  batch_code?: string;
+  result?: string;
+  nonconformity_type?: string;
+  start_at?: string;
+  end_at?: string;
+}
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${apiUrl}${path}`, { headers: { "Content-Type": "application/json" }, ...init });
@@ -48,7 +78,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export const api = {
   summary: (filters: InspectionFilters = {}) => {
     const params = new URLSearchParams();
-    Object.entries(filters).forEach(([key, value]) => { if (value) params.set(key, value); });
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) params.set(key, value);
+    });
     const query = params.toString();
     return request<InspectionSummary>(`/api/inspecoes/resumo${query ? `?${query}` : ""}`);
   },
@@ -78,7 +110,15 @@ export const api = {
   stations: () => request<Station[]>("/api/estacoes"),
   stationStatus: (id: number) => request<DeviceStatus>(`/api/estacoes/${id}/status`),
   alarms: () => request<Alarm[]>("/api/alarmes"),
-  acknowledgeAlarm: (id: number, acknowledgedBy: string) => request<Alarm>(`/api/alarmes/${id}/reconhecer`, { method: "POST", body: JSON.stringify({ acknowledged_by: acknowledgedBy }) }),
-  configureAlarm: (stationId: number, batchId: number, name: string, limit: number) => request(`/api/estacoes/${stationId}/lotes/${batchId}/limite`, { method: "PUT", body: JSON.stringify({ alarm_name: name, max_nonconformity_rate: limit }) }),
+  acknowledgeAlarm: (id: number, acknowledgedBy: string) =>
+    request<Alarm>(`/api/alarmes/${id}/reconhecer`, {
+      method: "POST",
+      body: JSON.stringify({ acknowledged_by: acknowledgedBy }),
+    }),
+  configureAlarm: (stationId: number, batchId: number, name: string, limit: number) =>
+    request(`/api/estacoes/${stationId}/lotes/${batchId}/limite`, {
+      method: "PUT",
+      body: JSON.stringify({ alarm_name: name, max_nonconformity_rate: limit }),
+    }),
   eventsUrl: `${apiUrl}/api/eventos/stream`,
 };

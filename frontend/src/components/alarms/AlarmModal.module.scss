@@ -1,16 +1,106 @@
-.backdrop { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 20px; background: #05243c99; }
-.configModal, .alertModal { width: min(100%, 440px); padding: 28px; border-radius: 16px; background: #fff; box-shadow: 0 22px 60px #00192780; }
-.configModal > div:first-child p, .alertModal > p { margin: 0 0 8px; color: #64818f; font-size: 10px; font-weight: 700; letter-spacing: .12em; }
-.configModal h2, .alertModal h2 { margin: 0; color: #05243c; font-size: 23px; }
-.configModal form { display: grid; gap: 16px; margin-top: 24px; }
-.configModal label, .alertModal label { display: grid; gap: 7px; color: #345563; font-size: 13px; font-weight: 600; }
-.configModal input, .alertModal input { min-height: 42px; border: 1px solid #c7d8dc; border-radius: 8px; padding: 0 12px; color: #05243c; background: #fff; font: inherit; font-weight: 400; }
-.actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
-.actions button, .alertModal button { min-height: 40px; border: 1px solid #b9ddd4; border-radius: 999px; padding: 0 16px; color: #007d64; background: #f0faf7; font: inherit; font-size: 13px; cursor: pointer; }
-.actions button:first-child { border-color: #c7d8dc; color: #52717c; background: #fff; }
-.alertModal { text-align: center; border: 2px solid #d85d5d; }
-.alertModal > svg { margin-bottom: 14px; color: #c94a4a; }
-.alertModal > span { display: block; margin: 12px 0 22px; color: #79919b; font-size: 13px; }
-.alertModal label { text-align: left; }
-.alertModal button { width: 100%; margin-top: 18px; border-color: #c94a4a; color: #fff; background: #c94a4a; }
-.alertModal button:disabled { cursor: not-allowed; opacity: .55; }
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: #05243c99;
+}
+.configModal,
+.alertModal {
+  width: min(100%, 440px);
+  padding: 28px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 22px 60px #00192780;
+}
+.configModal > div:first-child p,
+.alertModal > p {
+  margin: 0 0 8px;
+  color: #64818f;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+.configModal h2,
+.alertModal h2 {
+  margin: 0;
+  color: #05243c;
+  font-size: 23px;
+}
+.configModal form {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+}
+.configModal label,
+.alertModal label {
+  display: grid;
+  gap: 7px;
+  color: #345563;
+  font-size: 13px;
+  font-weight: 600;
+}
+.configModal input,
+.alertModal input {
+  min-height: 42px;
+  border: 1px solid #c7d8dc;
+  border-radius: 8px;
+  padding: 0 12px;
+  color: #05243c;
+  background: #fff;
+  font: inherit;
+  font-weight: 400;
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+.actions button,
+.alertModal button {
+  min-height: 40px;
+  border: 1px solid #b9ddd4;
+  border-radius: 999px;
+  padding: 0 16px;
+  color: #007d64;
+  background: #f0faf7;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.actions button:first-child {
+  border-color: #c7d8dc;
+  color: #52717c;
+  background: #fff;
+}
+.alertModal {
+  text-align: center;
+  border: 2px solid #d85d5d;
+}
+.alertModal > svg {
+  margin-bottom: 14px;
+  color: #c94a4a;
+}
+.alertModal > span {
+  display: block;
+  margin: 12px 0 22px;
+  color: #79919b;
+  font-size: 13px;
+}
+.alertModal label {
+  text-align: left;
+}
+.alertModal button {
+  width: 100%;
+  margin-top: 18px;
+  border-color: #c94a4a;
+  color: #fff;
+  background: #c94a4a;
+}
+.alertModal button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}

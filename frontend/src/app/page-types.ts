@@ -14,11 +14,7 @@ export interface PageData {
   inspectionOffset: number;
   stations: StationWithStatus[];
   alarms: Alarm[];
-  onFilterInspections: (
-    filters: InspectionFilters,
-    limit?: number,
-    offset?: number,
-  ) => void;
+  onFilterInspections: (filters: InspectionFilters, limit?: number, offset?: number) => void;
   onAcknowledgeAlarm: (id: number, acknowledgedBy: string) => Promise<void>;
   onConfigureAlarm: (name: string, limit: number) => Promise<void>;
 }

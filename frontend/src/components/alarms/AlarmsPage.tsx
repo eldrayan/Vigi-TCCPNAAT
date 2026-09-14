@@ -19,10 +19,42 @@ export function AlarmsPage({ alarms, stations, onAcknowledgeAlarm, onConfigureAl
     const responsible = window.prompt("Informe o responsável pelo reconhecimento:");
     if (responsible?.trim()) await onAcknowledgeAlarm(alarm.id, responsible.trim());
   };
-  return <>
-    <PageSection title="Alarmes" description="Visualize eventos não conformes e alertas que exigem atenção." action={<button className={styles.configure} type="button" onClick={() => setConfiguring(true)}>Adicionar alarme</button>}>
-      <div className={styles.list}>{alarms.map((alarm) => <article className={styles.alarm} key={alarm.id}><div className={styles.icon}><ShieldAlert size={20} /></div><div><h3>{alarm.name}</h3><p>{stations.find((station) => station.id === alarm.station_id)?.name ?? "Estação desconhecida"} · Taxa {alarm.rate.toLocaleString("pt-BR")}% (limite: {alarm.threshold.toLocaleString("pt-BR")}%)</p>{alarm.acknowledged_by && <small>Reconhecido por {alarm.acknowledged_by}</small>}</div><time>{formatDate(alarm.created_at)}</time>{alarm.status === "ABERTO" && <button className={styles.acknowledge} type="button" onClick={() => void acknowledge(alarm)}>Reconhecer</button>}</article>)}</div>
-    </PageSection>
-    {configuring && <AlarmConfigurationModal onClose={() => setConfiguring(false)} onSave={onConfigureAlarm} />}
-  </>;
+  return (
+    <>
+      <PageSection
+        title="Alarmes"
+        description="Visualize eventos não conformes e alertas que exigem atenção."
+        action={
+          <button className={styles.configure} type="button" onClick={() => setConfiguring(true)}>
+            Adicionar alarme
+          </button>
+        }
+      >
+        <div className={styles.list}>
+          {alarms.map((alarm) => (
+            <article className={styles.alarm} key={alarm.id}>
+              <div className={styles.icon}>
+                <ShieldAlert size={20} />
+              </div>
+              <div>
+                <h3>{alarm.name}</h3>
+                <p>
+                  {stations.find((station) => station.id === alarm.station_id)?.name ?? "Estação desconhecida"} · Taxa{" "}
+                  {alarm.rate.toLocaleString("pt-BR")}% (limite: {alarm.threshold.toLocaleString("pt-BR")}%)
+                </p>
+                {alarm.acknowledged_by && <small>Reconhecido por {alarm.acknowledged_by}</small>}
+              </div>
+              <time>{formatDate(alarm.created_at)}</time>
+              {alarm.status === "ABERTO" && (
+                <button className={styles.acknowledge} type="button" onClick={() => void acknowledge(alarm)}>
+                  Reconhecer
+                </button>
+              )}
+            </article>
+          ))}
+        </div>
+      </PageSection>
+      {configuring && <AlarmConfigurationModal onClose={() => setConfiguring(false)} onSave={onConfigureAlarm} />}
+    </>
+  );
 }

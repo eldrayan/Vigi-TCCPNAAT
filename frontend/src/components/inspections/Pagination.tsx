@@ -3,12 +3,7 @@
  * Autor: Leôncio Ferreira
  */
 
-import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 
 import styles from "./Pagination.module.scss";
 
@@ -26,13 +21,7 @@ function visiblePages(current: number, total: number): number[] {
   return Array.from({ length: end - start + 1 }, (_, index) => start + index);
 }
 
-export function Pagination({
-  total,
-  limit,
-  offset,
-  onPageChange,
-  onPageSizeChange,
-}: PaginationProps) {
+export function Pagination({ total, limit, offset, onPageChange, onPageSizeChange }: PaginationProps) {
   const totalPages = Math.max(1, Math.ceil(total / limit));
   const currentPage = Math.floor(offset / limit) + 1;
   const start = total === 0 ? 0 : offset + 1;
@@ -44,7 +33,12 @@ export function Pagination({
       <button type="button" aria-label="Primeira página" disabled={currentPage === 1} onClick={() => change(1)}>
         <ChevronsLeft size={16} />
       </button>
-      <button type="button" aria-label="Página anterior" disabled={currentPage === 1} onClick={() => change(currentPage - 1)}>
+      <button
+        type="button"
+        aria-label="Página anterior"
+        disabled={currentPage === 1}
+        onClick={() => change(currentPage - 1)}
+      >
         <ChevronLeft size={16} />
       </button>
       {visiblePages(currentPage, totalPages).map((page) => (
@@ -58,14 +52,30 @@ export function Pagination({
           {page}
         </button>
       ))}
-      <button type="button" aria-label="Próxima página" disabled={currentPage === totalPages} onClick={() => change(currentPage + 1)}>
+      <button
+        type="button"
+        aria-label="Próxima página"
+        disabled={currentPage === totalPages}
+        onClick={() => change(currentPage + 1)}
+      >
         <ChevronRight size={16} />
       </button>
-      <button type="button" aria-label="Última página" disabled={currentPage === totalPages} onClick={() => change(totalPages)}>
+      <button
+        type="button"
+        aria-label="Última página"
+        disabled={currentPage === totalPages}
+        onClick={() => change(totalPages)}
+      >
         <ChevronsRight size={16} />
       </button>
-      <span>{start} - {end} de {total}</span>
-      <select aria-label="Itens por página" value={limit} onChange={(event) => onPageSizeChange(Number(event.target.value))}>
+      <span>
+        {start} - {end} de {total}
+      </span>
+      <select
+        aria-label="Itens por página"
+        value={limit}
+        onChange={(event) => onPageSizeChange(Number(event.target.value))}
+      >
         <option value={10}>10</option>
         <option value={20}>20</option>
         <option value={50}>50</option>

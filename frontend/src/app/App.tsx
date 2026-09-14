@@ -29,12 +29,14 @@ export function App() {
     onAcknowledgeAlarm: dashboard.acknowledgeAlarm,
     onConfigureAlarm: dashboard.configureAlarm,
   };
-  const pages = dashboard.data ? {
-    "Visão geral": <OverviewPage {...dashboard.data} {...pageActions} />,
-    Inspeções: <InspectionsPage {...dashboard.data} {...pageActions} />,
-    Estações: <StationsPage {...dashboard.data} {...pageActions} />,
-    Alarmes: <AlarmsPage {...dashboard.data} {...pageActions} />,
-  } : null;
+  const pages = dashboard.data
+    ? {
+        "Visão geral": <OverviewPage {...dashboard.data} {...pageActions} />,
+        Inspeções: <InspectionsPage {...dashboard.data} {...pageActions} />,
+        Estações: <StationsPage {...dashboard.data} {...pageActions} />,
+        Alarmes: <AlarmsPage {...dashboard.data} {...pageActions} />,
+      }
+    : null;
   const activeAlarm = dashboard.data?.alarms.find((alarm) => alarm.status === "ABERTO");
 
   return (
@@ -51,8 +53,18 @@ export function App() {
           {navigation.map((item) => {
             const Icon = item.icon;
             return (
-              <a className={activePage === item.label ? styles.activeLink : ""} href={`#${item.label.toLowerCase()}`} key={item.label} onClick={(event) => { event.preventDefault(); setActivePage(item.label); }}>
-                <span aria-hidden="true"><Icon size={18} strokeWidth={1.7} /></span>
+              <a
+                className={activePage === item.label ? styles.activeLink : ""}
+                href={`#${item.label.toLowerCase()}`}
+                key={item.label}
+                onClick={(event) => {
+                  event.preventDefault();
+                  setActivePage(item.label);
+                }}
+              >
+                <span aria-hidden="true">
+                  <Icon size={18} strokeWidth={1.7} />
+                </span>
                 {item.label}
               </a>
             );
@@ -69,7 +81,13 @@ export function App() {
           </header>
         )}
 
-        {dashboard.error ? <ErrorState message={dashboard.error} onRetry={() => void dashboard.refresh()} /> : dashboard.loading || pages === null ? <section className={styles.loading}>Carregando dados operacionais…</section> : pages[activePage as keyof typeof pages]}
+        {dashboard.error ? (
+          <ErrorState message={dashboard.error} onRetry={() => void dashboard.refresh()} />
+        ) : dashboard.loading || pages === null ? (
+          <section className={styles.loading}>Carregando dados operacionais…</section>
+        ) : (
+          pages[activePage as keyof typeof pages]
+        )}
       </main>
       {activeAlarm && <ActiveAlarmModal alarm={activeAlarm} onConfirm={dashboard.acknowledgeAlarm} />}
     </div>
