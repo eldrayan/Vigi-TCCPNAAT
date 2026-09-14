@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import signal
 import sys
 from pathlib import Path
@@ -20,6 +21,10 @@ from edge.acquisition.camera import Camera  # noqa: E402
 from edge.acquisition.sensor import (  # noqa: E402
     PhotoelectricSensor,
     SimulatedPhotoelectricSensor,
+)
+from edge.actuation.indicators import (  # noqa: E402
+    GPIOStatusIndicators,
+    validate_gpio_pin_assignments,
 )
 from edge.inference.engine import InferenceEngine  # noqa: E402
 from edge.messaging.event import InspectionEvent  # noqa: E402
@@ -118,6 +123,35 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Filtro de debounce em ms (30 a 100 ms, conforme RNF08)",
     )
     parser.add_argument(
+        "--enable-indicators",
+        action="store_true",
+        help="Ativar LEDs e buzzer físicos da issue #32",
+    )
+    parser.add_argument(
+        "--green-led-pin",
+        type=int,
+        default=27,
+        help="GPIO BCM do LED verde (padrão: 27)",
+    )
+    parser.add_argument(
+        "--red-led-pin",
+        type=int,
+        default=22,
+        help="GPIO BCM do LED vermelho (padrão: 22)",
+    )
+    parser.add_argument(
+        "--buzzer-pin",
+        type=int,
+        default=23,
+        help="GPIO BCM do driver do buzzer ativo (padrão: 23)",
+    )
+    parser.add_argument(
+        "--critical-alarm-after",
+        type=int,
+        default=3,
+        help="Não conformidades consecutivas para disparar o buzzer (padrão: 3)",
+    )
+    parser.add_argument(
         "--mqtt-host",
         default="localhost",
         help="Endereço do broker Mosquitto",
@@ -175,6 +209,23 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
+def validate_hardware_pin_configuration(args: argparse.Namespace) -> None:
+    """Rejeita configurações que disputem uma GPIO física."""
+    if not args.enable_indicators:
+        return
+    if args.critical_alarm_after < 1:
+        raise ValueError("critical_alarm_after deve ser maior ou igual a 1")
+
+    assignments = {
+        "led_verde": args.green_led_pin,
+        "led_vermelho": args.red_led_pin,
+        "buzzer": args.buzzer_pin,
+    }
+    if not args.simulated_sensor:
+        assignments["sensor"] = args.gpio_pin
+    validate_gpio_pin_assignments(**assignments)
+
+
 def format_inspection_banner(event: InspectionEvent, timing: CycleTiming) -> str:
     """Formata um bloco visual destacado com o resultado e tipo de não conformidade."""
     conf_str = (
@@ -217,6 +268,12 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     setup_logging(args.verbose)
     logger = logging.getLogger("vigi.conveyor")
+
+    try:
+        validate_hardware_pin_configuration(args)
+    except ValueError as exc:
+        logger.error("Configuração de GPIO inválida: %s", exc)
+        return 2
 
     logger.info("=" * 60)
     logger.info("VIGI — SISTEMA EMBARCADO DE INSPEÇÃO EM ESTEIRA (RPi 5)")
@@ -289,7 +346,28 @@ def main(argv: list[str] | None = None) -> int:
             camera.release()
             return 1
 
-    # 4. Publicador MQTT com LWT
+    # 4. Sinalização física opcional
+    indicators = None
+    if args.enable_indicators:
+        try:
+            indicators = GPIOStatusIndicators(
+                green_pin=args.green_led_pin,
+                red_pin=args.red_led_pin,
+                buzzer_pin=args.buzzer_pin,
+            )
+            logger.info(
+                "Indicadores ativos: verde=GPIO%d, vermelho=GPIO%d, buzzer=GPIO%d",
+                args.green_led_pin,
+                args.red_led_pin,
+                args.buzzer_pin,
+            )
+        except Exception as exc:
+            logger.error("Falha ao inicializar os indicadores GPIO: %s", exc)
+            sensor.close()
+            camera.release()
+            return 1
+
+    # 5. Publicador MQTT com LWT
     publisher = MQTTInspectionPublisher(
         host=args.mqtt_host,
         port=args.mqtt_port,
@@ -309,6 +387,8 @@ def main(argv: list[str] | None = None) -> int:
         publisher=publisher,
         save_dir=args.save_dir,
         on_inspection=handle_inspection,
+        indicators=indicators,
+        critical_alarm_after=args.critical_alarm_after,
     )
 
 
@@ -319,6 +399,16 @@ def main(argv: list[str] | None = None) -> int:
 
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
+    if indicators is not None and hasattr(signal, "SIGUSR1"):
+
+        def acknowledge_alarm_handler(signum, frame):
+            logger.info("Reconhecimento do alarme físico recebido.")
+            orchestrator.acknowledge_alarm()
+
+        signal.signal(signal.SIGUSR1, acknowledge_alarm_handler)
+        logger.info(
+            "Para reconhecer e silenciar o buzzer: kill -USR1 %d", os.getpid()
+        )
 
     try:
         orchestrator.run(max_cycles=args.max_inspections)
