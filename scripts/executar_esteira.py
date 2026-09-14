@@ -34,7 +34,10 @@ def create_camera(
     height: int,
     warmup_seconds: float = 2.0,
 ) -> Camera:
-    if backend == "picamera2":
+    from edge.acquisition.camera import CameraFactory
+
+    resolved_backend = CameraFactory.resolve_backend(backend)
+    if resolved_backend == "picamera2":
         from edge.acquisition.backends.picamera2_camera import Picamera2Camera
 
         return Picamera2Camera(

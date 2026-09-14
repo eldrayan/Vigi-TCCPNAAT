@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import socket
 import sys
 from http import server
 from pathlib import Path
@@ -139,6 +140,21 @@ def make_handler(camera, cv2):
     return StreamingHandler
 
 
+def detect_host_ip() -> str:
+    """Tenta detectar o IP da interface de rede local ativa sem resolver loopback."""
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("10.255.255.255", 1))
+        ip = s.getsockname()[0]
+        if ip and not ip.startswith("127."):
+            return ip
+    except Exception:
+        pass
+    finally:
+        s.close()
+    return "<IP_DA_RASPBERRY>"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -174,10 +190,11 @@ def main() -> int:
     address = ("", args.port)
     httpd = StreamingServer(address, handler_class)
 
+    host_ip = detect_host_ip()
     logger.info("=" * 60)
     logger.info("PREVIEW AO VIVO DA CÂMERA INICIADO!")
     logger.info("Abra no navegador do seu notebook:")
-    logger.info("👉 http://192.168.1.110:%d", args.port)
+    logger.info("👉 http://%s:%d", host_ip, args.port)
     logger.info("Pressione Ctrl+C para encerrar o preview.")
     logger.info("=" * 60)
 
