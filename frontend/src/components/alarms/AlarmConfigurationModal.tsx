@@ -1,3 +1,8 @@
+/**
+ * Descrição: Configura o nome e o limite percentual de um alarme do lote ativo.
+ * Autor: Leôncio Ferreira
+ */
+
 import { useState, type FormEvent } from "react";
 
 import styles from "./AlarmModal.module.scss";
@@ -7,7 +12,6 @@ interface AlarmConfigurationModalProps {
   onSave: (name: string, limit: number) => Promise<void>;
 }
 
-/** Configura o nome e o percentual limite do alarme do lote ativo. */
 export function AlarmConfigurationModal({ onClose, onSave }: AlarmConfigurationModalProps) {
   const [name, setName] = useState("Alarme de qualidade");
   const [limit, setLimit] = useState("20");

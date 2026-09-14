@@ -1,3 +1,8 @@
+/**
+ * Descrição: Inicializa a aplicação React do dashboard Vigi.
+ * Autor: Leôncio Ferreira
+ */
+
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 

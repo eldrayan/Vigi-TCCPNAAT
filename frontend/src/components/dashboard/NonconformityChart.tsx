@@ -1,3 +1,8 @@
+/**
+ * Descrição: Renderiza a distribuição de não conformidades por tipo.
+ * Autor: Leôncio Ferreira
+ */
+
 import {
   ArcElement,
   Chart,
@@ -13,7 +18,6 @@ Chart.register(DoughnutController, ArcElement, Legend, Tooltip);
 
 interface NonconformityChartProps { data: Record<string, number>; }
 
-/** Exibe a distribuição dos defeitos físicos registrados no período. */
 export function NonconformityChart({ data }: NonconformityChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 

@@ -1,3 +1,8 @@
+/**
+ * Descrição: Solicita o reconhecimento explícito de um alarme crítico aberto.
+ * Autor: Leôncio Ferreira
+ */
+
 import { ShieldAlert } from "lucide-react";
 import { useState } from "react";
 
@@ -9,7 +14,6 @@ interface ActiveAlarmModalProps {
   onConfirm: (alarmId: number, responsible: string) => Promise<void>;
 }
 
-/** Exige o reconhecimento explícito de um alarme ainda aberto. */
 export function ActiveAlarmModal({ alarm, onConfirm }: ActiveAlarmModalProps) {
   const [responsible, setResponsible] = useState("");
   const [submitting, setSubmitting] = useState(false);

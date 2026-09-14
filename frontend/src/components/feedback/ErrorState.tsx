@@ -1,3 +1,8 @@
+/**
+ * Descrição: Exibe o estado padronizado para falhas de carregamento ou comunicação.
+ * Autor: Leôncio Ferreira
+ */
+
 import { AlertCircle, RefreshCw } from "lucide-react";
 
 import styles from "./ErrorState.module.scss";
@@ -8,7 +13,6 @@ interface ErrorStateProps {
   onRetry?: () => void;
 }
 
-/** Estado visual padronizado para falhas de carregamento ou comunicação. */
 export function ErrorState({
   title = "Não foi possível carregar os dados",
   message = "Ocorreu um erro inesperado. Tente novamente em alguns instantes.",
