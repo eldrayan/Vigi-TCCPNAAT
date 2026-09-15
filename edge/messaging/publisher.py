@@ -144,10 +144,11 @@ class MQTTInspectionPublisher:
             retain=False,
         )
 
-    def publish(self, event: InspectionEvent) -> None:
+    def publish(self, event: InspectionEvent, topic: str | None = None) -> None:
         """Método de publicação compatível com chamadas one-shot e persistentes."""
         if self._persistent_session:
-            self.publish_inspection(event)
+            payload = json.dumps(event.as_dict(), ensure_ascii=False)
+            self.client.publish(topic or self.topic, payload, qos=1, retain=False)
             return
 
         # Modo one-shot (conecta -> publica -> desconecta)
@@ -155,7 +156,7 @@ class MQTTInspectionPublisher:
         self.client.loop_start()
         try:
             publication = self.client.publish(
-                self.topic,
+                topic or self.topic,
                 json.dumps(event.as_dict(), ensure_ascii=False),
                 qos=1,
                 retain=False,

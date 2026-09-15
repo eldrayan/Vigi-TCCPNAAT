@@ -10,7 +10,6 @@ MQTT_IMAGE ?= eclipse-mosquitto:2.0.22
 HOST ?= localhost
 PORT ?= 1883
 TOPIC ?= vigi/teste
-MODEL_TOPIC ?= vigi/esteira/inspecoes
 MANIFEST ?= models/active/manifest.json
 CAMERA ?= 0
 CAMERA_BACKEND ?= picamera2
@@ -45,10 +44,12 @@ help:
 	@echo "make infer-help                    Mostra as opções do modelo"
 	@echo "make infer-image IMAGE=imagem.jpg Executa o modelo e publica no MQTT"
 	@echo "make infer-camera                  Captura da câmera e publica no MQTT"
+	@echo "make monitor-edge                  Mantém o estado da Raspberry publicado"
 	@echo "make preview-camera                Inicia streaming HTTP de preview da câmera na porta 8080"
 	@echo "make run-esteira                   Inicia laço contínuo da esteira (sensor + câmera + MQTT)"
 	@echo "make mqtt-sub                      Escuta mensagens MQTT"
 	@echo "make mqtt-pub MSG='mensagem'       Publica uma mensagem MQTT"
+	@echo "make sync-outbox                    Reenvia continuamente a fila offline"
 	@echo ""
 	@echo "Atalhos dos comandos do README:"
 	@echo "make check-env                     Verifica o ambiente de treinamento"
@@ -90,7 +91,7 @@ test-backend:
 	cd backend && uv run --frozen pytest -q
 
 lint:
-	$(UV_RUN) ruff check backend/app backend/migrations edge scripts tests
+	$(UV_RUN) ruff check backend/app backend/migrations backend/tests edge scripts tests
 
 check-env:
 	$(UV_RUN) python scripts/verificar_ambiente.py
@@ -198,8 +199,7 @@ infer-image:
 		--manifest "$(MANIFEST)" \
 		--image "$(IMAGE)" \
 		--mqtt-host "$(HOST)" \
-		--mqtt-port "$(PORT)" \
-		--mqtt-topic "$(MODEL_TOPIC)"
+		--mqtt-port "$(PORT)"
 
 infer-camera:
 	$(UV_RUN) python scripts/infer.py \
@@ -207,8 +207,17 @@ infer-camera:
 		--camera "$(CAMERA)" \
 		--backend "$(CAMERA_BACKEND)" \
 		--mqtt-host "$(HOST)" \
-		--mqtt-port "$(PORT)" \
-		--mqtt-topic "$(MODEL_TOPIC)"
+		--mqtt-port "$(PORT)"
+
+monitor-edge:
+	$(UV_RUN) python scripts/monitor_edge.py \
+		--mqtt-host "$(HOST)" \
+		--mqtt-port "$(PORT)"
+
+sync-outbox:
+	$(UV_RUN) python scripts/sync_outbox.py \
+		--mqtt-host "$(HOST)" \
+		--mqtt-port "$(PORT)"
 
 mqtt-sub:
 	docker run --rm --network host $(MQTT_IMAGE) \

@@ -1,4 +1,5 @@
-"""Descrição: Verifica confirmação MQTT somente após persistência.
+"""
+Descrição: Verifica confirmação MQTT somente após persistência.
 Autor: Leôncio Ferreira
 """
 
