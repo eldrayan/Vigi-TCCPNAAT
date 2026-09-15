@@ -3308,6 +3308,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "dagshub" },
+    { name = "dvc", extra = ["s3"] },
     { name = "dvc-ssh" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
@@ -3324,9 +3325,6 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
-mlops = [
-    { name = "dvc", extra = ["s3"] },
-]
 train = [
     { name = "matplotlib" },
 ]
@@ -3342,7 +3340,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "dagshub", specifier = ">=0.7.2" },
-    { name = "dvc", extras = ["s3"], marker = "extra == 'mlops'", specifier = ">=3.50,<4" },
+    { name = "dvc", extras = ["s3"], specifier = ">=3.50,<4" },
     { name = "dvc-ssh", specifier = ">=4.3.0" },
     { name = "matplotlib", marker = "extra == 'train'", specifier = ">=3.8,<4" },
     { name = "numpy", specifier = ">=1.26,<3" },
@@ -3357,7 +3355,7 @@ requires-dist = [
     { name = "torchvision", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'", specifier = ">=0.24,<1", index = "https://download.pytorch.org/whl/cu130" },
     { name = "ultralytics", specifier = ">=8.2,<9" },
 ]
-provides-extras = ["train", "mlops"]
+provides-extras = ["train"]
 
 [package.metadata.requires-dev]
 dev = [

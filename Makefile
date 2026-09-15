@@ -106,7 +106,7 @@ dvc-login:
 	uv run dagshub login
 
 dvc-pull:
-	uv run python scripts/dvc_dagshub.py pull
+	uv run python scripts/dvc_dagshub.py pull "$(DATASET).dvc" models.dvc
 
 dataset-validate:
 	$(UV_RUN) python scripts/validar_dataset.py --dataset "$(DATASET)"

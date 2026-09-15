@@ -189,7 +189,7 @@ Use Python 3.12 e instale os grupos necessários com `uv`:
 
 ```bash
 uv python install 3.12
-uv sync --python 3.12 --extra train --extra mlops --group dev
+uv sync --python 3.12 --extra train --group dev
 uv run python scripts/verificar_ambiente.py
 ```
 
@@ -214,7 +214,7 @@ script indicado no guia.
 Para baixar dataset e modelos depois do clone:
 
 ```bash
-uv sync --extra mlops
+uv sync
 uv run dagshub login
 uv run python scripts/dvc_dagshub.py pull
 ```
