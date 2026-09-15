@@ -30,11 +30,11 @@ def main(argv: list[str] | None = None) -> int:
         port=args.mqtt_port,
         device_id=args.device_id,
     )
-    publisher.start(camera="ONLINE", processing="ONLINE")
+    publisher.start(sensor="ONLINE", camera="ONLINE", processing="ONLINE")
     try:
         while True:
             time.sleep(args.interval)
-            publisher.publish(camera="ONLINE", processing="ONLINE")
+            publisher.publish(sensor="ONLINE", camera="ONLINE", processing="ONLINE")
     except KeyboardInterrupt:
         publisher.stop()
     return 0

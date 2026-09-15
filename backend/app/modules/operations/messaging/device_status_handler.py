@@ -35,6 +35,7 @@ class DeviceStatusMessageHandler:
 
         status = DeviceStatusDTO(
             connection=message.connection,
+            sensor=message.sensor,
             camera=message.camera,
             processing=message.processing,
             timestamp=message.timestamp,

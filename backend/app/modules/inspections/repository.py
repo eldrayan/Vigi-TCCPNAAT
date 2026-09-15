@@ -28,8 +28,10 @@ class InspectionRepository:
                     select(Station.id, Batch.id)
                     .join(Batch, Batch.station_id == Station.id)
                     .where(
-                        Station.code == dto.station_code,
-                        Batch.code == dto.batch_code,
+                        func.lower(func.replace(Station.code, "_", "-"))
+                        == func.lower(func.replace(dto.station_code, "_", "-")),
+                        func.lower(func.replace(Batch.code, "_", "-"))
+                        == func.lower(func.replace(dto.batch_code, "_", "-")),
                     )
                 )
                 row = context.one_or_none()
@@ -108,24 +110,61 @@ class InspectionRepository:
         self,
         session: AsyncSession,
         filters: InspectionFilterDTO | None = None,
-    ) -> tuple[int, int, int]:
+    ) -> dict[str, int | float]:
         statement = select(
             func.count(Inspection.inspection_id),
             func.sum(case((Inspection.result == "CONFORME", 1), else_=0)),
             func.sum(case((Inspection.result == "NAO_CONFORME", 1), else_=0)),
+            func.sum(
+                case((Inspection.nonconformity_type == "SEM_TAMPA", 1), else_=0)
+            ),
+            func.sum(
+                case((Inspection.nonconformity_type == "TAMPA_TORTA", 1), else_=0)
+            ),
+            func.sum(
+                case((Inspection.nonconformity_type == "AMASSADO", 1), else_=0)
+            ),
+            func.sum(case((Inspection.category == "FALHA_TECNICA", 1), else_=0)),
         )
         result = await session.execute(self.apply_filters(statement, filters))
-        total, compliant, noncompliant = result.one()
-        return total or 0, compliant or 0, noncompliant or 0
+        (
+            total,
+            compliant,
+            noncompliant,
+            sem_tampa,
+            tampa_torta,
+            amassado,
+            falha_tecnica,
+        ) = result.one()
+        tot = total or 0
+        comp = compliant or 0
+        noncomp = noncompliant or 0
+        rate = round((comp / tot * 100), 2) if tot > 0 else 100.0
+        return {
+            "total": tot,
+            "compliant": comp,
+            "noncompliant": noncomp,
+            "compliance_rate": rate,
+            "sem_tampa": sem_tampa or 0,
+            "tampa_torta": tampa_torta or 0,
+            "amassado": amassado or 0,
+            "falha_tecnica": falha_tecnica or 0,
+        }
 
     @staticmethod
     def apply_filters(statement, filters: InspectionFilterDTO | None):
         if filters is None:
             return statement
         if filters.station_code is not None:
-            statement = statement.where(Inspection.station_code == filters.station_code)
+            statement = statement.where(
+                func.lower(func.replace(Inspection.station_code, "_", "-"))
+                == func.lower(func.replace(filters.station_code, "_", "-"))
+            )
         if filters.batch_code is not None:
-            statement = statement.where(Inspection.batch_code == filters.batch_code)
+            statement = statement.where(
+                func.lower(func.replace(Inspection.batch_code, "_", "-"))
+                == func.lower(func.replace(filters.batch_code, "_", "-"))
+            )
         if filters.result is not None:
             statement = statement.where(Inspection.result == filters.result.value)
         if filters.nonconformity_type is not None:

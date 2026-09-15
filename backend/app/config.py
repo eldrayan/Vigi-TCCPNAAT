@@ -27,7 +27,9 @@ class Settings(BaseSettings):
     mqtt_qos: int = 1
     mqtt_max_retries: int = 5
     mqtt_topic_inspections: str = "vigi/estacoes/+/inspecoes"
+    mqtt_topic_conveyor_inspections: str = "vigi/esteira/inspecoes"
     mqtt_topic_device_status: str = "vigi/dispositivos/+/status"
+    mqtt_topic_alarms: str = "vigi/esteira/alarmes"
 
 
 @lru_cache

@@ -50,6 +50,7 @@ def test_status_publisher_uses_lwt_and_retains_current_state() -> None:
     assert client.will[0] == "vigi/dispositivos/leocio-raspberry/status"
     assert client.will[1]["device_id"] == "leocio-raspberry"
     assert client.will[1]["connection"] == "OFFLINE"
+    assert client.will[1]["sensor"] == "OFFLINE"
     assert client.will[1]["camera"] == "OFFLINE"
     assert client.will[1]["processing"] == "OFFLINE"
     assert "timestamp" in client.will[1]
@@ -57,6 +58,8 @@ def test_status_publisher_uses_lwt_and_retains_current_state() -> None:
     online = json.loads(client.publications[0][1])
     offline = json.loads(client.publications[1][1])
     assert online["connection"] == "ONLINE"
+    assert online["sensor"] == "ONLINE"
     assert online["camera"] == "ONLINE"
     assert offline["connection"] == "OFFLINE"
+    assert offline["sensor"] == "OFFLINE"
     assert client.publications[0][2:] == (1, True)

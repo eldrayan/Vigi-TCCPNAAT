@@ -3,6 +3,7 @@ Descrição: Expõe o fluxo SSE de inspeções e estados das estações.
 Autor: Leôncio Ferreira
 """
 
+import asyncio
 import json
 from collections.abc import AsyncIterator
 from typing import Any
@@ -32,8 +33,11 @@ async def stream_events(request: Request) -> StreamingResponse:
             while True:
                 if await request.is_disconnected():
                     break
-                event = await queue.get()
-                yield format_sse(event)
+                try:
+                    event = await asyncio.wait_for(queue.get(), timeout=15.0)
+                    yield format_sse(event)
+                except TimeoutError:
+                    yield ": ping\n\n"
         finally:
             bus.unsubscribe(queue)
 

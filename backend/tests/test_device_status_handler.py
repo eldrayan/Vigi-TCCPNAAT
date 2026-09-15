@@ -34,6 +34,7 @@ async def receive_status_message() -> None:
         b'''{
             "device_id": "leocio-raspberry",
             "connection": "ONLINE",
+            "sensor": "ONLINE",
             "camera": "ONLINE",
             "processing": "ONLINE",
             "timestamp": "2026-09-13T10:00:00-03:00"
@@ -45,6 +46,7 @@ async def receive_status_message() -> None:
 
     assert status is not None
     assert status.connection == "ONLINE"
+    assert status.sensor == "ONLINE"
 
 
 def test_handler_persists_device_status_from_mqtt() -> None:

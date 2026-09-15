@@ -26,3 +26,22 @@ def test_list_inspections_exposes_pagination_metadata() -> None:
     page_schema = document["components"]["schemas"][reference.rsplit("/", 1)[-1]]
 
     assert {"items", "total", "limit", "offset"} <= page_schema["properties"].keys()
+
+
+def test_summary_schema_exposes_breakdown_and_rate() -> None:
+    document = app.openapi()
+    schema = document["paths"]["/api/inspecoes/resumo"]["get"]["responses"]["200"]
+    reference = schema["content"]["application/json"]["schema"]["$ref"]
+    summary_schema = document["components"]["schemas"][reference.rsplit("/", 1)[-1]]
+
+    expected_keys = {
+        "total",
+        "compliant",
+        "noncompliant",
+        "compliance_rate",
+        "sem_tampa",
+        "tampa_torta",
+        "amassado",
+        "falha_tecnica",
+    }
+    assert expected_keys <= summary_schema["properties"].keys()

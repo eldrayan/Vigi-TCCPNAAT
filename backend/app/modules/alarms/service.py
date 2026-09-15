@@ -29,34 +29,89 @@ class AlarmService:
             return None
 
         batch = await session.get(Batch, inspection.batch_id)
-        if batch is None or batch.max_nonconformity_rate is None:
+        if batch is None:
             return None
 
-        result = await session.execute(
-            select(
-                func.count(Inspection.inspection_id),
-                func.sum(func.iif(Inspection.result == "NAO_CONFORME", 1, 0)),
-            ).where(Inspection.batch_id == batch.id)
-        )
-        total, nonconforming = result.one()
-        rate = (nonconforming or 0) * 100 / total if total else 0
-        if rate <= batch.max_nonconformity_rate:
-            return None
+        now = datetime.now(UTC)
 
-        existing = await self.repository.find_open(session, batch.id)
-        if existing is not None:
-            return None
+        # 1. RN05: Alarme de não-conformidades recorrentes / consecutivas
+        consecutive_threshold = 3
+        recent_results = (
+            await session.scalars(
+                select(Inspection.result)
+                .where(Inspection.batch_id == batch.id)
+                .order_by(Inspection.timestamp.desc(), Inspection.inspection_id.desc())
+                .limit(consecutive_threshold)
+            )
+        ).all()
 
-        alarm = await self.repository.create_open(
-            session,
-            station_id=inspection.station_id,
-            batch_id=batch.id,
-            rate=rate,
-            threshold=batch.max_nonconformity_rate,
-            name=batch.alarm_name or "Alarme de qualidade",
-            created_at=datetime.now(UTC),
-        )
-        return AlarmResponseDTO.model_validate(alarm)
+        if (
+            len(recent_results) == consecutive_threshold
+            and all(r == "NAO_CONFORME" for r in recent_results)
+        ):
+            open_consecutive = await self.repository.find_open(
+                session, batch.id, alarm_type="FALHAS_RECORRENTES"
+            )
+            if open_consecutive is None:
+                latest_consecutive = await self.repository.find_latest(
+                    session, batch.id, alarm_type="FALHAS_RECORRENTES"
+                )
+                should_trigger_consecutive = True
+                if latest_consecutive is not None:
+                    count_since = await session.scalar(
+                        select(func.count(Inspection.inspection_id)).where(
+                            Inspection.batch_id == batch.id,
+                            Inspection.timestamp > latest_consecutive.created_at,
+                        )
+                    )
+                    if count_since is not None and count_since < consecutive_threshold:
+                        should_trigger_consecutive = False
+
+                if should_trigger_consecutive:
+                    alarm = await self.repository.create_open(
+                        session,
+                        station_id=inspection.station_id,
+                        batch_id=batch.id,
+                        alarm_type="FALHAS_RECORRENTES",
+                        rate=float(consecutive_threshold),
+                        threshold=float(consecutive_threshold),
+                        name="Falhas recorrentes consecutivas",
+                        created_at=now,
+                    )
+                    return AlarmResponseDTO.model_validate(alarm)
+
+        # 2. Alarme por Limite de Não Conformidade do Lote (US02)
+        if batch.max_nonconformity_rate is not None:
+            result = await session.execute(
+                select(
+                    func.count(Inspection.inspection_id),
+                    func.sum(func.iif(Inspection.result == "NAO_CONFORME", 1, 0)),
+                ).where(Inspection.batch_id == batch.id)
+            )
+            total, nonconforming = result.one()
+            rate = (nonconforming or 0) * 100 / total if total else 0
+            if rate > batch.max_nonconformity_rate:
+                existing = await self.repository.find_open(
+                    session, batch.id, alarm_type="LIMITE_NAO_CONFORMIDADE"
+                )
+                if existing is None:
+                    latest = await self.repository.find_latest(
+                        session, batch.id, alarm_type="LIMITE_NAO_CONFORMIDADE"
+                    )
+                    if latest is None or rate > (latest.rate + 5.0):
+                        alarm = await self.repository.create_open(
+                            session,
+                            station_id=inspection.station_id,
+                            batch_id=batch.id,
+                            alarm_type="LIMITE_NAO_CONFORMIDADE",
+                            rate=rate,
+                            threshold=batch.max_nonconformity_rate,
+                            name=batch.alarm_name or "Alarme de qualidade",
+                            created_at=now,
+                        )
+                        return AlarmResponseDTO.model_validate(alarm)
+
+        return None
 
     async def list_all(self, session: AsyncSession) -> list[AlarmResponseDTO]:
         return [

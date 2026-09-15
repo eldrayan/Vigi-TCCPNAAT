@@ -18,10 +18,17 @@ logger = logging.getLogger(__name__)
 
 
 class InspectionMessageHandler:
-    def __init__(self, event_bus: EventBus | None = None) -> None:
+    def __init__(
+        self,
+        event_bus: EventBus | None = None,
+        producer=None,
+        topic_alarms: str | None = None,
+    ) -> None:
         self.service = InspectionService(InspectionRepository())
         self.alarm_service = AlarmService()
         self.event_bus = event_bus
+        self.producer = producer
+        self.topic_alarms = topic_alarms
 
     async def __call__(self, payload: bytes) -> None:
         try:
@@ -36,10 +43,16 @@ class InspectionMessageHandler:
             await self.service.create(session, dto)
             alarm = await self.alarm_service.evaluate(session, dto.inspection_id)
 
-        if self.event_bus is not None and alarm is not None:
-            await self.event_bus.publish(
-                "alarm.created", alarm.model_dump(mode="json")
-            )
+        if alarm is not None:
+            alarm_payload = alarm.model_dump(mode="json")
+            if self.event_bus is not None:
+                await self.event_bus.publish("alarm.created", alarm_payload)
+            if self.producer is not None and self.topic_alarms:
+                self.producer.publish(
+                    topic=self.topic_alarms,
+                    payload=alarm_payload,
+                    qos=1,
+                )
 
         if self.event_bus is not None:
             await self.event_bus.publish(

@@ -62,11 +62,5 @@ class InspectionService:
         session: AsyncSession,
         filters: InspectionFilterDTO | None = None,
     ) -> InspectionSummaryDTO:
-        total, compliant, noncompliant = await self.repository.get_summary(
-            session, filters
-        )
-        return InspectionSummaryDTO(
-            total=total,
-            compliant=compliant,
-            noncompliant=noncompliant,
-        )
+        data = await self.repository.get_summary(session, filters)
+        return InspectionSummaryDTO(**data)

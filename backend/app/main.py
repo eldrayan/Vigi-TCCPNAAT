@@ -25,9 +25,19 @@ mqtt_client = MQTTClient(settings)
 mqtt_subscriber = MQTTSubscriber(mqtt_client)
 mqtt_producer = MQTTProducer(mqtt_client)
 event_bus = EventBus()
+inspection_handler = InspectionMessageHandler(
+    event_bus=event_bus,
+    producer=mqtt_producer,
+    topic_alarms=settings.mqtt_topic_alarms,
+)
 mqtt_subscriber.subscribe(
     topic=settings.mqtt_topic_inspections,
-    handler=InspectionMessageHandler(event_bus),
+    handler=inspection_handler,
+    qos=settings.mqtt_qos,
+)
+mqtt_subscriber.subscribe(
+    topic=settings.mqtt_topic_conveyor_inspections,
+    handler=inspection_handler,
     qos=settings.mqtt_qos,
 )
 mqtt_subscriber.subscribe(

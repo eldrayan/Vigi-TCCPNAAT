@@ -36,12 +36,15 @@ def main(argv: list[str] | None = None) -> int:
     publisher = MQTTInspectionPublisher(args.mqtt_host, args.mqtt_port)
     synchronizer = InspectionOutboxSynchronizer(outbox, publisher)
 
+    publisher.start_session()
     try:
         while True:
             synchronizer.synchronize_once()
             time.sleep(args.interval)
     except KeyboardInterrupt:
         return 0
+    finally:
+        publisher.stop_session()
 
 
 if __name__ == "__main__":

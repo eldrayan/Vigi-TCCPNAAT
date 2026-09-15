@@ -26,20 +26,32 @@ class MQTTDeviceStatusPublisher:
         self.client = client or create_mqtt_client()
         self.client.will_set(
             self.topic,
-            json.dumps(self._payload("OFFLINE", "OFFLINE", "OFFLINE")),
+            json.dumps(self._payload("OFFLINE", "OFFLINE", "OFFLINE", "OFFLINE")),
             qos=1,
             retain=True,
         )
 
-    def start(self, *, camera: str, processing: str) -> None:
+    def start(
+        self,
+        *,
+        camera: str,
+        processing: str,
+        sensor: str = "ONLINE",
+    ) -> None:
         self.client.connect(self.host, self.port)
         self.client.loop_start()
-        self.publish(camera=camera, processing=processing)
+        self.publish(camera=camera, processing=processing, sensor=sensor)
 
-    def publish(self, *, camera: str, processing: str) -> None:
+    def publish(
+        self,
+        *,
+        camera: str,
+        processing: str,
+        sensor: str = "ONLINE",
+    ) -> None:
         publication = self.client.publish(
             self.topic,
-            json.dumps(self._payload("ONLINE", camera, processing)),
+            json.dumps(self._payload("ONLINE", camera, processing, sensor)),
             qos=1,
             retain=True,
         )
@@ -50,7 +62,7 @@ class MQTTDeviceStatusPublisher:
     def stop(self) -> None:
         publication = self.client.publish(
             self.topic,
-            json.dumps(self._payload("OFFLINE", "OFFLINE", "OFFLINE")),
+            json.dumps(self._payload("OFFLINE", "OFFLINE", "OFFLINE", "OFFLINE")),
             qos=1,
             retain=True,
         )
@@ -58,10 +70,17 @@ class MQTTDeviceStatusPublisher:
         self.client.disconnect()
         self.client.loop_stop()
 
-    def _payload(self, connection: str, camera: str, processing: str) -> dict[str, str]:
+    def _payload(
+        self,
+        connection: str,
+        camera: str,
+        processing: str,
+        sensor: str = "OFFLINE",
+    ) -> dict[str, str]:
         return {
             "device_id": self.device_id,
             "connection": connection,
+            "sensor": sensor,
             "camera": camera,
             "processing": processing,
             "timestamp": datetime.now(UTC).isoformat(),
