@@ -11,7 +11,12 @@ def test_list_inspections_exposes_optional_filters_in_query() -> None:
     parameter_names = {parameter["name"] for parameter in parameters}
 
     assert "filters" not in parameter_names
-    assert {"station_code", "batch_code", "result", "nonconformity_type"} <= parameter_names
+    assert {
+        "station_code",
+        "batch_code",
+        "result",
+        "nonconformity_type",
+    } <= parameter_names
 
 
 def test_list_inspections_exposes_pagination_metadata() -> None:
