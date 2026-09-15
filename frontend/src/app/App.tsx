@@ -3,7 +3,6 @@
  * Autor: Leôncio Ferreira
  */
 
-import logo from "../assets/vigi-symbol.svg";
 import { ClipboardCheck, LayoutGrid, ShieldAlert, Workflow } from "lucide-react";
 import { useState } from "react";
 
@@ -11,6 +10,7 @@ import { AlarmsPage, InspectionsPage, OverviewPage, StationsPage } from "./pages
 import { ErrorState } from "../components/feedback/ErrorState";
 import { ActiveAlarmModal } from "../components/alarms/ActiveAlarmModal";
 import { useDashboard } from "../hooks/useDashboard";
+import { Sidebar } from "./Sidebar";
 
 import styles from "./App.module.scss";
 
@@ -41,36 +41,7 @@ export function App() {
 
   return (
     <div className={styles.shell}>
-      <aside className={styles.sidebar}>
-        <div className={styles.brand}>
-          <div className={styles.brandMark}>
-            <img src={logo} alt="" />
-            <strong>VIGI</strong>
-          </div>
-          <span>VISÃO INTELIGENTE PARA GARANTIA DE INSPEÇÃO</span>
-        </div>
-        <nav aria-label="Navegação principal">
-          {navigation.map((item) => {
-            const Icon = item.icon;
-            return (
-              <a
-                className={activePage === item.label ? styles.activeLink : ""}
-                href={`#${item.label.toLowerCase()}`}
-                key={item.label}
-                onClick={(event) => {
-                  event.preventDefault();
-                  setActivePage(item.label);
-                }}
-              >
-                <span aria-hidden="true">
-                  <Icon size={18} strokeWidth={1.7} />
-                </span>
-                {item.label}
-              </a>
-            );
-          })}
-        </nav>
-      </aside>
+      <Sidebar activePage={activePage} items={navigation} onNavigate={setActivePage} />
 
       <main className={styles.content}>
         {activePage === "Visão geral" && (

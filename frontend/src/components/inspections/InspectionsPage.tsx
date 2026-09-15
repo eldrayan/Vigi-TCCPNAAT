@@ -3,13 +3,12 @@
  * Autor: Leôncio Ferreira
  */
 
-import { CheckCircle2, Search, XCircle } from "lucide-react";
+import { Search } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import type { PageData } from "../../app/page-types";
-import { labelType, formatDate } from "../../lib/formatters";
 import { PageSection } from "../layout/PageSection";
-import { Pagination } from "./Pagination";
+import { InspectionResultsTable } from "./InspectionResultsTable";
 import styles from "./InspectionsPage.module.scss";
 
 function dateRange(
@@ -140,51 +139,14 @@ export function InspectionsPage({
           </button>
         </form>
       )}
-      <div className={styles.tableWrap}>
-        <div className={styles.tableScroll}>
-          <table>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Estação</th>
-                <th>Data e hora</th>
-                <th>Resultado</th>
-                <th>Tipo</th>
-                <th>Confiança</th>
-              </tr>
-            </thead>
-            <tbody>
-              {inspections.map((inspection) => {
-                const compliant = inspection.result === "CONFORME";
-                return (
-                  <tr key={inspection.inspection_id}>
-                    <td>INS-{String(inspection.inspection_id).padStart(5, "0")}</td>
-                    <td>{inspection.station_code ?? "—"}</td>
-                    <td>{formatDate(inspection.timestamp)}</td>
-                    <td>
-                      <span className={compliant ? styles.ok : styles.danger}>
-                        {compliant ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
-                        {inspection.result.replaceAll("_", " ")}
-                      </span>
-                    </td>
-                    <td>
-                      {compliant ? "—" : labelType(inspection.nonconformity_type ?? inspection.technical_failure_type)}
-                    </td>
-                    <td>{inspection.confidence ? `${Math.round(inspection.confidence * 100)}%` : "—"}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-        <Pagination
-          total={inspectionTotal}
-          limit={inspectionLimit}
-          offset={inspectionOffset}
-          onPageChange={(page) => load(inspectionLimit, (page - 1) * inspectionLimit)}
-          onPageSizeChange={(size) => load(size)}
-        />
-      </div>
+      <InspectionResultsTable
+        inspections={inspections}
+        total={inspectionTotal}
+        limit={inspectionLimit}
+        offset={inspectionOffset}
+        onPageChange={(page) => load(inspectionLimit, (page - 1) * inspectionLimit)}
+        onPageSizeChange={load}
+      />
     </PageSection>
   );
 }

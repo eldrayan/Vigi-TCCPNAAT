@@ -3,36 +3,17 @@
  * Autor: Leôncio Ferreira
  */
 
-import { CheckCircle2, ClipboardCheck, Database, Eye, Radio, ShieldAlert, XCircle } from "lucide-react";
+import { ClipboardCheck, Database, Radio, ShieldAlert } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import type { Inspection } from "../../lib/api";
 import type { PageData } from "../../app/page-types";
-import { labelType, formatDate } from "../../lib/formatters";
 import { NonconformityChart } from "../dashboard/NonconformityChart";
 import { InspectionDetailModal } from "./InspectionDetailModal";
+import { OverviewMetric } from "./OverviewMetric";
+import metricStyles from "./OverviewMetrics.module.scss";
+import { RecentInspectionsTable } from "./RecentInspectionsTable";
 import styles from "./OverviewPage.module.scss";
-
-function Metric({
-  icon: Icon,
-  label,
-  value,
-  detail,
-}: {
-  icon: typeof ClipboardCheck;
-  label: string;
-  value: string;
-  detail: string;
-}) {
-  return (
-    <article className={styles.metric}>
-      <Icon size={18} />
-      <span>{label}</span>
-      <strong>{value}</strong>
-      <small>{detail}</small>
-    </article>
-  );
-}
 
 function getRange(period: string) {
   if (period === "all") return {};
@@ -72,26 +53,26 @@ export function OverviewPage({ summary, inspections, stations, alarms, onFilterI
 
   return (
     <>
-      <section className={styles.metrics} aria-label="Resumo das inspeções">
-        <Metric
+      <section className={metricStyles.metrics} aria-label="Resumo das inspeções">
+        <OverviewMetric
           icon={ClipboardCheck}
           label="Inspeções"
           value={String(summary.total)}
           detail={`${summary.noncompliant} não conformes`}
         />
-        <Metric
+        <OverviewMetric
           icon={Database}
           label="Taxa de conformidade"
           value={`${summary.conformity_rate.toLocaleString("pt-BR")}%`}
           detail={`${summary.compliant} conformes`}
         />
-        <Metric
+        <OverviewMetric
           icon={Radio}
           label="Estações online"
           value={`${stations.filter((station) => station.status?.connection === "ONLINE").length}/${stations.length}`}
           detail="Status do dispositivo"
         />
-        <Metric
+        <OverviewMetric
           icon={ShieldAlert}
           label="Alarmes abertos"
           value={String(alarms.filter((alarm) => alarm.status === "ABERTO").length)}
@@ -135,7 +116,7 @@ export function OverviewPage({ summary, inspections, stations, alarms, onFilterI
               </select>
             )}
           </div>
-          <RecentTable inspections={inspections.slice(0, 5)} onSelect={setSelected} />
+          <RecentInspectionsTable inspections={inspections.slice(0, 5)} onSelect={setSelected} />
         </div>
         <div className={styles.quality}>
           <header>
@@ -151,63 +132,5 @@ export function OverviewPage({ summary, inspections, stations, alarms, onFilterI
       </section>
       {selected && <InspectionDetailModal inspection={selected} onClose={() => setSelected(null)} />}
     </>
-  );
-}
-
-function RecentTable({
-  inspections,
-  onSelect,
-}: {
-  inspections: Inspection[];
-  onSelect: (inspection: Inspection) => void;
-}) {
-  return (
-    <div className={styles.recentTableWrap}>
-      <table className={styles.recentTable}>
-        <thead>
-          <tr>
-            <th>Hora</th>
-            <th>Estação</th>
-            <th>Conformidade</th>
-            <th>Tipo</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {inspections.length === 0 ? (
-            <tr>
-              <td className={styles.emptyRow} colSpan={5}>
-                Nenhuma inspeção encontrada no filtro selecionado.
-              </td>
-            </tr>
-          ) : (
-            inspections.map((inspection) => {
-              const compliant = inspection.result === "CONFORME";
-              return (
-                <tr key={inspection.inspection_id}>
-                  <td>{formatDate(inspection.timestamp).split(", ")[1]}</td>
-                  <td>{inspection.station_code ?? "—"}</td>
-                  <td>
-                    <span className={compliant ? styles.badgeOk : styles.badgeDanger}>
-                      {compliant ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
-                      {compliant ? "Conforme" : "Não conforme"}
-                    </span>
-                  </td>
-                  <td>
-                    {compliant ? "—" : labelType(inspection.nonconformity_type ?? inspection.technical_failure_type)}
-                  </td>
-                  <td>
-                    <button type="button" onClick={() => onSelect(inspection)}>
-                      <Eye size={13} />
-                      Ver detalhes
-                    </button>
-                  </td>
-                </tr>
-              );
-            })
-          )}
-        </tbody>
-      </table>
-    </div>
   );
 }

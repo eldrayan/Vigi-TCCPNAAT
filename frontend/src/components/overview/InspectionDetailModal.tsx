@@ -6,7 +6,8 @@
 import type { Inspection } from "../../lib/api";
 import { formatDate, labelType } from "../../lib/formatters";
 
-import styles from "./OverviewPage.module.scss";
+import badgeStyles from "./OverviewPage.module.scss";
+import styles from "./InspectionDetailModal.module.scss";
 
 interface InspectionDetailModalProps {
   inspection: Inspection;
@@ -42,7 +43,7 @@ export function InspectionDetailModal({ inspection, onClose }: InspectionDetailM
           <div>
             <dt>Resultado</dt>
             <dd>
-              <span className={compliant ? styles.badgeOk : styles.badgeDanger}>
+              <span className={compliant ? badgeStyles.badgeOk : badgeStyles.badgeDanger}>
                 {inspection.result.replaceAll("_", " ")}
               </span>
             </dd>
