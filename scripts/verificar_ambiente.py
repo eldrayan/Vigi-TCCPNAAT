@@ -15,7 +15,7 @@ def main() -> int:
         "python": sys.version.split()[0],
         "python_supported": (3, 11) <= sys.version_info[:2] < (3, 13),
         "dvc": shutil.which("dvc") is not None,
-        "ssh": shutil.which("ssh") is not None,
+        "dagshub": importlib.util.find_spec("dagshub") is not None,
         "ultralytics": importlib.util.find_spec("ultralytics") is not None,
     }
     try:
@@ -39,7 +39,7 @@ def main() -> int:
     required = (
         checks["python_supported"],
         checks["dvc"],
-        checks["ssh"],
+        checks["dagshub"],
         checks["ultralytics"],
         checks["cuda_available"],
     )
