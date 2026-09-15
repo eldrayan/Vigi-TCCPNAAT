@@ -8,6 +8,9 @@ version = "0.1.0"
 description = "Pipeline de coleta, treinamento e inferencia Edge AI do Vigi"
 requires-python = ">=3.11,<3.14"
 dependencies = [
+    "dagshub>=0.7.2",
+    "dvc[s3]>=3.50,<4",
+    "dvc-ssh>=4.3.0",
     "numpy>=1.26,<3",
     "paho-mqtt>=2.1,<3",
     "Pillow>=10,<13",
@@ -15,15 +18,11 @@ dependencies = [
     "ultralytics>=8.2,<9",
     "torch>=2.9,<3",
     "torchvision>=0.24,<1",
-    "dvc-ssh>=4.3.0",
 ]
 
 [project.optional-dependencies]
 train = [
     "matplotlib>=3.8,<4",
-]
-mlops = [
-    "dvc[ssh]>=3.50,<4",
 ]
 [dependency-groups]
 dev = [
@@ -53,6 +52,17 @@ name = "pytorch-cpu"
 url = "https://download.pytorch.org/whl/cpu"
 explicit = true
 
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true
+
 [tool.uv.sources]
-torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux' or sys_platform == 'win32'" }]
-torchvision = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux' or sys_platform == 'win32'" }]
+torch = [
+    { index = "pytorch-cu130", marker = "sys_platform == 'linux' and platform_machine == 'x86_64'" },
+    { index = "pytorch-cpu", marker = "(sys_platform == 'linux' and platform_machine != 'x86_64') or sys_platform == 'win32'" },
+]
+torchvision = [
+    { index = "pytorch-cu130", marker = "sys_platform == 'linux' and platform_machine == 'x86_64'" },
+    { index = "pytorch-cpu", marker = "(sys_platform == 'linux' and platform_machine != 'x86_64') or sys_platform == 'win32'" },
+]
