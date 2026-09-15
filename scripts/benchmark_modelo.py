@@ -31,8 +31,7 @@ def build_report(
 ) -> dict[str, object]:
     """Consolida o benchmark sem tratar decisoes de negocio como falhas tecnicas."""
     warmup_errors = sum(
-        result.technical_failure_type == "ERRO_INFERENCIA"
-        for result in warmup_results
+        result.technical_failure_type == "ERRO_INFERENCIA" for result in warmup_results
     )
     inference_errors = sum(
         result.technical_failure_type == "ERRO_INFERENCIA"
@@ -99,12 +98,10 @@ def main(argv: list[str] | None = None) -> int:
     engine = InferenceEngine.from_manifest(args.manifest)
 
     warmup_results = [
-        engine.inspect(str(images[index % len(images)]))
-        for index in range(args.warmup)
+        engine.inspect(str(images[index % len(images)])) for index in range(args.warmup)
     ]
     measured_results = [
-        engine.inspect(str(images[index % len(images)]))
-        for index in range(args.runs)
+        engine.inspect(str(images[index % len(images)])) for index in range(args.runs)
     ]
     payload = build_report(
         engine.manifest.format,

@@ -539,6 +539,49 @@ uv run python scripts/infer.py \
 
 A CLI executa uma inspeção por chamada e imprime um evento JSON com `inspection_id`, `timestamp`, `result`, `category`, `nonconformity_type`, `technical_failure_type`, `confidence`, `processing_time_ms` e `model_format`. Os valores de domínio continuam em português, como `CONFORME` e `SEM_TAMPA`. `--mqtt-host` habilita a publicação com QoS 1, e os alvos `make infer-camera` e `make infer-image` já passam essa opção. A CLI não abre preview ou dashboard.
 
+### Operação contínua da esteira e alinhamento da câmera
+
+Para operação física em bancada na Raspberry Pi 5, o sistema disponibiliza dois utilitários integrados de hardware:
+
+#### 1. Alinhamento e foco da câmera (preview ao vivo)
+
+Inicia um servidor web leve com streaming MJPEG e retângulos guia de enquadramento da garrafa:
+
+```bash
+# Via Makefile:
+make preview-camera
+
+# Ou diretamente via Python:
+python scripts/preview_camera.py --backend picamera2 --port 8080
+```
+
+- Acesse no navegador do seu notebook: `http://IP_DA_RASPBERRY:8080`
+- Permite ajustar o anel de foco da lente e a posição mecânica do sensor fotoelétrico.
+- **Importante**: Pressione `Ctrl+C` no terminal para liberar a câmera antes de iniciar a esteira.
+
+#### 2. Supervisão contínua da esteira (sensor + câmera + Edge AI + MQTT)
+
+Executa o laço de inspeção contínua em tempo real com o sensor infravermelho E18-D80NK no GPIO 17:
+
+```bash
+# Via Makefile (configurações padrão):
+make run-esteira
+
+# Ou diretamente via CLI com opções avançadas:
+python scripts/executar_esteira.py \
+  --manifest models/active/manifest.json \
+  --backend picamera2 \
+  --gpio-pin 17 \
+  --debounce-ms 50 \
+  --threshold 0.70 \
+  --save-dir captures \
+  --verbose
+```
+
+- **Ciclo operacional**: A cada passagem física do frasco, o sensor fotoelétrico dispara a captura instantânea (< 15 ms), processa a inferência YOLOv8n-cls (~48 ms) e publica o evento de telemetria em `vigi/esteira/inspecoes` e alarmes em `vigi/esteira/alarmes`.
+- **Feedback no terminal**: Imprime bloco visual destacado com o status (`CONFORME` ou `NÃO CONFORME`), tipo de defeito (`SEM_TAMPA`, `TAMPA_TORTA`, `AMASSADO`), confiança percentual e latência total ponta a ponta (RNF01 < 500 ms).
+- **Parada limpa**: Pressione `Ctrl+C` para encerrar a sessão MQTT com envio de status offline (LWT), desalocar a câmera e liberar o pino GPIO.
+
 A confirmação de publicação no broker não comprova a gravação no SQLite. Consulte `/api/inspecoes/{id_inspecao}` com o `inspection_id` da saída para verificar o mesmo evento no banco. O backend aplica as migrations ao iniciar e usa um volume de dados no Compose. `make down` preserva os volumes; não use remoção de volumes para encerrar a demonstração.
 
 Os contratos executáveis atuais estão em [edge/messaging/event.py](edge/messaging/event.py) e [DTOs do backend](backend/app/modules/inspections/dto). Os exemplos em português e a fila offline do [diagrama arquitetural](docs/arquitetura/diagrama-arquitetural.md) descrevem a proposta e ainda precisam ser atualizados para refletir integralmente a implementação.

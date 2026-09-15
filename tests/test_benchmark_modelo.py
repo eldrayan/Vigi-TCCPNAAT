@@ -10,18 +10,12 @@ def decision(
     category: str | None = None,
 ) -> InspectionDecision:
     is_technical_failure = code in {"BAIXA_CONFIANCA", "ERRO_INFERENCIA"}
-    resolved_category = (
-        category or ("FALHA_TECNICA" if is_technical_failure else None)
-    )
+    resolved_category = category or ("FALHA_TECNICA" if is_technical_failure else None)
     return InspectionDecision(
         result="CONFORME" if code is None else "NAO_CONFORME",
         category=resolved_category,
-        nonconformity_type=(
-            code if resolved_category == "ANOMALIA_PRODUTO" else None
-        ),
-        technical_failure_type=(
-            code if resolved_category == "FALHA_TECNICA" else None
-        ),
+        nonconformity_type=(code if resolved_category == "ANOMALIA_PRODUTO" else None),
+        technical_failure_type=(code if resolved_category == "FALHA_TECNICA" else None),
         confidence=None if code == "ERRO_INFERENCIA" else 0.9,
         processing_time_ms=latency,
         model_format="pytorch",
