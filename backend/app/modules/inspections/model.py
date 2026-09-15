@@ -5,7 +5,16 @@ Autor: Leôncio Ferreira
 
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, DateTime, Float, Index, Integer, String, func
+from sqlalchemy import (
+    CheckConstraint,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.infrastructure.database import Base
@@ -19,8 +28,7 @@ class Inspection(Base):
             name="ck_inspections_result",
         ),
         CheckConstraint(
-            "category IS NULL OR category IN "
-            "('ANOMALIA_PRODUTO', 'FALHA_TECNICA')",
+            "category IS NULL OR category IN ('ANOMALIA_PRODUTO', 'FALHA_TECNICA')",
             name="ck_inspections_category",
         ),
         CheckConstraint(
@@ -70,6 +78,14 @@ class Inspection(Base):
     confidence: Mapped[float | None] = mapped_column(Float)
     processing_time_ms: Mapped[float] = mapped_column(Float)
     model_format: Mapped[str] = mapped_column(String(30))
+    station_code: Mapped[str | None] = mapped_column(String(50))
+    batch_code: Mapped[str | None] = mapped_column(String(100))
+    station_id: Mapped[int | None] = mapped_column(
+        ForeignKey("stations.id", ondelete="RESTRICT")
+    )
+    batch_id: Mapped[int | None] = mapped_column(
+        ForeignKey("batches.id", ondelete="RESTRICT")
+    )
     received_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.current_timestamp(),

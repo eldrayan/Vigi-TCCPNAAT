@@ -88,3 +88,29 @@ def test_inference_cli_rejects_threshold_override() -> None:
             ]
         )
     assert exc_info.value.code == 2
+
+
+def test_inference_cli_publishes_camera_failure_decision(monkeypatch, capsys) -> None:
+    from types import SimpleNamespace
+
+    from scripts import infer
+
+    class EngineStub:
+        manifest = SimpleNamespace(format="pytorch")
+
+        def inspect(self, _image):
+            raise AssertionError("A inferência não deve executar sem captura")
+
+    monkeypatch.setattr(infer.InferenceEngine, "from_manifest", lambda _: EngineStub())
+    monkeypatch.setattr(
+        infer,
+        "capture_frame",
+        lambda *args: (_ for _ in ()).throw(RuntimeError("camera indisponível")),
+    )
+
+    exit_code = infer.main(
+        ["--manifest", "models/active/manifest.json", "--camera", "0"]
+    )
+
+    assert exit_code == 0
+    assert '"technical_failure_type": "ERRO_CAPTURA"' in capsys.readouterr().out

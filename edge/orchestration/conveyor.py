@@ -23,6 +23,7 @@ from edge.acquisition.sensor import PhotoelectricSensor, SensorTrigger
 from edge.actuation.indicators import StatusIndicators
 from edge.inference.engine import InferenceEngine
 from edge.inference.schemas import InspectionDecision
+from edge.messaging.context import OperationalContext
 from edge.messaging.event import InspectionEvent
 from edge.messaging.publisher import MQTTInspectionPublisher
 
@@ -47,6 +48,7 @@ class ConveyorOrchestrator:
         engine: InferenceEngine,
         publisher: MQTTInspectionPublisher,
         *,
+        context: OperationalContext | None = None,
         on_inspection: Callable[[InspectionEvent, CycleTiming], None] | None = None,
         save_dir: Path | None = None,
         indicators: StatusIndicators | None = None,
@@ -58,6 +60,7 @@ class ConveyorOrchestrator:
         self.camera = camera
         self.engine = engine
         self.publisher = publisher
+        self.context = context
         self.on_inspection = on_inspection
         self.save_dir = save_dir
         self.indicators = indicators
@@ -90,7 +93,7 @@ class ConveyorOrchestrator:
         inference_ms = (t_inferred - t_captured) * 1000.0
 
         # 3. Composição e Publicação MQTT
-        event = InspectionEvent.from_decision(decision)
+        event = InspectionEvent.from_decision(decision, context=self.context)
         self.publisher.publish_inspection(event)
 
         # 4. Alarme para não-conformidades ou falhas técnicas (RN02 / RNF04)

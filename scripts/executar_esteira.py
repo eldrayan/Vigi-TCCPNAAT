@@ -27,6 +27,7 @@ from edge.actuation.indicators import (  # noqa: E402
     validate_gpio_pin_assignments,
 )
 from edge.inference.engine import InferenceEngine  # noqa: E402
+from edge.messaging.context import OperationalContext  # noqa: E402
 from edge.messaging.event import InspectionEvent  # noqa: E402
 from edge.messaging.publisher import MQTTInspectionPublisher  # noqa: E402
 from edge.orchestration.conveyor import ConveyorOrchestrator, CycleTiming  # noqa: E402
@@ -176,6 +177,16 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--mqtt-status",
         default="vigi/esteira/status",
         help="Tópico MQTT de status e LWT do nó de borda",
+    )
+    parser.add_argument(
+        "--station-code",
+        default="ESTACAO_01",
+        help="Código da estação operacional vinculada",
+    )
+    parser.add_argument(
+        "--batch-code",
+        default="LOTE_01",
+        help="Código do lote ativo para rastreabilidade",
     )
     parser.add_argument(
         "--max-inspections",
@@ -367,11 +378,22 @@ def main(argv: list[str] | None = None) -> int:
             camera.release()
             return 1
 
-    # 5. Publicador MQTT com LWT
+    # 5. Contexto operacional e publicador MQTT com LWT
+    context = None
+    if args.station_code and args.batch_code:
+        context = OperationalContext(
+            station_code=args.station_code, batch_code=args.batch_code
+        )
+
+    topic = (
+        context.inspections_topic
+        if (context and args.mqtt_topic == "vigi/esteira/inspecoes")
+        else args.mqtt_topic
+    )
     publisher = MQTTInspectionPublisher(
         host=args.mqtt_host,
         port=args.mqtt_port,
-        topic=args.mqtt_topic,
+        topic=topic,
         topic_alarms=args.mqtt_alarms,
         topic_status=args.mqtt_status,
         client_id="vigi-edge-gateway-rpi5",
@@ -385,6 +407,7 @@ def main(argv: list[str] | None = None) -> int:
         camera=camera,
         engine=engine,
         publisher=publisher,
+        context=context,
         save_dir=args.save_dir,
         on_inspection=handle_inspection,
         indicators=indicators,

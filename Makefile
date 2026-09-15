@@ -1,7 +1,6 @@
 .PHONY: help setup setup-dev setup-rpi test lint up down build ps logs \
 	migrate infer-help infer-image infer-camera preview-camera run-esteira \
-	run-esteira-indicators \
-	mqtt-sub mqtt-pub test-backend
+	run-esteira-indicators monitor-edge sync-outbox mqtt-sub mqtt-pub test-backend
 
 MQTT_IMAGE ?= eclipse-mosquitto:2.0.22
 HOST ?= localhost
@@ -29,11 +28,13 @@ help:
 	@echo "make infer-help                    Mostra as opções do modelo"
 	@echo "make infer-image IMAGE=imagem.jpg Executa o modelo e publica no MQTT"
 	@echo "make infer-camera                  Captura da câmera e publica no MQTT"
+	@echo "make monitor-edge                  Mantém o estado da Raspberry publicado"
 	@echo "make preview-camera                Inicia streaming HTTP de preview da câmera na porta 8080"
 	@echo "make run-esteira                   Inicia laço contínuo da esteira (sensor + câmera + MQTT)"
 	@echo "make run-esteira-indicators        Inicia a esteira com LEDs e buzzer físicos"
 	@echo "make mqtt-sub                      Escuta mensagens MQTT"
 	@echo "make mqtt-pub MSG='mensagem'       Publica uma mensagem MQTT"
+	@echo "make sync-outbox                    Reenvia continuamente a fila offline"
 	@echo ""
 	@echo "Opções: HOST, PORT, TOPIC, MODEL_TOPIC, MANIFEST, CAMERA e CAMERA_BACKEND"
 
@@ -54,7 +55,7 @@ test-backend:
 	cd backend && uv run --frozen pytest -q
 
 lint:
-	$(UV_RUN) ruff check backend/app backend/migrations edge scripts tests
+	$(UV_RUN) ruff check backend/app backend/migrations backend/tests edge scripts tests
 
 up:
 	docker compose up --build --detach
@@ -83,8 +84,7 @@ infer-image:
 		--manifest "$(MANIFEST)" \
 		--image "$(IMAGE)" \
 		--mqtt-host "$(HOST)" \
-		--mqtt-port "$(PORT)" \
-		--mqtt-topic "$(MODEL_TOPIC)"
+		--mqtt-port "$(PORT)"
 
 infer-camera:
 	$(UV_RUN) python scripts/infer.py \
@@ -92,8 +92,17 @@ infer-camera:
 		--camera "$(CAMERA)" \
 		--backend "$(CAMERA_BACKEND)" \
 		--mqtt-host "$(HOST)" \
-		--mqtt-port "$(PORT)" \
-		--mqtt-topic "$(MODEL_TOPIC)"
+		--mqtt-port "$(PORT)"
+
+monitor-edge:
+	$(UV_RUN) python scripts/monitor_edge.py \
+		--mqtt-host "$(HOST)" \
+		--mqtt-port "$(PORT)"
+
+sync-outbox:
+	$(UV_RUN) python scripts/sync_outbox.py \
+		--mqtt-host "$(HOST)" \
+		--mqtt-port "$(PORT)"
 
 mqtt-sub:
 	docker run --rm --network host $(MQTT_IMAGE) \

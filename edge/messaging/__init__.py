@@ -1,6 +1,18 @@
 """Componentes de composição e publicação de eventos do Edge."""
 
+from .context import MQTTOperationalContextReceiver, OperationalContext
 from .event import InspectionEvent
+from .outbox import InspectionOutbox
 from .publisher import MQTTInspectionPublisher
+from .status import MQTTDeviceStatusPublisher
+from .synchronizer import InspectionOutboxSynchronizer
 
-__all__ = ["InspectionEvent", "MQTTInspectionPublisher"]
+__all__ = [
+    "InspectionEvent",
+    "InspectionOutbox",
+    "MQTTOperationalContextReceiver",
+    "MQTTInspectionPublisher",
+    "MQTTDeviceStatusPublisher",
+    "InspectionOutboxSynchronizer",
+    "OperationalContext",
+]
