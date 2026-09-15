@@ -7,6 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .dto import (
     InspectionCreateDTO,
+    InspectionFilterDTO,
+    InspectionPageDTO,
     InspectionResponseDTO,
     InspectionSummaryDTO,
 )
@@ -31,12 +33,19 @@ class InspectionService:
         session: AsyncSession,
         limit: int,
         offset: int,
-    ) -> list[InspectionResponseDTO]:
-        inspections = await self.repository.find_all(session, limit, offset)
-        return [
-            InspectionResponseDTO.model_validate(inspection)
-            for inspection in inspections
-        ]
+        filters: InspectionFilterDTO | None = None,
+    ) -> InspectionPageDTO:
+        inspections = await self.repository.find_all(session, limit, offset, filters)
+        total = await self.repository.count(session, filters)
+        return InspectionPageDTO(
+            items=[
+                InspectionResponseDTO.model_validate(inspection)
+                for inspection in inspections
+            ],
+            total=total,
+            limit=limit,
+            offset=offset,
+        )
 
     async def find_by_id(
         self,
@@ -51,10 +60,7 @@ class InspectionService:
     async def get_summary(
         self,
         session: AsyncSession,
+        filters: InspectionFilterDTO | None = None,
     ) -> InspectionSummaryDTO:
-        total, compliant, noncompliant = await self.repository.get_summary(session)
-        return InspectionSummaryDTO(
-            total=total,
-            compliant=compliant,
-            noncompliant=noncompliant,
-        )
+        data = await self.repository.get_summary(session, filters)
+        return InspectionSummaryDTO(**data)
