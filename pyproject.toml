@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "Pipeline de coleta, treinamento e inferencia Edge AI do Vigi"
 requires-python = ">=3.11,<3.14"
 dependencies = [
+    "dagshub>=0.7.2",
     "numpy>=1.26,<3",
     "paho-mqtt>=2.1,<3",
     "Pillow>=10,<13",
@@ -23,7 +24,7 @@ train = [
     "matplotlib>=3.8,<4",
 ]
 mlops = [
-    "dvc[ssh]>=3.50,<4",
+    "dvc[s3]>=3.50,<4",
 ]
 [dependency-groups]
 dev = [
