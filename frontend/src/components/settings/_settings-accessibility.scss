@@ -1,0 +1,96 @@
+.fontSize {
+  display: grid;
+  gap: 16px;
+}
+
+.fontSize h3 {
+  margin: 0 0 4px;
+  color: #244b63;
+  font-size: 15px;
+}
+
+.fontSize p {
+  margin: 0;
+  color: #678296;
+  font-size: 13px;
+}
+
+.fontControls {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+  color: #244b63;
+  font-weight: 600;
+}
+
+.fontLabelSmall,
+.fontLabelLarge {
+  color: #244b63;
+  line-height: 1;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  transition: color 180ms ease, opacity 180ms ease, transform 180ms ease;
+}
+
+.fontLabelSmall:hover,
+.fontLabelLarge:hover {
+  color: #0f4c6d;
+  background: transparent;
+  opacity: 0.72;
+  transform: scale(1.04);
+}
+
+.fontLabelSmall {
+  font-size: 24px;
+}
+
+.fontLabelLarge {
+  font-size: 34px;
+}
+
+.fontLabelSmall:disabled,
+.fontLabelLarge:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.fontLabelSmall:focus-visible,
+.fontLabelLarge:focus-visible {
+  outline: 3px solid #8bc9dc;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.sliderWrap {
+  display: grid;
+  min-width: 280px;
+  gap: 5px;
+  justify-items: center;
+}
+
+.sliderWrap output {
+  min-width: 45px;
+  text-align: center;
+  color: #678296;
+  font-size: 12px;
+}
+
+.sliderWrap input {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  accent-color: #0f4c6d;
+}
+
+@media (max-width: 560px) {
+  .fontSize {
+    gap: 12px;
+  }
+
+  .sliderWrap {
+    min-width: 0;
+    width: min(280px, 58vw);
+  }
+}

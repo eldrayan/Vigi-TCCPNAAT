@@ -3,10 +3,10 @@
  * Autor: Leôncio Ferreira
  */
 
-import { ClipboardCheck, LayoutGrid, ShieldAlert, Workflow } from "lucide-react";
-import { useState } from "react";
+import { ClipboardCheck, LayoutGrid, Settings, ShieldAlert, Workflow } from "lucide-react";
+import { useEffect, useState } from "react";
 
-import { AlarmsPage, InspectionsPage, OverviewPage, StationsPage } from "./pages";
+import { AlarmsPage, InspectionsPage, OverviewPage, SettingsPage, StationsPage } from "./pages";
 import { ErrorState } from "../components/feedback/ErrorState";
 import { ActiveAlarmModal } from "../components/alarms/ActiveAlarmModal";
 import { useDashboard } from "../hooks/useDashboard";
@@ -19,15 +19,25 @@ const navigation = [
   { label: "Inspeções", icon: ClipboardCheck },
   { label: "Estações", icon: Workflow },
   { label: "Alarmes", icon: ShieldAlert },
+  { label: "Configurações", icon: Settings },
 ];
 
 export function App() {
   const [activePage, setActivePage] = useState("Visão geral");
+  const [fontScale, setFontScale] = useState(() => {
+    const stored = Number(window.localStorage.getItem("vigi-font-scale"));
+    return stored === 1.1 || stored === 1.2 ? stored : 1;
+  });
   const dashboard = useDashboard();
+  useEffect(() => {
+    document.documentElement.style.setProperty("--font-scale", String(fontScale));
+    window.localStorage.setItem("vigi-font-scale", String(fontScale));
+  }, [fontScale]);
   const pageActions = {
     onFilterInspections: dashboard.filterInspections,
     onAcknowledgeAlarm: dashboard.acknowledgeAlarm,
     onConfigureAlarm: dashboard.configureAlarm,
+    onConfigureContext: dashboard.configureContext,
   };
   const pages = dashboard.data
     ? {
@@ -35,6 +45,14 @@ export function App() {
         Inspeções: <InspectionsPage {...dashboard.data} {...pageActions} />,
         Estações: <StationsPage {...dashboard.data} {...pageActions} />,
         Alarmes: <AlarmsPage {...dashboard.data} {...pageActions} />,
+        Configurações: (
+          <SettingsPage
+            stations={dashboard.data.stations}
+            onConfigureContext={dashboard.configureContext}
+            fontScale={fontScale}
+            onFontScaleChange={setFontScale}
+          />
+        ),
       }
     : null;
   const activeAlarm = dashboard.data?.alarms.find((alarm) => alarm.status === "ABERTO");

@@ -132,5 +132,18 @@ export function useDashboard() {
     [refresh],
   );
 
-  return { data, error, loading, refresh, filterInspections, acknowledgeAlarm, configureAlarm };
+  const configureContext = useCallback(
+    async (stationCode: string, batchCode: string) => {
+      const station = data?.stations.find((item) => item.code === stationCode);
+      if (!station) throw new Error("Estação ativa não encontrada.");
+      const batches = await api.batches(station.id);
+      const existing = batches.find((batch) => batch.code === batchCode);
+      const batch = existing ?? (await api.createBatch(station.id, batchCode));
+      await api.activateBatch(station.id, batch.id);
+      await refresh();
+    },
+    [data?.stations, refresh],
+  );
+
+  return { data, error, loading, refresh, filterInspections, acknowledgeAlarm, configureAlarm, configureContext };
 }

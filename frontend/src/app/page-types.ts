@@ -17,4 +17,5 @@ export interface PageData {
   onFilterInspections: (filters: InspectionFilters, limit?: number, offset?: number) => void;
   onAcknowledgeAlarm: (id: number, acknowledgedBy: string) => Promise<void>;
   onConfigureAlarm: (name: string, limit: number) => Promise<void>;
+  onConfigureContext: (stationCode: string, batchCode: string) => Promise<void>;
 }

@@ -40,6 +40,17 @@ export interface Station {
   name: string;
   device_id: string;
 }
+export interface Batch {
+  id: number;
+  code: string;
+  station_id: number;
+  status: string;
+  started_at: string | null;
+  finished_at: string | null;
+  created_at: string;
+  max_nonconformity_rate: number | null;
+  alarm_name: string | null;
+}
 export interface DeviceStatus {
   connection: string;
   sensor: string;
@@ -72,6 +83,10 @@ export interface InspectionFilters {
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${apiUrl}${path}`, { headers: { "Content-Type": "application/json" }, ...init });
   if (!response.ok) throw new Error(`Falha ao consultar a API (${response.status}).`);
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    throw new Error("A API retornou uma resposta inválida. Confirme se o backend está ativo na porta 8000.");
+  }
   return response.json() as Promise<T>;
 }
 
@@ -108,6 +123,17 @@ export const api = {
   },
   inspections: (filters: InspectionFilters = {}) => api.inspectionsPage(filters).then((page) => page.items),
   stations: () => request<Station[]>("/api/estacoes"),
+  batches: (stationId: number) => request<Batch[]>(`/api/estacoes/${stationId}/lotes`),
+  createBatch: (stationId: number, code: string) =>
+    request<Batch>(`/api/estacoes/${stationId}/lotes`, {
+      method: "POST",
+      body: JSON.stringify({ code }),
+    }),
+  activateBatch: (stationId: number, batchId: number) =>
+    request(`/api/estacoes/${stationId}/lote-ativo`, {
+      method: "PUT",
+      body: JSON.stringify({ batch_id: batchId }),
+    }),
   stationStatus: (id: number) => request<DeviceStatus>(`/api/estacoes/${id}/status`),
   alarms: () => request<Alarm[]>("/api/alarmes"),
   acknowledgeAlarm: (id: number, acknowledgedBy: string) =>
