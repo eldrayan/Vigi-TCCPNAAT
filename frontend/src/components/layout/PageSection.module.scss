@@ -1,0 +1,33 @@
+.pageSection {
+  margin-top: 18px;
+}
+
+.pageIntro {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+
+  h2 {
+    margin: 0 0 8px;
+    font-size: 26px;
+  }
+
+  p {
+    margin: 0;
+    color: #52717c;
+  }
+}
+
+.pageActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (max-width: 640px) {
+  .pageIntro {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

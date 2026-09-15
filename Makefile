@@ -1,18 +1,27 @@
-.PHONY: help setup setup-dev setup-rpi test lint up down build ps logs \
-	migrate infer-help infer-image infer-camera preview-camera run-esteira \
-	mqtt-sub mqtt-pub test-backend check-env collect collect-headless \
-	dvc-login dvc-pull dataset-validate dataset-add dataset-push \
-	models-add models-push train-baseline train-tuned calibrate-model \
-	evaluate-model promote-model infer-local-image infer-local-camera \
-	benchmark-model
+.PHONY: help setup setup-dev setup-rpi configure-env ensure-env model-pull health test lint up down build ps logs \
+	backend-up backend-down frontend-up frontend-build edge-up migrate infer-help \
+	infer-image infer-camera preview-camera run-conveyor run-esteira monitor-edge sync-outbox mqtt-sub mqtt-pub test-backend \
+	check-env collect collect-headless dvc-login dvc-pull dataset-validate dataset-add dataset-push \
+	models-add models-push train-baseline train-tuned calibrate-model evaluate-model promote-model \
+	infer-local-image infer-local-camera benchmark-model
 
 MQTT_IMAGE ?= eclipse-mosquitto:2.0.22
+-include .env
+export MQTT_EDGE_USERNAME MQTT_EDGE_PASSWORD
 HOST ?= localhost
 PORT ?= 1883
 TOPIC ?= vigi/teste
 MANIFEST ?= models/active/manifest.json
 CAMERA ?= 0
 CAMERA_BACKEND ?= picamera2
+STATION_CODE ?= ESTACAO_01
+DEVICE_ID ?= $(STATION_CODE)
+BATCH_CODE ?= LOTE_01
+GPIO_PIN ?= 17
+DEBOUNCE_MS ?= 50
+FRONTEND_HOST ?= 0.0.0.0
+FRONTEND_PORT ?= 8081
+API_URL ?= http://127.0.0.1:8000
 UV_RUN ?= uv run --no-sync
 DATASET ?= dataset/vigi-cls
 MODEL ?= models/candidates/vigi-yolov8n-cls-tuned.pt
@@ -32,21 +41,28 @@ help:
 	@echo "make setup                         Instala as dependências travadas"
 	@echo "make setup-dev                     Instala também as ferramentas de desenvolvimento"
 	@echo "make setup-rpi                     Instala CPU travado e permite drivers da câmera CSI"
+	@echo "make configure-env                 Cria .env com credenciais MQTT locais aleatórias"
+	@echo "make model-pull                    Recupera o modelo ativo via DVC"
 	@echo "make test                          Executa os testes do Edge"
 	@echo "make test-backend                  Executa os testes unitários do backend"
 	@echo "make lint                          Verifica o código com Ruff"
-	@echo "make up                            Sobe os serviços"
+	@echo "make up                            Sobe dashboard, API e MQTT em containers"
 	@echo "make down                          Para os serviços"
+	@echo "make backend-up                    Sobe MQTT, aplica migrations e inicia a API"
+	@echo "make backend-down                  Para MQTT e API"
+	@echo "make frontend-up                   Inicia o dashboard React na rede local"
+	@echo "make frontend-build                Gera o build local do dashboard"
+	@echo "make edge-up                       Inicia a Estação 01 com sensor E18-D80NK"
 	@echo "make build                         Reconstrói o backend"
 	@echo "make ps                            Mostra os serviços"
+	@echo "make health                        Consulta a saúde da API"
 	@echo "make logs                          Acompanha os logs"
 	@echo "make migrate                       Executa as migrations"
 	@echo "make infer-help                    Mostra as opções do modelo"
 	@echo "make infer-image IMAGE=imagem.jpg Executa o modelo e publica no MQTT"
 	@echo "make infer-camera                  Captura da câmera e publica no MQTT"
+	@echo "make edge-up                       Executa a Estação 01 pelo sensor E18-D80NK"
 	@echo "make monitor-edge                  Mantém o estado da Raspberry publicado"
-	@echo "make preview-camera                Inicia streaming HTTP de preview da câmera na porta 8080"
-	@echo "make run-esteira                   Inicia laço contínuo da esteira (sensor + câmera + MQTT)"
 	@echo "make mqtt-sub                      Escuta mensagens MQTT"
 	@echo "make mqtt-pub MSG='mensagem'       Publica uma mensagem MQTT"
 	@echo "make sync-outbox                    Reenvia continuamente a fila offline"
@@ -83,6 +99,25 @@ setup-dev:
 setup-rpi:
 	@test -d .venv || uv venv --system-site-packages --python /usr/bin/python3 .venv
 	uv sync --frozen --no-dev
+
+configure-env:
+	@test ! -e .env || (echo ".env já existe; preserve-o ou remova-o conscientemente antes de recriar." && exit 1)
+	@cp .env.example .env
+	@edge_password=$$(openssl rand -hex 24); backend_password=$$(openssl rand -hex 24); \
+		sed -i "s/^MQTT_EDGE_PASSWORD=.*/MQTT_EDGE_PASSWORD=$$edge_password/; s/^MQTT_BACKEND_PASSWORD=.*/MQTT_BACKEND_PASSWORD=$$backend_password/" .env
+	@printf "FRONTEND_PORT=$(FRONTEND_PORT)\n" >> .env
+	@chmod 600 .env
+	@echo ".env criado com credenciais MQTT locais."
+
+ensure-env:
+	@test -f .env || $(MAKE) --no-print-directory configure-env
+
+model-pull:
+	$(UV_RUN) dvc pull models.dvc
+	@test -f "$(MANIFEST)" || (echo "Modelo ativo não encontrado em $(MANIFEST)." && exit 1)
+
+health:
+	curl --fail --silent --show-error http://127.0.0.1:8000/health
 
 test:
 	$(UV_RUN) pytest -q
@@ -172,14 +207,28 @@ benchmark-model:
 		--warmup "$(BENCHMARK_WARMUP)" \
 		--output "$(BENCHMARK_OUTPUT)"
 
-up:
+up: ensure-env
 	docker compose up --build --detach
 
 down:
 	docker compose down
 
+backend-up: ensure-env
+	docker compose up --build --detach mqtt
+	docker compose run --rm --no-deps backend uv run --frozen --no-dev alembic upgrade head
+	docker compose up --detach backend
+
+backend-down:
+	docker compose down
+
+frontend-up:
+	cd frontend && VITE_API_URL="$(API_URL)" npm run dev -- --host "$(FRONTEND_HOST)"
+
+frontend-build:
+	cd frontend && npm run build
+
 build:
-	docker compose build backend
+	docker compose build
 
 ps:
 	docker compose ps
@@ -209,6 +258,33 @@ infer-camera:
 		--mqtt-host "$(HOST)" \
 		--mqtt-port "$(PORT)"
 
+run-esteira:
+	$(UV_RUN) python scripts/executar_esteira.py \
+		--manifest "$(MANIFEST)" \
+		--backend "$(CAMERA_BACKEND)" \
+		--camera-id "$(CAMERA)" \
+		--mqtt-host "$(HOST)" \
+		--mqtt-port "$(PORT)" \
+		--station-code "$(STATION_CODE)" \
+		--batch-code "$(BATCH_CODE)" \
+		--gpio-pin "$(GPIO_PIN)" \
+		--debounce-ms "$(DEBOUNCE_MS)"
+
+run-conveyor:
+	$(UV_RUN) python scripts/run_conveyor.py \
+		--manifest "$(MANIFEST)" \
+		--backend "$(CAMERA_BACKEND)" \
+		--camera "$(CAMERA)" \
+		--mqtt-host "$(HOST)" \
+		--mqtt-port "$(PORT)" \
+		--station-code "$(STATION_CODE)" \
+		--device-id "$(DEVICE_ID)" \
+		--batch-code "$(BATCH_CODE)" \
+		--gpio-pin "$(GPIO_PIN)" \
+		--debounce-ms "$(DEBOUNCE_MS)"
+
+edge-up: run-conveyor
+
 monitor-edge:
 	$(UV_RUN) python scripts/monitor_edge.py \
 		--mqtt-host "$(HOST)" \
@@ -221,30 +297,13 @@ sync-outbox:
 
 mqtt-sub:
 	docker run --rm --network host $(MQTT_IMAGE) \
-		mosquitto_sub -h $(HOST) -p $(PORT) -t '$(TOPIC)' -v
+		mosquitto_sub -h $(HOST) -p $(PORT) \
+		-u "$(MQTT_BACKEND_USERNAME)" -P "$(MQTT_BACKEND_PASSWORD)" \
+		-t '$(TOPIC)' -v
 
 mqtt-pub:
 	@test -n "$(MSG)" || (echo "Informe MSG. Exemplo: make mqtt-pub MSG='Olá MQTT'" && exit 1)
 	docker run --rm --network host $(MQTT_IMAGE) \
-		mosquitto_pub -h $(HOST) -p $(PORT) -t '$(TOPIC)' -m '$(MSG)'
-
-GPIO_PIN ?= 17
-DEBOUNCE_MS ?= 50
-PREVIEW_PORT ?= 8080
-
-preview-camera:
-	$(UV_RUN) python scripts/preview_camera.py \
-		--backend "$(CAMERA_BACKEND)" \
-		--camera-id "$(CAMERA)" \
-		--port "$(PREVIEW_PORT)"
-
-run-esteira:
-	$(UV_RUN) python scripts/executar_esteira.py \
-		--manifest "$(MANIFEST)" \
-		--backend "$(CAMERA_BACKEND)" \
-		--camera-id "$(CAMERA)" \
-		--gpio-pin "$(GPIO_PIN)" \
-		--debounce-ms "$(DEBOUNCE_MS)" \
-		--mqtt-host "$(HOST)" \
-		--mqtt-port "$(PORT)" \
-		--mqtt-topic "$(MODEL_TOPIC)"
+		mosquitto_pub -h $(HOST) -p $(PORT) \
+		-u "$(MQTT_EDGE_USERNAME)" -P "$(MQTT_EDGE_PASSWORD)" \
+		-t '$(TOPIC)' -m '$(MSG)'

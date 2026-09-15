@@ -1,0 +1,54 @@
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: #05243c66;
+}
+.detailModal {
+  width: min(100%, 430px);
+  padding: 24px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 18px 50px #05243c33;
+}
+.sectionHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sectionHeading h2 {
+  margin: 0;
+  font-size: 16px;
+}
+.sectionHeading button {
+  border: 0;
+  color: #64818f;
+  background: transparent;
+  font-size: 25px;
+  cursor: pointer;
+}
+.detailList {
+  display: grid;
+  margin: 8px 0 0;
+}
+.detailList div {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 14px 0;
+  border-top: 1px solid #edf1f2;
+}
+.detailList dt {
+  color: #79919b;
+  font-size: 12px;
+}
+.detailList dd {
+  margin: 0;
+  color: #05243c;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: right;
+}

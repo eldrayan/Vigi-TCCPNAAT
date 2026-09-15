@@ -50,6 +50,7 @@ extracted_apostila.txt
 .coverage
 dist/
 build/
+node_modules/
 *.egg-info/
 /*.pt
 

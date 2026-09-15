@@ -1,0 +1,19 @@
+.chart {
+  height: 250px;
+  display: grid;
+  place-items: center;
+}
+.chart canvas {
+  max-width: 250px !important;
+  max-height: 250px !important;
+}
+
+@media (max-width: 640px) {
+  .chart {
+    height: 220px;
+  }
+  .chart canvas {
+    max-width: 220px !important;
+    max-height: 220px !important;
+  }
+}

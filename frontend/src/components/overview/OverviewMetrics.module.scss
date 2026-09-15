@@ -1,0 +1,42 @@
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.metric {
+  display: grid;
+  gap: 9px;
+  padding: 19px 21px;
+  border: 1px solid #e4ebed;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.metric svg {
+  color: #00af87;
+}
+.metric span {
+  color: #64818f;
+  font-size: 12px;
+}
+.metric strong {
+  font-size: 30px;
+  line-height: 1;
+}
+.metric small {
+  color: #9aaeb6;
+  font-size: 11px;
+}
+
+@media (max-width: 900px) {
+  .metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .metrics {
+    grid-template-columns: 1fr;
+  }
+}

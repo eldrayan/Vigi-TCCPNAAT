@@ -1,0 +1,37 @@
+{
+  "name": "vigi-dashboard",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint src --max-warnings 0 && tsc --noEmit",
+    "format": "prettier --write \"src/**/*.{ts,tsx,scss}\" \"*.{js,json}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,scss}\" \"*.{js,json}\"",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.1",
+    "chart.js": "^4.5.1",
+    "lucide-react": "^1.45.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "sass": "1.104.1",
+    "typescript": "7.0.2",
+    "vite": "8.3.0"
+  },
+  "devDependencies": {
+    "@babel/eslint-parser": "^7.28.5",
+    "@babel/preset-react": "^7.28.5",
+    "@babel/preset-typescript": "^7.28.5",
+    "@eslint/js": "^9.39.1",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "prettier": "^3.9.6"
+  }
+}

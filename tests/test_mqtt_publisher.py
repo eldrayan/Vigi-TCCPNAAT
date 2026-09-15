@@ -31,6 +31,10 @@ class MQTTClientStub:
         self.loop_started = False
         self.disconnected = False
         self.loop_stopped = False
+        self.credentials: tuple[str, str] | None = None
+
+    def username_pw_set(self, username: str, password: str) -> None:
+        self.credentials = (username, password)
 
     def connect(self, host: str, port: int) -> None:
         self.connected_to = (host, port)
@@ -164,6 +168,19 @@ def test_publisher_sends_event_with_qos_one() -> None:
     assert client.publication.wait_timeout == 5
     assert client.disconnected
     assert client.loop_stopped
+
+
+def test_publisher_configures_credentials_when_provided() -> None:
+    client = MQTTClientStub()
+
+    MQTTInspectionPublisher(
+        host="mqtt.local",
+        username="vigi-edge",
+        password="senha-segura",
+        client=client,
+    )
+
+    assert client.credentials == ("vigi-edge", "senha-segura")
 
 
 def test_inference_cli_publishes_complete_event(monkeypatch, tmp_path) -> None:

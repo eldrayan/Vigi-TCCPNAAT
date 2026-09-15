@@ -1,0 +1,165 @@
+.overviewGrid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 16px;
+  margin-top: 22px;
+}
+.activity,
+.quality {
+  padding: 22px;
+  border: 1px solid #e4ebed;
+  border-radius: 14px;
+  background: #fff;
+}
+.activity h2,
+.quality h2 {
+  margin: 0 0 17px;
+  font-size: 16px;
+}
+.quality header {
+  display: flex;
+  justify-content: space-between;
+}
+.quality header span,
+.quality p {
+  color: #79919b;
+  font-size: 12px;
+}
+.quality p {
+  margin: 14px 0 0;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -4px 0 14px;
+}
+.filters input,
+.filters select {
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #334155;
+  background: #fff;
+  font: inherit;
+  font-size: 12px;
+}
+.filters input {
+  width: 90px;
+}
+.filters input:focus,
+.filters select:focus {
+  outline: 2px solid #b9ddd4;
+  border-color: #00af87;
+}
+
+.recentTableWrap {
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+}
+.recentTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  text-align: left;
+  font-size: 12px;
+}
+.recentTable th,
+.recentTable td {
+  padding: 11px 14px;
+  border-right: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.recentTable th {
+  color: #64748b;
+  background: #f8fafc;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.recentTable th:last-child,
+.recentTable td:last-child {
+  border-right: 0;
+  text-align: right;
+}
+.recentTable tbody tr:last-child td {
+  border-bottom: 0;
+}
+.recentTable button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 11px;
+  border: 1px solid #b9ddd4;
+  border-radius: 999px;
+  color: #007d64;
+  background: #f0faf7;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.recentTable button:hover {
+  border-color: #00af87;
+  background: #dff6ef;
+}
+.emptyRow {
+  text-align: center !important;
+  color: #94a3b8 !important;
+}
+
+.badgeOk,
+.badgeDanger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border: 1px solid;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.badgeOk {
+  border-color: #d1fae5;
+  color: #059669;
+  background: #ecfdf5;
+}
+.badgeDanger {
+  border-color: #fee2e2;
+  color: #dc2626;
+  background: #fef2f2;
+}
+.progress {
+  height: 9px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #e5f1ee;
+}
+.progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #00af87;
+}
+
+@media (max-width: 900px) {
+  .overviewGrid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 640px) {
+  .recentTableWrap {
+    overflow-x: auto;
+  }
+  .recentTable {
+    min-width: 620px;
+  }
+}

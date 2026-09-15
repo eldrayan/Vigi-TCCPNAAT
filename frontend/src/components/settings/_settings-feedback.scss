@@ -1,0 +1,22 @@
+.success,
+.failure {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  margin: 18px 0 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.success {
+  color: #008f72;
+  border: 1px solid #b9eadc;
+  background: #ecfdf5;
+}
+
+.failure {
+  color: #b54737;
+  border: 1px solid #f3c6be;
+  background: #fff5f3;
+}

@@ -44,7 +44,7 @@ def test_status_publisher_uses_lwt_and_retains_current_state() -> None:
         host="mqtt.local", device_id="leocio-raspberry", client=client
     )
 
-    publisher.start(camera="ONLINE", processing="ONLINE")
+    publisher.start(sensor="ONLINE", camera="ONLINE", processing="ONLINE")
     publisher.stop()
 
     assert client.will[0] == "vigi/dispositivos/leocio-raspberry/status"
@@ -63,3 +63,24 @@ def test_status_publisher_uses_lwt_and_retains_current_state() -> None:
     assert offline["connection"] == "OFFLINE"
     assert offline["sensor"] == "OFFLINE"
     assert client.publications[0][2:] == (1, True)
+
+
+def test_status_publisher_configures_credentials_when_provided() -> None:
+    class AuthClientStub(ClientStub):
+        def __init__(self) -> None:
+            super().__init__()
+            self.credentials: tuple[str, str] | None = None
+
+        def username_pw_set(self, username: str, password: str) -> None:
+            self.credentials = (username, password)
+
+    client = AuthClientStub()
+    MQTTDeviceStatusPublisher(
+        host="mqtt.local",
+        device_id="leocio-raspberry",
+        username="vigi-edge",
+        password="senha-segura",
+        client=client,
+    )
+
+    assert client.credentials == ("vigi-edge", "senha-segura")

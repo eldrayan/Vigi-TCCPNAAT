@@ -55,6 +55,14 @@ Abaixo está representado o fluxo integrado de inspeção visual, processamento 
    * **Backend Python:** O FastAPI consome MQTT, acessa o SQLite e fornece dados ao dashboard por REST/SSE. A camada de dados permanece em Python para manter o mesmo ecossistema do modelo de visão computacional.
    * **Frontend JavaScript:** O React apresenta indicadores, gráficos e alarmes no navegador, sem acessar diretamente o broker ou o banco de dados.
 
+### Organização em monólito modular
+
+O backend do Vigi adota a organização de um monólito modular: uma única aplicação FastAPI reúne as funções de negócio, separadas em módulos com responsabilidades definidas. O módulo de inspeções concentra rotas, validação dos dados, serviços e persistência em `backend/app/modules/inspections/`. Configuração, banco e comunicação MQTT ficam na infraestrutura compartilhada.
+
+Essa organização permite documentar cada responsabilidade junto do código correspondente e facilita a manutenção, sem exigir um serviço independente para cada função de negócio. A divisão por fluxo de dados dos diagramas complementa essa visão, mostrando como as informações passam entre os componentes.
+
+O Edge é um processo separado que publica eventos, e o Mosquitto é um serviço de infraestrutura. O termo monólito modular descreve a organização do backend; o sistema completo inclui esses componentes e o frontend React no navegador.
+
 ### Separação da stack
 
 O processamento de imagens, a inferência do modelo, a comunicação MQTT, a persistência e a API são implementados em **Python**. Essa escolha reduz a quantidade de tecnologias na camada de dados e facilita o compartilhamento de modelos, validações e contratos entre o processamento em borda e o backend.
@@ -290,7 +298,139 @@ A promoção suporta somente checkpoints PyTorch `.pt` e usa obrigatoriamente o
 
 ### Inferência e benchmark na Raspberry Pi 5
 
-Após `dvc pull`, classifique uma imagem ou capture um quadro da câmera CSI:
+Para câmera CSI, instale os pacotes do sistema conforme a seção do coletor e use o Python de `/usr/bin/python3`, na faixa 3.11 a 3.13 aceita pelo Edge. O backend usa Python 3.12 em seu próprio ambiente/container. O `make setup-rpi` cria `.venv` com acesso aos pacotes do sistema apenas se o diretório ainda não existir; um ambiente criado antes sem esse acesso precisa ser revisto antes de usar Picamera2.
+
+A [documentação do uv](https://docs.astral.sh/uv/reference/cli/#uv-venv) descreve `--system-site-packages`. Instalar outro interpretador não transfere os bindings da câmera. A compatibilidade das bibliotecas deve ser testada na Pi.
+
+Antes de iniciar o fluxo integrado, confira as ferramentas instaladas:
+
+```bash
+make --version
+docker --version
+docker compose version
+curl --version
+uv --version
+```
+
+## Reprodução ponta a ponta
+
+Este roteiro reproduz o fluxo completo na Raspberry Pi: sensor → câmera →
+inferência no Edge → MQTT autenticado → FastAPI/SQLite → dashboard React.
+Execute todos os comandos a partir da raiz do repositório.
+
+### 1. Preparar a Raspberry e o modelo
+
+Instale Docker com Compose, `uv`, Git e os drivers da câmera CSI. A instalação
+do Docker deve seguir a [documentação oficial](https://docs.docker.com/engine/install/).
+Depois, prepare o ambiente Python do Edge e recupere os artefatos DVC:
+
+```bash
+make setup-rpi
+make dvc-pull
+```
+
+Confirme que `models/active/manifest.json` existe antes de continuar.
+
+### 2. Configurar as credenciais locais
+
+Crie o arquivo local de configuração. Ele é ignorado pelo Git e nunca deve ser
+enviado ao repositório:
+
+```bash
+cp .env.example .env
+nano .env
+```
+
+Mantenha os nomes de usuário distintos e troque as duas senhas de exemplo por
+valores fortes:
+
+```env
+MQTT_BACKEND_USERNAME=vigi-backend
+MQTT_BACKEND_PASSWORD=troque-por-uma-senha-forte
+MQTT_EDGE_USERNAME=vigi-edge
+MQTT_EDGE_PASSWORD=troque-por-outra-senha-forte
+```
+
+O broker não aceita conexões sem credenciais. O Edge publica somente nos tópicos
+da `ESTACAO_01`; o backend consome inspeções e estados do dispositivo.
+
+### 3. Subir dashboard, API e broker
+
+```bash
+make up
+make ps
+curl -f http://localhost:8000/health
+```
+
+O Compose aplica as migrations automaticamente, mantém o SQLite em volume e
+inicia o dashboard, FastAPI e Mosquitto. Na rede local, acesse:
+
+```text
+Dashboard: http://leocio-raspberry.local:8080
+Swagger:   http://leocio-raspberry.local:8000/docs
+```
+
+Se o mDNS não estiver disponível, obtenha o endereço com `hostname -I` e use
+`http://IP_DA_RASPBERRY:8080`. O dashboard encaminha API e SSE internamente;
+por isso não exige configuração adicional de CORS nesse fluxo em containers.
+
+O CORS só é necessário para desenvolvimento separado com Vite. Nesse caso,
+inicie a API com `FRONTEND_ORIGINS=http://IP_DA_RASPBERRY:5173 make backend-up`
+e o dashboard com `make frontend-up API_URL=http://IP_DA_RASPBERRY:8000`.
+
+### 4. Iniciar a inspeção contínua
+
+Em outro terminal na Raspberry, conecte o sensor E18-D80NK e a câmera e execute:
+
+```bash
+make edge-up HOST=localhost
+```
+
+O diagnóstico inicial confirma modelo, sensor, câmera e broker. Depois, cada
+detecção do sensor captura uma imagem, executa a inferência, salva o evento na
+outbox SQLite do Edge e o publica no MQTT. A migration cria a estação fixa
+`ESTACAO_01` e o lote ativo `LOTE_01`.
+
+### 5. Verificar a inspeção no dashboard e na API
+
+Após passar um recipiente na esteira, confira a nova inspeção no dashboard ou
+consulte a API:
+
+```bash
+curl -f 'http://localhost:8000/api/inspecoes?limit=10&offset=0'
+curl -f http://localhost:8000/api/inspecoes/resumo
+```
+
+O histórico persistido inclui resultado, confiança e, quando não conforme, o
+tipo da não conformidade. O dashboard recebe atualizações por SSE.
+
+### 6. Testar sem o sensor ou a câmera
+
+Para demonstrar o restante da esteira com uma imagem existente, sem hardware
+de captura, execute:
+
+```bash
+make infer-image IMAGE=/caminho/imagem.jpg HOST=localhost
+```
+
+Para inspecionar os tópicos MQTT com autenticação, use:
+
+```bash
+make mqtt-sub TOPIC='vigi/estacoes/#' HOST=localhost
+```
+
+### 7. Parar com segurança
+
+Interrompa o Edge com `Ctrl+C` e pare os containers sem remover os volumes:
+
+```bash
+make down
+```
+
+O histórico do backend e a outbox local do Edge são preservados. Para consultar
+todos os atalhos disponíveis, execute `make help`.
+
+Para executar somente a inferência local, sem publicação MQTT, use diretamente a CLI:
 
 ```bash
 uv run python scripts/infer.py \

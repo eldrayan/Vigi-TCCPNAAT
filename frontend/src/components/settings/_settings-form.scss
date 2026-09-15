@@ -1,0 +1,57 @@
+.form {
+  display: grid;
+  gap: 16px;
+}
+
+label {
+  display: grid;
+  gap: 7px;
+  color: #244b63;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+label small {
+  color: #678296;
+  font-size: 13px;
+}
+
+input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 11px 12px;
+  border: 1px solid #bfd4de;
+  border-radius: 8px;
+  color: #123b54;
+  background: #fff;
+  font: inherit;
+}
+
+input:read-only {
+  color: #56758a;
+  background: #f5f9fa;
+}
+
+button {
+  display: inline-flex;
+  width: fit-content;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 8px;
+  color: #fff;
+  background: #0f4c6d;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #0b3d59;
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
