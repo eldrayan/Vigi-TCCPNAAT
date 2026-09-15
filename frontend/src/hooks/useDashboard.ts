@@ -3,7 +3,7 @@
  * Autor: Leôncio Ferreira
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   api,
@@ -29,17 +29,24 @@ interface DashboardData {
 }
 
 function playAlarmSound() {
-  const AudioContextConstructor = window.AudioContext;
-  if (!AudioContextConstructor) return;
-  const context = new AudioContextConstructor();
-  const oscillator = context.createOscillator();
-  const gain = context.createGain();
-  oscillator.frequency.value = 880;
-  gain.gain.setValueAtTime(0.08, context.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.35);
-  oscillator.connect(gain).connect(context.destination);
-  oscillator.start();
-  oscillator.stop(context.currentTime + 0.35);
+  try {
+    const AudioContextConstructor = window.AudioContext;
+    if (!AudioContextConstructor) return;
+    const context = new AudioContextConstructor();
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    oscillator.frequency.value = 880;
+    gain.gain.setValueAtTime(0.08, context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.35);
+    oscillator.connect(gain).connect(context.destination);
+    oscillator.onended = () => {
+      void context.close().catch(() => {});
+    };
+    oscillator.start();
+    oscillator.stop(context.currentTime + 0.35);
+  } catch {
+    // Silently ignore autoplay restrictions or audio context limits
+  }
 }
 
 export function useDashboard() {
@@ -47,12 +54,16 @@ export function useDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
+  const currentFiltersRef = useRef<InspectionFilters>({});
+  const currentLimitRef = useRef(10);
+  const currentOffsetRef = useRef(0);
+
+  const refresh = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const [summary, inspectionPage, stations, alarms] = await Promise.all([
         api.summary(),
-        api.inspectionsPage(),
+        api.inspectionsPage(currentFiltersRef.current, currentLimitRef.current, currentOffsetRef.current),
         api.stations(),
         api.alarms(),
       ]);
@@ -78,26 +89,41 @@ export function useDashboard() {
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Não foi possível carregar o dashboard.");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    void refresh();
+    void refresh(false);
   }, [refresh]);
+
   useEffect(() => {
     const events = new EventSource(api.eventsUrl);
-    const scheduleRefresh = () => void refresh();
+    let timer: number | undefined;
+
+    const scheduleRefresh = () => {
+      if (timer) window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        void refresh(true);
+      }, 400);
+    };
+
     events.addEventListener("inspection.created", scheduleRefresh);
     events.addEventListener("device.status", scheduleRefresh);
     events.addEventListener("alarm.created", () => {
       playAlarmSound();
       scheduleRefresh();
     });
-    return () => events.close();
+    return () => {
+      if (timer) window.clearTimeout(timer);
+      events.close();
+    };
   }, [refresh]);
 
   const filterInspections = useCallback(async (filters: InspectionFilters, limit = 10, offset = 0) => {
+    currentFiltersRef.current = filters;
+    currentLimitRef.current = limit;
+    currentOffsetRef.current = offset;
     try {
       const page = await api.inspectionsPage(filters, limit, offset);
       setData((current) =>
@@ -119,17 +145,28 @@ export function useDashboard() {
   const acknowledgeAlarm = useCallback(
     async (alarmId: number, acknowledgedBy: string) => {
       await api.acknowledgeAlarm(alarmId, acknowledgedBy);
-      await refresh();
+      await refresh(true);
     },
     [refresh],
   );
 
   const configureAlarm = useCallback(
-    async (name: string, limit: number) => {
-      await api.configureAlarm(1, 1, name, limit);
-      await refresh();
+    async (name: string, limit: number, stationId?: number, batchId?: number) => {
+      const targetStationId = stationId ?? data?.stations[0]?.id ?? 1;
+      let targetBatchId = batchId;
+      if (!targetBatchId) {
+        try {
+          const batches = await api.batches(targetStationId);
+          const activeBatch = batches.find((b) => b.status === "EM_ANDAMENTO" || b.status === "ATIVO") ?? batches[batches.length - 1];
+          targetBatchId = activeBatch?.id ?? 1;
+        } catch {
+          targetBatchId = 1;
+        }
+      }
+      await api.configureAlarm(targetStationId, targetBatchId, name, limit);
+      await refresh(true);
     },
-    [refresh],
+    [data?.stations, refresh],
   );
 
   const configureContext = useCallback(
@@ -140,7 +177,7 @@ export function useDashboard() {
       const existing = batches.find((batch) => batch.code === batchCode);
       const batch = existing ?? (await api.createBatch(station.id, batchCode));
       await api.activateBatch(station.id, batch.id);
-      await refresh();
+      await refresh(true);
     },
     [data?.stations, refresh],
   );

@@ -10,15 +10,13 @@ import type { PageData } from "../../app/page-types";
 import type { Alarm } from "../../lib/api";
 import { formatDate } from "../../lib/formatters";
 import { PageSection } from "../layout/PageSection";
+import { ActiveAlarmModal } from "./ActiveAlarmModal";
 import { AlarmConfigurationModal } from "./AlarmConfigurationModal";
 import styles from "./AlarmsPage.module.scss";
 
 export function AlarmsPage({ alarms, stations, onAcknowledgeAlarm, onConfigureAlarm }: PageData) {
   const [configuring, setConfiguring] = useState(false);
-  const acknowledge = async (alarm: Alarm) => {
-    const responsible = window.prompt("Informe o responsável pelo reconhecimento:");
-    if (responsible?.trim()) await onAcknowledgeAlarm(alarm.id, responsible.trim());
-  };
+  const [acknowledgingAlarm, setAcknowledgingAlarm] = useState<Alarm | null>(null);
   return (
     <>
       <PageSection
@@ -46,7 +44,11 @@ export function AlarmsPage({ alarms, stations, onAcknowledgeAlarm, onConfigureAl
               </div>
               <time>{formatDate(alarm.created_at)}</time>
               {alarm.status === "ABERTO" && (
-                <button className={styles.acknowledge} type="button" onClick={() => void acknowledge(alarm)}>
+                <button
+                  className={styles.acknowledge}
+                  type="button"
+                  onClick={() => setAcknowledgingAlarm(alarm)}
+                >
                   Reconhecer
                 </button>
               )}
@@ -55,6 +57,16 @@ export function AlarmsPage({ alarms, stations, onAcknowledgeAlarm, onConfigureAl
         </div>
       </PageSection>
       {configuring && <AlarmConfigurationModal onClose={() => setConfiguring(false)} onSave={onConfigureAlarm} />}
+      {acknowledgingAlarm && (
+        <ActiveAlarmModal
+          alarm={acknowledgingAlarm}
+          onConfirm={async (id, responsible) => {
+            await onAcknowledgeAlarm(id, responsible);
+            setAcknowledgingAlarm(null);
+          }}
+          onClose={() => setAcknowledgingAlarm(null)}
+        />
+      )}
     </>
   );
 }

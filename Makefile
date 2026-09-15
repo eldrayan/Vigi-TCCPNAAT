@@ -153,9 +153,20 @@ run-esteira:
 		--gpio-pin "$(GPIO_PIN)" \
 		--debounce-ms "$(DEBOUNCE_MS)"
 
-run-conveyor: run-esteira
+run-conveyor:
+	$(UV_RUN) python scripts/run_conveyor.py \
+		--manifest "$(MANIFEST)" \
+		--backend "$(CAMERA_BACKEND)" \
+		--camera "$(CAMERA)" \
+		--mqtt-host "$(HOST)" \
+		--mqtt-port "$(PORT)" \
+		--station-code "$(STATION_CODE)" \
+		--device-id "$(DEVICE_ID)" \
+		--batch-code "$(BATCH_CODE)" \
+		--gpio-pin "$(GPIO_PIN)" \
+		--debounce-ms "$(DEBOUNCE_MS)"
 
-edge-up: run-esteira
+edge-up: run-conveyor
 
 monitor-edge:
 	$(UV_RUN) python scripts/monitor_edge.py \

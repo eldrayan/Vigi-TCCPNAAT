@@ -6,7 +6,7 @@ import json
 from datetime import UTC, datetime
 from typing import Any
 
-from .publisher import create_mqtt_client
+from .publisher import configure_mqtt_client, create_mqtt_client
 
 
 class MQTTDeviceStatusPublisher:
@@ -17,13 +17,19 @@ class MQTTDeviceStatusPublisher:
         host: str,
         device_id: str,
         port: int = 1883,
+        username: str | None = None,
+        password: str | None = None,
         client: Any | None = None,
     ) -> None:
         self.host = host
         self.port = port
         self.device_id = device_id
         self.topic = f"vigi/dispositivos/{device_id}/status"
-        self.client = client or create_mqtt_client()
+        self.client = configure_mqtt_client(
+            client or create_mqtt_client(client_id=f"vigi-status-{device_id}"),
+            username,
+            password,
+        )
         self.client.will_set(
             self.topic,
             json.dumps(self._payload("OFFLINE", "OFFLINE", "OFFLINE", "OFFLINE")),

@@ -72,7 +72,7 @@ export function App() {
 
         {dashboard.error ? (
           <ErrorState message={dashboard.error} onRetry={() => void dashboard.refresh()} />
-        ) : dashboard.loading || pages === null ? (
+        ) : (dashboard.loading && !dashboard.data) || pages === null ? (
           <section className={styles.loading}>Carregando dados operacionais…</section>
         ) : (
           pages[activePage as keyof typeof pages]

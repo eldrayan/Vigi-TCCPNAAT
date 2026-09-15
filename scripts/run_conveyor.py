@@ -49,6 +49,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--mqtt-host", default="localhost")
     parser.add_argument("--mqtt-port", type=int, default=1883)
+    parser.add_argument("--mqtt-username", default=None)
+    parser.add_argument("--mqtt-password", default=None)
     parser.add_argument("--station-code", default="ESTACAO_01")
     parser.add_argument("--device-id", default="ESTACAO_01")
     parser.add_argument("--batch-code", default="LOTE_01")
@@ -124,7 +126,11 @@ def main(argv: list[str] | None = None) -> int:
         station_code=args.station_code, batch_code=args.batch_code
     )
     status = MQTTDeviceStatusPublisher(
-        args.mqtt_host, device_id=args.device_id, port=args.mqtt_port
+        args.mqtt_host,
+        device_id=args.device_id,
+        port=args.mqtt_port,
+        username=args.mqtt_username,
+        password=args.mqtt_password,
     )
     status.start(sensor="ONLINE", camera="ONLINE", processing="ONLINE")
 
@@ -140,7 +146,12 @@ def main(argv: list[str] | None = None) -> int:
         camera=camera,
         engine=engine,
         outbox=InspectionOutbox(args.outbox_path),
-        publisher=MQTTInspectionPublisher(args.mqtt_host, args.mqtt_port),
+        publisher=MQTTInspectionPublisher(
+            args.mqtt_host,
+            args.mqtt_port,
+            username=args.mqtt_username,
+            password=args.mqtt_password,
+        ),
         context=context,
         on_idle=report_idle,
     )

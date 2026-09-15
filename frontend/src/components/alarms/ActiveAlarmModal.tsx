@@ -12,25 +12,36 @@ import styles from "./AlarmModal.module.scss";
 interface ActiveAlarmModalProps {
   alarm: Alarm;
   onConfirm: (alarmId: number, responsible: string) => Promise<void>;
+  onClose?: () => void;
 }
 
-export function ActiveAlarmModal({ alarm, onConfirm }: ActiveAlarmModalProps) {
+export function ActiveAlarmModal({ alarm, onConfirm, onClose }: ActiveAlarmModalProps) {
   const [responsible, setResponsible] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const confirm = async () => {
     if (!responsible.trim()) return;
     setSubmitting(true);
+    setError(null);
     try {
       await onConfirm(alarm.id, responsible.trim());
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Falha ao reconhecer o alarme.");
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className={styles.backdrop} role="presentation">
-      <section className={styles.alertModal} role="alertdialog" aria-modal="true" aria-labelledby="active-alarm-title">
+    <div className={styles.backdrop} role="presentation" onMouseDown={onClose}>
+      <section
+        className={styles.alertModal}
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="active-alarm-title"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
         <ShieldAlert size={28} />
         <p>Alarme ativo</p>
         <h2 id="active-alarm-title">{alarm.name}</h2>
@@ -46,9 +57,15 @@ export function ActiveAlarmModal({ alarm, onConfirm }: ActiveAlarmModalProps) {
             placeholder="Seu nome"
           />
         </label>
+        {error && <p className={styles.failure} role="alert">{error}</p>}
         <button type="button" disabled={!responsible.trim() || submitting} onClick={() => void confirm()}>
           {submitting ? "Confirmando…" : "Reconhecer e confirmar"}
         </button>
+        {onClose && (
+          <button type="button" className={styles.cancelBtn} disabled={submitting} onClick={onClose}>
+            Cancelar
+          </button>
+        )}
       </section>
     </div>
   );

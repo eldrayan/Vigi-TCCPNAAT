@@ -6,7 +6,7 @@
 import { CheckCircle2, Eye, XCircle } from "lucide-react";
 
 import type { Inspection } from "../../lib/api";
-import { formatDate, labelType } from "../../lib/formatters";
+import { formatTime, labelType } from "../../lib/formatters";
 import styles from "./OverviewPage.module.scss";
 
 interface RecentInspectionsTableProps {
@@ -39,7 +39,7 @@ export function RecentInspectionsTable({ inspections, onSelect }: RecentInspecti
               const compliant = inspection.result === "CONFORME";
               return (
                 <tr key={inspection.inspection_id}>
-                  <td>{formatDate(inspection.timestamp).split(", ")[1]}</td>
+                  <td>{formatTime(inspection.timestamp)}</td>
                   <td>{inspection.station_code ?? "—"}</td>
                   <td>
                     <span className={compliant ? styles.badgeOk : styles.badgeDanger}>
