@@ -37,6 +37,26 @@ class InferenceEngineStub:
         return self.decision
 
 
+class IndicatorsStub:
+    def __init__(self) -> None:
+        self.results: list[str] = []
+        self.critical_alarm_count = 0
+        self.acknowledged_count = 0
+        self.closed = False
+
+    def signal_result(self, result: str) -> None:
+        self.results.append(result)
+
+    def signal_critical_alarm(self) -> None:
+        self.critical_alarm_count += 1
+
+    def acknowledge_alarm(self) -> None:
+        self.acknowledged_count += 1
+
+    def close(self) -> None:
+        self.closed = True
+
+
 def test_conveyor_process_cycle_conforme() -> None:
     sensor = SimulatedPhotoelectricSensor()
     camera = CameraStub()
@@ -149,3 +169,197 @@ def test_conveyor_runs_and_stops_on_max_cycles() -> None:
 
     assert orchestrator.inspections_count == 2
     assert camera.released
+
+
+def test_conveyor_signals_each_result_and_alarms_after_consecutive_rejections() -> None:
+    sensor = SimulatedPhotoelectricSensor()
+    camera = CameraStub()
+    decision = InspectionDecision(
+        result="NAO_CONFORME",
+        category="ANOMALIA_PRODUTO",
+        nonconformity_type="SEM_TAMPA",
+        technical_failure_type=None,
+        confidence=0.95,
+        processing_time_ms=40.0,
+        model_format="pytorch",
+    )
+    indicators = IndicatorsStub()
+    orchestrator = ConveyorOrchestrator(
+        sensor=sensor,
+        camera=camera,
+        engine=InferenceEngineStub(decision),
+        publisher=MQTTInspectionPublisher(client=MagicMock()),
+        indicators=indicators,
+        critical_alarm_after=2,
+    )
+
+    orchestrator.process_cycle()
+    assert indicators.results == ["NAO_CONFORME"]
+    assert indicators.critical_alarm_count == 0
+
+    orchestrator.process_cycle()
+    assert indicators.results == ["NAO_CONFORME", "NAO_CONFORME"]
+    assert indicators.critical_alarm_count == 1
+
+    orchestrator.acknowledge_alarm()
+    assert indicators.acknowledged_count == 1
+
+    orchestrator.process_cycle()
+    assert indicators.critical_alarm_count == 1
+
+    orchestrator.process_cycle()
+    assert indicators.critical_alarm_count == 2
+
+
+def test_conveyor_resets_rejection_streak_after_conforming_result() -> None:
+    sensor = SimulatedPhotoelectricSensor()
+    camera = CameraStub()
+    engine = InferenceEngineStub(
+        InspectionDecision(
+            result="NAO_CONFORME",
+            category="ANOMALIA_PRODUTO",
+            nonconformity_type="TAMPA_TORTA",
+            technical_failure_type=None,
+            confidence=0.9,
+            processing_time_ms=40.0,
+            model_format="pytorch",
+        )
+    )
+    indicators = IndicatorsStub()
+    orchestrator = ConveyorOrchestrator(
+        sensor=sensor,
+        camera=camera,
+        engine=engine,
+        publisher=MQTTInspectionPublisher(client=MagicMock()),
+        indicators=indicators,
+        critical_alarm_after=2,
+    )
+
+    orchestrator.process_cycle()
+    engine.decision = InspectionDecision(
+        result="CONFORME",
+        category=None,
+        nonconformity_type=None,
+        technical_failure_type=None,
+        confidence=0.99,
+        processing_time_ms=35.0,
+        model_format="pytorch",
+    )
+    orchestrator.process_cycle()
+    engine.decision = InspectionDecision(
+        result="NAO_CONFORME",
+        category="ANOMALIA_PRODUTO",
+        nonconformity_type="AMASSADO",
+        technical_failure_type=None,
+        confidence=0.91,
+        processing_time_ms=42.0,
+        model_format="pytorch",
+    )
+    orchestrator.process_cycle()
+
+    assert indicators.results == ["NAO_CONFORME", "CONFORME", "NAO_CONFORME"]
+    assert indicators.critical_alarm_count == 0
+
+
+def test_conveyor_closes_indicators_with_other_hardware() -> None:
+    sensor = SimulatedPhotoelectricSensor()
+    camera = CameraStub()
+    indicators = IndicatorsStub()
+    decision = InspectionDecision(
+        result="CONFORME",
+        category=None,
+        nonconformity_type=None,
+        technical_failure_type=None,
+        confidence=0.99,
+        processing_time_ms=30.0,
+        model_format="pytorch",
+    )
+    orchestrator = ConveyorOrchestrator(
+        sensor=sensor,
+        camera=camera,
+        engine=InferenceEngineStub(decision),
+        publisher=MQTTInspectionPublisher(client=MagicMock()),
+        indicators=indicators,
+    )
+
+    orchestrator.stop()
+
+    assert indicators.closed
+
+
+def test_conveyor_triggers_immediate_alarm_for_technical_failure() -> None:
+    indicators = IndicatorsStub()
+    decision = InspectionDecision(
+        result="NAO_CONFORME",
+        category="FALHA_TECNICA",
+        nonconformity_type=None,
+        technical_failure_type="ERRO_INFERENCIA",
+        confidence=None,
+        processing_time_ms=5.0,
+        model_format="pytorch",
+    )
+    orchestrator = ConveyorOrchestrator(
+        sensor=SimulatedPhotoelectricSensor(),
+        camera=CameraStub(),
+        engine=InferenceEngineStub(decision),
+        publisher=MQTTInspectionPublisher(client=MagicMock()),
+        indicators=indicators,
+        critical_alarm_after=3,
+    )
+
+    orchestrator.process_cycle()
+
+    assert indicators.critical_alarm_count == 1
+
+
+def test_led_failure_does_not_suppress_critical_buzzer() -> None:
+    indicators = IndicatorsStub()
+
+    def fail_to_signal_result(result: str) -> None:
+        raise RuntimeError("LED indisponível")
+
+    indicators.signal_result = fail_to_signal_result
+    decision = InspectionDecision(
+        result="NAO_CONFORME",
+        category="FALHA_TECNICA",
+        nonconformity_type=None,
+        technical_failure_type="ERRO_INFERENCIA",
+        confidence=None,
+        processing_time_ms=5.0,
+        model_format="pytorch",
+    )
+    orchestrator = ConveyorOrchestrator(
+        sensor=SimulatedPhotoelectricSensor(),
+        camera=CameraStub(),
+        engine=InferenceEngineStub(decision),
+        publisher=MQTTInspectionPublisher(client=MagicMock()),
+        indicators=indicators,
+    )
+
+    orchestrator.process_cycle()
+
+    assert indicators.critical_alarm_count == 1
+
+
+def test_external_critical_rule_can_trigger_physical_alarm() -> None:
+    indicators = IndicatorsStub()
+    decision = InspectionDecision(
+        result="CONFORME",
+        category=None,
+        nonconformity_type=None,
+        technical_failure_type=None,
+        confidence=0.99,
+        processing_time_ms=30.0,
+        model_format="pytorch",
+    )
+    orchestrator = ConveyorOrchestrator(
+        sensor=SimulatedPhotoelectricSensor(),
+        camera=CameraStub(),
+        engine=InferenceEngineStub(decision),
+        publisher=MQTTInspectionPublisher(client=MagicMock()),
+        indicators=indicators,
+    )
+
+    orchestrator.trigger_critical_alarm()
+
+    assert indicators.critical_alarm_count == 1
