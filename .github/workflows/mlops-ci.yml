@@ -87,7 +87,7 @@ jobs:
         if: steps.backend.outputs.available == 'true'
         run: |
           docker run -d --name vigi-ci-mqtt -p 127.0.0.1:1883:1883 \
-            -v "$GITHUB_WORKSPACE/infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro" \
+            -v "$GITHUB_WORKSPACE/infra/mosquitto/mosquitto.ci.conf:/mosquitto/config/mosquitto.conf:ro" \
             eclipse-mosquitto:2.0.22
           timeout 30 sh -c 'until docker exec vigi-ci-mqtt mosquitto_pub -h 127.0.0.1 -t vigi/ci/ready -m ready; do sleep 1; done'
 

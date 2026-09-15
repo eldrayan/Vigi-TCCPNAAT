@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from typing import Any
 
 from .event import InspectionEvent
@@ -18,6 +19,21 @@ def create_mqtt_client(client_id: str = "") -> Any:
         callback_api_version=mqtt.CallbackAPIVersion.VERSION2,
         client_id=client_id,
     )
+
+
+def configure_mqtt_client(
+    client: Any, username: str | None = None, password: str | None = None
+) -> Any:
+    """Configura credenciais MQTT sem armazená-las no código-fonte."""
+    username = username or os.getenv("MQTT_EDGE_USERNAME")
+    password = password or os.getenv("MQTT_EDGE_PASSWORD")
+    if bool(username) != bool(password):
+        raise ValueError(
+            "MQTT_EDGE_USERNAME e MQTT_EDGE_PASSWORD devem ser usados juntos."
+        )
+    if username and password and hasattr(client, "username_pw_set"):
+        client.username_pw_set(username, password)
+    return client
 
 
 class MQTTInspectionPublisher:
@@ -36,6 +52,8 @@ class MQTTInspectionPublisher:
         topic: str = "vigi/esteira/inspecoes",
         topic_alarms: str = "vigi/esteira/alarmes",
         topic_status: str = "vigi/esteira/status",
+        username: str | None = None,
+        password: str | None = None,
         client: Any | None = None,
         client_id: str = "vigi-edge-gateway",
     ) -> None:
@@ -45,7 +63,9 @@ class MQTTInspectionPublisher:
         self.topic_alarms = topic_alarms
         self.topic_status = topic_status
         self.client_id = client_id
-        self.client = client or create_mqtt_client(client_id=client_id)
+        self.client = configure_mqtt_client(
+            client or create_mqtt_client(client_id=client_id), username, password
+        )
         self._persistent_session = False
 
     def start_session(self) -> None:
