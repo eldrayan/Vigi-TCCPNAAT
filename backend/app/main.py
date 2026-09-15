@@ -6,7 +6,6 @@ Autor: Leôncio Ferreira
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Response, status
-from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -64,13 +63,6 @@ app = FastAPI(
     title="Vigi API",
     version="0.1.0",
     lifespan=lifespan,
-)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.allowed_frontend_origins,
-    allow_credentials=False,
-    allow_methods=["GET", "POST", "PUT", "OPTIONS"],
-    allow_headers=["Content-Type"],
 )
 app.include_router(inspections_router)
 app.include_router(operations_router)
