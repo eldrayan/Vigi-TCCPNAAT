@@ -6,4 +6,4 @@
 # Picamera2/libcamera são instalados pelo Raspberry Pi OS via apt.
 # Para apenas coletar imagens, siga o preparo do coletor no README.
 # O backend usa backend/pyproject.toml e backend/uv.lock, separadamente.
-# MQTT já é dependência do Edge; GPIO e dashboard permanecem previstos.
+# MQTT e GPIO Zero são dependências do Edge; o dashboard permanece previsto.

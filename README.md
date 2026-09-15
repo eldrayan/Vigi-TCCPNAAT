@@ -207,7 +207,8 @@ O [roteiro do pitch](docs/pitch/01-roteiro-pitch.md) e o [roteiro da PoC](docs/p
 | Câmera CSI compatível ou webcam USB | Entrada de imagens | Backends implementados em [edge/acquisition](edge/acquisition) |
 | Case para Raspberry Pi e câmera | Acomodação do conjunto na bancada | Informada pela equipe; conteúdo, dimensões e montagem a confirmar no ensaio |
 | Bancada, recipientes e iluminação estável | Aquisição de amostras | Preparar antes da coleta e dos vídeos |
-| E18-D80NK e interface elétrica compatível com GPIO | Gatilho da inspeção | Integração prevista; coletor atual usa comandos manuais |
+| E18-D80NK e interface elétrica compatível com GPIO | Gatilho da inspeção | Integrado no fluxo contínuo pelo PR #31; validação física informada no PR |
+| LEDs verde/vermelho, resistores de 220–330 Ω, buzzer ativo e driver compatível | Sinalização local opcional | Driver e pinagem documentados; validação elétrica/física ainda deve ser feita na bancada |
 | Wi-Fi/Ethernet e navegador | Supervisão na rede local | Previstos para acesso ao backend/dashboard |
 | Git | Obtenção e versionamento do código | Instalação inicial abaixo |
 | GNU Make, Docker Engine com Compose e curl | Atalhos, backend/broker em containers e consultas de verificação | Necessários para o fluxo integrado; comandos de verificação abaixo |
@@ -231,7 +232,7 @@ O [roteiro do pitch](docs/pitch/01-roteiro-pitch.md) e o [roteiro da PoC](docs/p
 | Matplotlib | Gráficos do treinamento | Extra `train` |
 | DVC (`dvc[ssh]`) | Artefatos no storage remoto | Extra `mlops` |
 | pytest e Ruff | Testes e lint | Grupo `dev` |
-| GPIO Zero (`gpiozero`) | Leitura do sensor | Previsto; backend e compatibilidade com Pi 5 a validar na integração |
+| GPIO Zero (`gpiozero`) | Leitura do sensor e acionamento dos indicadores | Dependência do Edge; integração física direcionada à Raspberry Pi 5 |
 | SQLite, SQLAlchemy, aiosqlite e Alembic | Persistência das inspeções recebidas e migrations | Implementados no backend; fila persistente no Edge ainda prevista |
 | Paho MQTT (`paho-mqtt`) | Publicação no Edge e consumo no backend | Implementados nos dois projetos Python |
 | Mosquitto | Broker local de mensagens | Configurado no Compose, imagem `eclipse-mosquitto:2.0.22` |
@@ -581,6 +582,30 @@ python scripts/executar_esteira.py \
 - **Ciclo operacional**: A cada passagem física do frasco, o sensor fotoelétrico dispara a captura instantânea (< 15 ms), processa a inferência YOLOv8n-cls (~48 ms) e publica o evento de telemetria em `vigi/esteira/inspecoes` e alarmes em `vigi/esteira/alarmes`.
 - **Feedback no terminal**: Imprime bloco visual destacado com o status (`CONFORME` ou `NÃO CONFORME`), tipo de defeito (`SEM_TAMPA`, `TAMPA_TORTA`, `AMASSADO`), confiança percentual e latência total ponta a ponta (RNF01 < 500 ms).
 - **Parada limpa**: Pressione `Ctrl+C` para encerrar a sessão MQTT com envio de status offline (LWT), desalocar a câmera e liberar o pino GPIO.
+
+#### 3. Sinalização física opcional (LEDs + buzzer)
+
+A montagem da issue #32 usa numeração BCM e reserva GPIO 17 para o sensor do
+PR #31. Os indicadores usam GPIO 27 (LED verde), GPIO 22 (LED vermelho) e
+GPIO 23 (driver do buzzer), sem sobreposição. Consulte o
+[esquemático e as precauções elétricas](docs/hardware/sinalizacao-fisica.md)
+antes de energizar a bancada.
+
+```bash
+make run-esteira-indicators
+
+# Pinagem e limiar de recorrência também podem ser configurados:
+make run-esteira-indicators GREEN_LED_PIN=27 RED_LED_PIN=22 \
+  BUZZER_PIN=23 CRITICAL_ALARM_AFTER=3
+```
+
+Os pulsos usam as operações em segundo plano do GPIO Zero, portanto não
+incluem esperas no caminho de inferência. Três resultados `NAO_CONFORME`
+consecutivos disparam o buzzer por padrão; uma decisão de falha técnica o
+dispara imediatamente. O alarme permanece intermitente até a finalização do
+processo ou o reconhecimento explícito com o comando `kill -USR1 PID`, usando
+o PID mostrado no log da CLI. A integração desse reconhecimento com o futuro
+dashboard ainda não está implementada.
 
 A confirmação de publicação no broker não comprova a gravação no SQLite. Consulte `/api/inspecoes/{id_inspecao}` com o `inspection_id` da saída para verificar o mesmo evento no banco. O backend aplica as migrations ao iniciar e usa um volume de dados no Compose. `make down` preserva os volumes; não use remoção de volumes para encerrar a demonstração.
 

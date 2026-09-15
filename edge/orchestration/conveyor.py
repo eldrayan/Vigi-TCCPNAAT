@@ -20,7 +20,9 @@ from pathlib import Path
 
 from edge.acquisition.camera import Camera
 from edge.acquisition.sensor import PhotoelectricSensor, SensorTrigger
+from edge.actuation.indicators import StatusIndicators
 from edge.inference.engine import InferenceEngine
+from edge.inference.schemas import InspectionDecision
 from edge.messaging.context import OperationalContext
 from edge.messaging.event import InspectionEvent
 from edge.messaging.publisher import MQTTInspectionPublisher
@@ -49,7 +51,11 @@ class ConveyorOrchestrator:
         context: OperationalContext | None = None,
         on_inspection: Callable[[InspectionEvent, CycleTiming], None] | None = None,
         save_dir: Path | None = None,
+        indicators: StatusIndicators | None = None,
+        critical_alarm_after: int = 3,
     ) -> None:
+        if critical_alarm_after < 1:
+            raise ValueError("critical_alarm_after deve ser maior ou igual a 1")
         self.sensor = sensor
         self.camera = camera
         self.engine = engine
@@ -57,8 +63,11 @@ class ConveyorOrchestrator:
         self.context = context
         self.on_inspection = on_inspection
         self.save_dir = save_dir
+        self.indicators = indicators
+        self.critical_alarm_after = critical_alarm_after
         self._stop_event = threading.Event()
         self._inspections_count = 0
+        self._consecutive_nonconformities = 0
 
     @property
     def inspections_count(self) -> int:
@@ -105,6 +114,8 @@ class ConveyorOrchestrator:
             }
             self.publisher.publish_alarm(alarm_payload)
 
+        self._update_indicators(decision)
+
         t_end = time.perf_counter()
         publish_ms = (t_end - t_inferred) * 1000.0
         total_ms = (t_end - t_start) * 1000.0
@@ -143,6 +154,46 @@ class ConveyorOrchestrator:
             self.on_inspection(event, timing)
 
         return event, timing
+
+    def _update_indicators(self, decision: InspectionDecision) -> None:
+        if decision.result == "CONFORME":
+            self._consecutive_nonconformities = 0
+        else:
+            self._consecutive_nonconformities += 1
+
+        if self.indicators is None:
+            return
+
+        try:
+            self.indicators.signal_result(decision.result)
+        except Exception as exc:
+            logger.warning("Falha na sinalização visual local: %s", exc)
+
+        is_critical = (
+            decision.technical_failure_type is not None
+            or self._consecutive_nonconformities == self.critical_alarm_after
+        )
+        if is_critical:
+            self.trigger_critical_alarm()
+
+    def trigger_critical_alarm(self) -> None:
+        """Dispara o alarme físico para uma regra crítica interna ou externa."""
+        if self.indicators is None:
+            return
+        try:
+            self.indicators.signal_critical_alarm()
+        except Exception as exc:
+            logger.warning("Falha na sinalização sonora local: %s", exc)
+
+    def acknowledge_alarm(self) -> None:
+        """Silencia um alarme físico após reconhecimento externo do operador."""
+        if self.indicators is None:
+            return
+        try:
+            self.indicators.acknowledge_alarm()
+            self._consecutive_nonconformities = 0
+        except Exception as exc:
+            logger.warning("Falha ao reconhecer alarme físico: %s", exc)
 
     def run(
         self,
@@ -196,4 +247,6 @@ class ConveyorOrchestrator:
         self.publisher.stop_session()
         self.sensor.close()
         self.camera.release()
+        if self.indicators is not None:
+            self.indicators.close()
         logger.info("Orquestrador da esteira finalizado.")

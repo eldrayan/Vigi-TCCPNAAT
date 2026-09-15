@@ -1,11 +1,12 @@
 .PHONY: help setup setup-dev setup-rpi test lint up down build ps logs \
 	migrate infer-help infer-image infer-camera preview-camera run-esteira \
-	monitor-edge sync-outbox mqtt-sub mqtt-pub test-backend
+	run-esteira-indicators monitor-edge sync-outbox mqtt-sub mqtt-pub test-backend
 
 MQTT_IMAGE ?= eclipse-mosquitto:2.0.22
 HOST ?= localhost
 PORT ?= 1883
 TOPIC ?= vigi/teste
+MODEL_TOPIC ?= vigi/esteira/inspecoes
 MANIFEST ?= models/active/manifest.json
 CAMERA ?= 0
 CAMERA_BACKEND ?= picamera2
@@ -30,11 +31,12 @@ help:
 	@echo "make monitor-edge                  Mantém o estado da Raspberry publicado"
 	@echo "make preview-camera                Inicia streaming HTTP de preview da câmera na porta 8080"
 	@echo "make run-esteira                   Inicia laço contínuo da esteira (sensor + câmera + MQTT)"
+	@echo "make run-esteira-indicators        Inicia a esteira com LEDs e buzzer físicos"
 	@echo "make mqtt-sub                      Escuta mensagens MQTT"
 	@echo "make mqtt-pub MSG='mensagem'       Publica uma mensagem MQTT"
 	@echo "make sync-outbox                    Reenvia continuamente a fila offline"
 	@echo ""
-	@echo "Opções: HOST, PORT, TOPIC, MANIFEST, CAMERA e CAMERA_BACKEND"
+	@echo "Opções: HOST, PORT, TOPIC, MODEL_TOPIC, MANIFEST, CAMERA e CAMERA_BACKEND"
 
 setup:
 	uv sync --frozen --no-dev
@@ -112,8 +114,13 @@ mqtt-pub:
 		mosquitto_pub -h $(HOST) -p $(PORT) -t '$(TOPIC)' -m '$(MSG)'
 
 GPIO_PIN ?= 17
+GREEN_LED_PIN ?= 27
+RED_LED_PIN ?= 22
+BUZZER_PIN ?= 23
+CRITICAL_ALARM_AFTER ?= 3
 DEBOUNCE_MS ?= 50
 PREVIEW_PORT ?= 8080
+INDICATOR_ARGS ?=
 
 preview-camera:
 	$(UV_RUN) python scripts/preview_camera.py \
@@ -130,4 +137,11 @@ run-esteira:
 		--debounce-ms "$(DEBOUNCE_MS)" \
 		--mqtt-host "$(HOST)" \
 		--mqtt-port "$(PORT)" \
-		--mqtt-topic "$(MODEL_TOPIC)"
+		--mqtt-topic "$(MODEL_TOPIC)" $(INDICATOR_ARGS)
+
+run-esteira-indicators:
+	$(MAKE) run-esteira INDICATOR_ARGS="--enable-indicators \
+		--green-led-pin $(GREEN_LED_PIN) \
+		--red-led-pin $(RED_LED_PIN) \
+		--buzzer-pin $(BUZZER_PIN) \
+		--critical-alarm-after $(CRITICAL_ALARM_AFTER)"
