@@ -5,6 +5,9 @@ introduzido pelo PR #31. Todos os números abaixo são **GPIO BCM**, que é a
 numeração padrão do GPIO Zero; os números físicos do conector J8 aparecem apenas
 como referência de montagem.
 
+Para preparar um clone novo e executar a validação completa, siga o
+[guia passo a passo de teste](./guia-teste-sinalizacao-fisica.md).
+
 ## Pinagem sem conflito
 
 | Função | GPIO BCM | Pino físico J8 | Estado |
