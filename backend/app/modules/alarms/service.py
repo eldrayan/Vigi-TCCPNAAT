@@ -45,7 +45,7 @@ class AlarmService:
 
         existing = await self.repository.find_open(session, batch.id)
         if existing is not None:
-            return AlarmResponseDTO.model_validate(existing)
+            return None
 
         alarm = await self.repository.create_open(
             session,
