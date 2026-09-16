@@ -7,6 +7,7 @@ Autor: Leôncio Ferreira
 from __future__ import annotations
 
 import argparse
+import os
 import socket
 import sys
 from pathlib import Path
@@ -49,19 +50,61 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--mqtt-host", default="localhost")
     parser.add_argument("--mqtt-port", type=int, default=1883)
-    parser.add_argument("--mqtt-username", default=None)
-    parser.add_argument("--mqtt-password", default=None)
+    parser.add_argument(
+        "--mqtt-username", default=os.getenv("MQTT_EDGE_USERNAME")
+    )
+    parser.add_argument(
+        "--mqtt-password", default=os.getenv("MQTT_EDGE_PASSWORD")
+    )
     parser.add_argument("--station-code", default="ESTACAO_01")
     parser.add_argument("--device-id", default="ESTACAO_01")
     parser.add_argument("--batch-code", default="LOTE_01")
     parser.add_argument("--gpio-pin", type=int, default=17)
     parser.add_argument("--debounce-ms", type=float, default=50)
+    parser.add_argument(
+        "--capture-delay-ms",
+        type=float,
+        default=0.0,
+        help="atraso entre o sensor e a captura, em milissegundos",
+    )
     parser.add_argument("--camera", type=int, default=0)
+    parser.add_argument("--width", type=int, default=1280)
+    parser.add_argument("--height", type=int, default=720)
+    parser.add_argument("--fps", type=int, default=20)
+    parser.add_argument(
+        "--exposure-us",
+        type=int,
+        default=None,
+        help="tempo de exposição manual em microssegundos; ausente mantém AE",
+    )
+    parser.add_argument(
+        "--analogue-gain",
+        type=float,
+        default=4.0,
+        help="ganho analógico usado com --exposure-us (padrão: 4.0)",
+    )
+    parser.add_argument(
+        "--awb-mode",
+        choices=("auto", "tungsten", "fluorescent", "indoor", "daylight", "cloudy"),
+        default="auto",
+        help="perfil de balanço de branco da câmera (padrão: auto)",
+    )
     parser.add_argument(
         "--backend", choices=("picamera2", "opencv", "auto"), default="picamera2"
     )
     parser.add_argument(
         "--outbox-path", type=Path, default=Path("data/edge-outbox.db")
+    )
+    parser.add_argument(
+        "--save-captures",
+        action="store_true",
+        help="salva o quadro de cada inspeção em --capture-dir",
+    )
+    parser.add_argument(
+        "--capture-dir",
+        type=Path,
+        default=Path("captures"),
+        help="diretório das imagens salvas (padrão: captures)",
     )
     parser.add_argument("--max-inspections", type=int)
     return parser
@@ -69,6 +112,14 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    if args.width <= 0 or args.height <= 0 or args.fps <= 0:
+        raise SystemExit("width, height e fps devem ser positivos")
+    if args.exposure_us is not None and args.exposure_us <= 0:
+        raise SystemExit("exposure-us deve ser positivo")
+    if args.analogue_gain <= 0:
+        raise SystemExit("analogue-gain deve ser positivo")
+    if args.capture_delay_ms < 0:
+        raise SystemExit("capture-delay-ms não pode ser negativo")
 
     print("\nDiagnóstico de prontidão — Estação 01")
     print("-" * 42)
@@ -89,9 +140,9 @@ def main(argv: list[str] | None = None) -> int:
         config = CollectionConfig(
             backend=args.backend,
             camera=args.camera,
-            width=1280,
-            height=720,
-            fps=20,
+            width=args.width,
+            height=args.height,
+            fps=args.fps,
             warmup_seconds=2,
             output=Path("captures"),
             session=socket.gethostname(),
@@ -102,6 +153,9 @@ def main(argv: list[str] | None = None) -> int:
             guide_height=0.88,
             crop_guide=False,
             headless=True,
+            exposure_us=args.exposure_us,
+            analogue_gain=args.analogue_gain,
+            awb_mode=args.awb_mode,
         )
         backend = CameraFactory.resolve_backend(args.backend)
         cv2 = load_opencv() if backend == "opencv" else None
@@ -110,6 +164,25 @@ def main(argv: list[str] | None = None) -> int:
         if not ok:
             raise RuntimeError("não foi possível capturar o quadro de teste")
         readiness_ok("Câmera", f"{backend} no dispositivo {args.camera}")
+        readiness_ok(
+            "Captura",
+            f"{args.width}x{args.height} a {args.fps} FPS; "
+            + (
+                f"exposição {args.exposure_us} µs, ganho {args.analogue_gain:g}"
+                if args.exposure_us is not None
+                else "exposição automática"
+            ),
+        )
+        readiness_ok(
+            "Atraso de captura", f"{args.capture_delay_ms:g} ms após o sensor"
+        )
+        readiness_ok("Balanço de branco", args.awb_mode)
+        readiness_ok(
+            "Capturas",
+            f"salvas em {args.capture_dir}"
+            if args.save_captures
+            else "não serão salvas",
+        )
 
         check_broker(args.mqtt_host, args.mqtt_port)
         readiness_ok("Broker MQTT", f"{args.mqtt_host}:{args.mqtt_port}")
@@ -154,6 +227,8 @@ def main(argv: list[str] | None = None) -> int:
         ),
         context=context,
         on_idle=report_idle,
+        save_dir=args.capture_dir if args.save_captures else None,
+        capture_delay_s=args.capture_delay_ms / 1000.0,
     )
     try:
         orchestrator.run(max_cycles=args.max_inspections)

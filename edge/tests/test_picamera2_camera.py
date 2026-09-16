@@ -27,6 +27,34 @@ class Picamera2CameraTests(unittest.TestCase):
             buffer_count=4,
         )
 
+    @patch("edge.acquisition.backends.picamera2_camera.importlib.import_module")
+    def test_configures_manual_exposure(self, import_module: MagicMock):
+        camera = MagicMock()
+        camera.camera_controls = {}
+        picamera2_module = SimpleNamespace(Picamera2=MagicMock(return_value=camera))
+        import_module.return_value = picamera2_module
+
+        Picamera2Camera(
+            device=0,
+            width=1296,
+            height=972,
+            fps=40,
+            warmup_seconds=0,
+            exposure_us=1000,
+            analogue_gain=4.0,
+        )
+
+        camera.create_video_configuration.assert_called_once_with(
+            main={"size": (1296, 972), "format": "RGB888"},
+            controls={
+                "FrameRate": 40.0,
+                "AeEnable": False,
+                "ExposureTime": 1000,
+                "AnalogueGain": 4.0,
+            },
+            buffer_count=4,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

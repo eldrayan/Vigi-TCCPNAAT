@@ -333,11 +333,15 @@ Confirme que `models/active/manifest.json` existe antes de continuar.
 
 ### 2. Configurar as credenciais locais
 
-Crie o arquivo local de configuração. Ele é ignorado pelo Git e nunca deve ser
-enviado ao repositório:
+O comando `make up` cria o `.env` automaticamente quando ele não existe e
+acrescenta configurações padrão que estejam faltando em um arquivo existente.
+Valores já configurados nunca são sobrescritos. As senhas MQTT ausentes são
+geradas aleatoriamente e o arquivo recebe permissão `600`.
+
+Para preparar o arquivo antes de subir os containers, execute:
 
 ```bash
-cp .env.example .env
+make configure-env
 nano .env
 ```
 
@@ -390,6 +394,45 @@ O diagnóstico inicial confirma modelo, sensor, câmera e broker. Depois, cada
 detecção do sensor captura uma imagem, executa a inferência, salva o evento na
 outbox SQLite do Edge e o publica no MQTT. A migration cria a estação fixa
 `ESTACAO_01` e o lote ativo `LOTE_01`.
+
+Por padrão, o quadro usado na inferência não é gravado em disco. Para salvar
+as imagens, habilite a opção no próprio comando:
+
+```bash
+make edge-up HOST=localhost SAVE_CAPTURES=true
+```
+
+As imagens são gravadas em `captures/`, incluindo `ultima_inspecao.jpg` e um
+arquivo identificado por inspeção. Para escolher outra pasta:
+
+```bash
+make edge-up HOST=localhost SAVE_CAPTURES=true CAPTURE_DIR=/caminho/das/imagens
+```
+
+Para reduzir o desfoque de movimento no OV5647, use o modo de aproximadamente
+40 FPS com exposição manual curta e iluminação suficiente:
+
+```bash
+make edge-up HOST=localhost \
+  WIDTH=1296 HEIGHT=972 FPS=40 \
+  EXPOSURE_US=1000 ANALOGUE_GAIN=4.0 \
+  SAVE_CAPTURES=true
+```
+
+Se `EXPOSURE_US` não for informado, a câmera mantém a exposição automática.
+
+Se o sensor estiver antes do ponto onde a câmera enquadra a garrafa, configure
+o atraso usando a distância entre eles e a velocidade da esteira:
+
+```bash
+make edge-up HOST=localhost \
+  CAPTURE_DELAY_MS=180 \
+  WIDTH=1296 HEIGHT=972 FPS=40 \
+  EXPOSURE_US=5000 ANALOGUE_GAIN=8.0
+```
+
+O atraso é aplicado depois do disparo do E18-D80NK e antes da captura. O valor
+inicial deve ser ajustado experimentalmente; comece entre `100` e `200 ms`.
 
 ### 5. Verificar a inspeção no dashboard e na API
 

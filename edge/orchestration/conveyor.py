@@ -16,6 +16,7 @@ import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from edge.acquisition.camera import Camera
@@ -23,6 +24,7 @@ from edge.acquisition.sensor import PhotoelectricSensor, SensorTrigger
 from edge.inference.engine import InferenceEngine
 from edge.messaging.context import OperationalContext
 from edge.messaging.event import InspectionEvent
+from edge.messaging.outbox import InspectionOutbox
 from edge.messaging.publisher import MQTTInspectionPublisher
 
 logger = logging.getLogger(__name__)
@@ -46,19 +48,26 @@ class ConveyorOrchestrator:
         engine: InferenceEngine,
         publisher: MQTTInspectionPublisher,
         *,
+        outbox: InspectionOutbox | None = None,
         context: OperationalContext | None = None,
         on_inspection: Callable[[InspectionEvent, CycleTiming], None] | None = None,
+        on_idle: Callable[[bool], None] | None = None,
         save_dir: Path | None = None,
+        capture_delay_s: float = 0.0,
     ) -> None:
         self.sensor = sensor
         self.camera = camera
         self.engine = engine
         self.publisher = publisher
+        self.outbox = outbox
         self.context = context
         self.on_inspection = on_inspection
+        self.on_idle = on_idle
         self.save_dir = save_dir
+        self.capture_delay_s = capture_delay_s
         self._stop_event = threading.Event()
         self._inspections_count = 0
+        self._idle_state: bool | None = None
 
     @property
     def inspections_count(self) -> int:
@@ -67,6 +76,9 @@ class ConveyorOrchestrator:
     def process_cycle(self) -> tuple[InspectionEvent, CycleTiming]:
         """Executa um ciclo completo de captura, inferência e publicação."""
         t_start = time.perf_counter()
+
+        if self.capture_delay_s > 0:
+            time.sleep(self.capture_delay_s)
 
         # 1. Aquisição imediata do quadro focal
         ok, frame = self.camera.read()
@@ -85,7 +97,15 @@ class ConveyorOrchestrator:
 
         # 3. Composição e Publicação MQTT
         event = InspectionEvent.from_decision(decision, context=self.context)
-        self.publisher.publish_inspection(event)
+        if self.outbox is None:
+            self.publisher.publish_inspection(event)
+        else:
+            self.outbox.enqueue(event)
+            self.outbox.deliver(self.publisher)
+            self.outbox.purge_expired(
+                now=datetime.now(UTC),
+                retention=timedelta(days=30),
+            )
 
         # 4. Alarme para não-conformidades ou falhas técnicas (RN02 / RNF04)
         if decision.result != "CONFORME" or decision.technical_failure_type is not None:
@@ -168,8 +188,10 @@ class ConveyorOrchestrator:
                 if self._stop_event.is_set():
                     break
                 if not triggered:
+                    self._set_idle(True)
                     continue
 
+                self._set_idle(False)
                 logger.debug("Gatilho fotoelétrico detectado! Processando frasco...")
                 try:
                     event, timing = self.process_cycle()
@@ -189,6 +211,13 @@ class ConveyorOrchestrator:
                     )
         finally:
             self.stop()
+
+    def _set_idle(self, is_idle: bool) -> None:
+        if self._idle_state == is_idle:
+            return
+        self._idle_state = is_idle
+        if self.on_idle is not None:
+            self.on_idle(is_idle)
 
     def stop(self) -> None:
         """Interrompe a execução e libera recursos."""
