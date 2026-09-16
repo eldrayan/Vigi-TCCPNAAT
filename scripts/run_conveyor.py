@@ -6,8 +6,6 @@ Autor: Leôncio Ferreira
 
 from __future__ import annotations
 
-import argparse
-import os
 import socket
 import sys
 from pathlib import Path
@@ -28,6 +26,7 @@ from edge.messaging import (  # noqa: E402
     OperationalContext,
 )
 from edge.orchestration import ConveyorOrchestrator  # noqa: E402
+from scripts.conveyor_cli import build_parser, validate_arguments  # noqa: E402
 
 
 def readiness_ok(name: str, detail: str) -> None:
@@ -43,83 +42,9 @@ def check_broker(host: str, port: int) -> None:
         return
 
 
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--manifest", type=Path, default=Path("models/active/manifest.json")
-    )
-    parser.add_argument("--mqtt-host", default="localhost")
-    parser.add_argument("--mqtt-port", type=int, default=1883)
-    parser.add_argument(
-        "--mqtt-username", default=os.getenv("MQTT_EDGE_USERNAME")
-    )
-    parser.add_argument(
-        "--mqtt-password", default=os.getenv("MQTT_EDGE_PASSWORD")
-    )
-    parser.add_argument("--station-code", default="ESTACAO_01")
-    parser.add_argument("--device-id", default="ESTACAO_01")
-    parser.add_argument("--batch-code", default="LOTE_01")
-    parser.add_argument("--gpio-pin", type=int, default=17)
-    parser.add_argument("--debounce-ms", type=float, default=50)
-    parser.add_argument(
-        "--capture-delay-ms",
-        type=float,
-        default=0.0,
-        help="atraso entre o sensor e a captura, em milissegundos",
-    )
-    parser.add_argument("--camera", type=int, default=0)
-    parser.add_argument("--width", type=int, default=1280)
-    parser.add_argument("--height", type=int, default=720)
-    parser.add_argument("--fps", type=int, default=20)
-    parser.add_argument(
-        "--exposure-us",
-        type=int,
-        default=None,
-        help="tempo de exposição manual em microssegundos; ausente mantém AE",
-    )
-    parser.add_argument(
-        "--analogue-gain",
-        type=float,
-        default=4.0,
-        help="ganho analógico usado com --exposure-us (padrão: 4.0)",
-    )
-    parser.add_argument(
-        "--awb-mode",
-        choices=("auto", "tungsten", "fluorescent", "indoor", "daylight", "cloudy"),
-        default="auto",
-        help="perfil de balanço de branco da câmera (padrão: auto)",
-    )
-    parser.add_argument(
-        "--backend", choices=("picamera2", "opencv", "auto"), default="picamera2"
-    )
-    parser.add_argument(
-        "--outbox-path", type=Path, default=Path("data/edge-outbox.db")
-    )
-    parser.add_argument(
-        "--save-captures",
-        action="store_true",
-        help="salva o quadro de cada inspeção em --capture-dir",
-    )
-    parser.add_argument(
-        "--capture-dir",
-        type=Path,
-        default=Path("captures"),
-        help="diretório das imagens salvas (padrão: captures)",
-    )
-    parser.add_argument("--max-inspections", type=int)
-    return parser
-
-
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    if args.width <= 0 or args.height <= 0 or args.fps <= 0:
-        raise SystemExit("width, height e fps devem ser positivos")
-    if args.exposure_us is not None and args.exposure_us <= 0:
-        raise SystemExit("exposure-us deve ser positivo")
-    if args.analogue_gain <= 0:
-        raise SystemExit("analogue-gain deve ser positivo")
-    if args.capture_delay_ms < 0:
-        raise SystemExit("capture-delay-ms não pode ser negativo")
+    validate_arguments(args)
 
     print("\nDiagnóstico de prontidão — Estação 01")
     print("-" * 42)

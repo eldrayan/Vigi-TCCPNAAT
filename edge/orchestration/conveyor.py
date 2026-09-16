@@ -1,12 +1,6 @@
-"""Orquestrador ponta a ponta da esteira de inspeção do Vigi.
-
-Integração de Hardware (Sensor E18-D80NK + Câmera + Edge AI + Gateway MQTT).
-Atende a:
-- RN01: Inspeção automatizada por gatilho determinístico de presença.
-- RN02: Ação preventiva de Fail-Safe em caso de baixa confiança ou erro técnico.
-- RNF01: Latência total ponta a ponta < 500 ms.
-- RNF04: Telemetria MQTT não-bloqueante, reconexão e LWT.
-- RNF08: Sensor fotoelétrico com filtro de debounce de 30 a 100 ms.
+"""
+Descrição: Orquestra o ciclo ponta a ponta da esteira de inspeção.
+Autor: Leôncio Ferreira
 """
 
 from __future__ import annotations
@@ -16,7 +10,6 @@ import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from edge.acquisition.camera import Camera
@@ -26,6 +19,9 @@ from edge.messaging.context import OperationalContext
 from edge.messaging.event import InspectionEvent
 from edge.messaging.outbox import InspectionOutbox
 from edge.messaging.publisher import MQTTInspectionPublisher
+
+from .capture_store import InspectionCaptureStore
+from .inspection_dispatcher import InspectionDispatcher
 
 logger = logging.getLogger(__name__)
 
@@ -39,8 +35,6 @@ class CycleTiming:
 
 
 class ConveyorOrchestrator:
-    """Orquestrador de execução contínua da esteira de inspeção."""
-
     def __init__(
         self,
         sensor: SensorTrigger | PhotoelectricSensor,
@@ -59,11 +53,11 @@ class ConveyorOrchestrator:
         self.camera = camera
         self.engine = engine
         self.publisher = publisher
-        self.outbox = outbox
+        self.dispatcher = InspectionDispatcher(publisher, outbox)
         self.context = context
         self.on_inspection = on_inspection
         self.on_idle = on_idle
-        self.save_dir = save_dir
+        self.capture_store = InspectionCaptureStore(save_dir) if save_dir else None
         self.capture_delay_s = capture_delay_s
         self._stop_event = threading.Event()
         self._inspections_count = 0
@@ -74,13 +68,11 @@ class ConveyorOrchestrator:
         return self._inspections_count
 
     def process_cycle(self) -> tuple[InspectionEvent, CycleTiming]:
-        """Executa um ciclo completo de captura, inferência e publicação."""
         t_start = time.perf_counter()
 
         if self.capture_delay_s > 0:
             time.sleep(self.capture_delay_s)
 
-        # 1. Aquisição imediata do quadro focal
         ok, frame = self.camera.read()
         t_captured = time.perf_counter()
         if not ok or frame is None:
@@ -90,40 +82,11 @@ class ConveyorOrchestrator:
 
         capture_ms = (t_captured - t_start) * 1000.0
 
-        # 2. Inferência Edge AI
         decision = self.engine.inspect(frame)
         t_inferred = time.perf_counter()
         inference_ms = (t_inferred - t_captured) * 1000.0
 
-        # 3. Composição e Publicação MQTT
-        event = InspectionEvent.from_decision(decision, context=self.context)
-        if self.outbox is None:
-            self.publisher.publish_inspection(event)
-        else:
-            self.outbox.enqueue(event)
-            self.outbox.deliver(self.publisher)
-            self.outbox.purge_expired(
-                now=datetime.now(UTC),
-                retention=timedelta(days=30),
-            )
-
-        # 4. Alarme para não-conformidades ou falhas técnicas (RN02 / RNF04)
-        if decision.result != "CONFORME" or decision.technical_failure_type is not None:
-            alert_name = (
-                decision.technical_failure_type
-                or decision.nonconformity_type
-                or "ALERTA"
-            )
-            alarm_payload = {
-                "inspection_id": event.inspection_id,
-                "timestamp": event.timestamp,
-                "alert_type": alert_name,
-                "severity": "CRITICAL"
-                if decision.technical_failure_type
-                else "WARNING",
-                "message": f"Não conformidade detectada: {alert_name}",
-            }
-            self.publisher.publish_alarm(alarm_payload)
+        event = self.dispatcher.dispatch(decision, self.context)
 
         t_end = time.perf_counter()
         publish_ms = (t_end - t_inferred) * 1000.0
@@ -138,23 +101,12 @@ class ConveyorOrchestrator:
 
         self._inspections_count += 1
 
-        if self.save_dir is not None:
+        if self.capture_store is not None:
             try:
-                import cv2
-
-                self.save_dir.mkdir(parents=True, exist_ok=True)
-                bgr = (
-                    cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-                    if (frame.ndim == 3 and frame.shape[2] == 3)
-                    else frame
-                )
-                cv2.imwrite(str(self.save_dir / "ultima_inspecao.jpg"), bgr)
-                cv2.imwrite(
-                    str(
-                        self.save_dir
-                        / f"inspecao_{event.inspection_id}_{event.result}.jpg"
-                    ),
-                    bgr,
+                self.capture_store.save(
+                    frame,
+                    inspection_id=event.inspection_id,
+                    result=event.result,
                 )
             except Exception as exc:
                 logger.warning("Falha ao salvar imagem de inspeção: %s", exc)
@@ -169,7 +121,6 @@ class ConveyorOrchestrator:
         max_cycles: int | None = None,
         poll_interval: float = 0.05,
     ) -> None:
-        """Inicia o laço de supervisão contínua da esteira."""
         logger.info(
             "Iniciando orquestração da esteira (aguardando frascos via sensor)..."
         )
@@ -183,7 +134,6 @@ class ConveyorOrchestrator:
                     )
                     break
 
-                # Aguarda o sensor disparar
                 triggered = self.sensor.wait_for_trigger(timeout=poll_interval)
                 if self._stop_event.is_set():
                     break
@@ -220,7 +170,6 @@ class ConveyorOrchestrator:
             self.on_idle(is_idle)
 
     def stop(self) -> None:
-        """Interrompe a execução e libera recursos."""
         self._stop_event.set()
         self.publisher.stop_session()
         self.sensor.close()
