@@ -352,8 +352,9 @@ make configure-env
 nano .env
 ```
 
-Mantenha os nomes de usuário distintos e troque as duas senhas de exemplo por
-valores fortes:
+O arquivo gerado já contém senhas aleatórias. Se a equipe optar por editar o
+arquivo manualmente, mantenha os usuários distintos e nunca reutilize os valores
+de exemplo abaixo:
 
 ```env
 MQTT_BACKEND_USERNAME=vigi-backend
@@ -377,12 +378,12 @@ O Compose aplica as migrations automaticamente, mantém o SQLite em volume e
 inicia o dashboard, FastAPI e Mosquitto. Na rede local, acesse:
 
 ```text
-Dashboard: http://leocio-raspberry.local:8080
+Dashboard: http://leocio-raspberry.local:8081
 Swagger:   http://leocio-raspberry.local:8000/docs
 ```
 
 Se o mDNS não estiver disponível, obtenha o endereço com `hostname -I` e use
-`http://IP_DA_RASPBERRY:8080`. O dashboard encaminha API e SSE internamente;
+`http://IP_DA_RASPBERRY:8081`. O dashboard encaminha API e SSE internamente;
 por isso não exige configuração adicional de CORS nesse fluxo em containers.
 
 O CORS só é necessário para desenvolvimento separado com Vite. Nesse caso,

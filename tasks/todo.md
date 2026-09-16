@@ -78,7 +78,8 @@ sinalização experimental.
 ## Tarefa 4: Consolidar instalação e configuração no README
 
 **Descrição:** Criar um caminho principal de clone limpo com pré-requisitos,
-versões, configuração do `.env`, recuperação DVC e alternativas para CSI/USB.
+versões, configuração segura do `.env`, recuperação DVC e alternativas para
+CSI/USB.
 
 **Critérios de aceitação:**
 
@@ -90,7 +91,8 @@ versões, configuração do `.env`, recuperação DVC e alternativas para CSI/US
 
 - [ ] Ensaio dos comandos em diretório temporário ou clone limpo.
 - [ ] `make help` corresponde ao manual.
-- [ ] Variáveis documentadas correspondem a `.env.example` e `compose.yaml`.
+- [ ] Variáveis documentadas correspondem a `.env.example`, `compose.yaml` e
+  `scripts/configurar_env.py`.
 
 **Dependências:** Tarefa 3.
 
@@ -172,7 +174,8 @@ alimentação e proteção.
 - [ ] Continuidade e tensões conferidas com a placa desenergizada/energizada conforme o teste.
 - [ ] Comparação entre esquemático e fotografia da montagem.
 
-**Dependências:** Confirmações da equipe listadas em `tasks/plan.md`.
+**Dependências:** Confirmações da equipe listadas em `tasks/plan.md` e revisão
+do esquemático candidato do PR #39 para retirar componentes fora do escopo.
 
 **Arquivos envolvidos:**
 

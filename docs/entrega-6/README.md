@@ -19,7 +19,7 @@ terceiros.
 ## Matriz de conformidade inicial
 
 Auditoria inicialmente realizada na branch `feat/sinalizacao-fisica` e
-reconciliada em 16/09/2026 com `origin/main` no commit `cf9438b`. Os estados
+reconciliada em 16/09/2026 com `origin/main` no commit `68642fc`. Os estados
 abaixo descrevem a branch documental criada dessa base; não afirmam homologação
 da montagem nem publicação da documentação no repositório remoto.
 
@@ -29,15 +29,15 @@ a arquitetura, a montagem, os testes nem as evidências exigidas para a Entrega 
 
 | Critério da atividade | Artefato atual | Estado inicial | Evidência ou lacuna |
 | --- | --- | --- | --- |
-| Código-fonte desenvolvido | `edge/`, `backend/`, `frontend/`, `model_lifecycle/`, `scripts/`, `tests/` | Presente | Executar testes, lint e build novamente na base recente antes de registrar evidência final |
-| Esquemáticos elétricos | Esquemático da interface E18-D80NK → GPIO 17, a criar | Pendente | Deve documentar o circuito realmente usado para adaptar a saída do sensor à GPIO de 3,3 V; LEDs e buzzer estão fora do escopo |
+| Código-fonte desenvolvido | `edge/`, `backend/`, `frontend/`, `model_lifecycle/`, `scripts/`, `tests/` | Presente e testado automaticamente | 161 testes gerais e 33 testes do backend aprovados; frontend passou por lint e build |
+| Esquemáticos elétricos | Candidato no PR #39 (`docs/esquematico/`) | Em revisão, ainda fora desta branch | O material inclui sensor, câmera e BOM, mas também relé/solenoide de ejeção fora do escopo e sem integração correspondente na `main`; revisar antes de tratá-lo como artefato final |
 | Instruções de montagem | Manual da câmera, sensor E18-D80NK, Raspberry Pi 5 e alimentação, a consolidar | Pendente | A montagem final não inclui LEDs nem buzzer e ainda precisa ser ensaiada fisicamente |
-| Diagramas finais de arquitetura | [`docs/arquitetura/diagrama-arquitetural.md`](../arquitetura/diagrama-arquitetural.md) | Atualizado no working tree; render visual pendente | Revisão 0.7.0 inclui Edge, MQTT autenticado, backend, SQLite e dashboard React; falta inspecionar a renderização dos três Mermaid |
+| Diagramas finais de arquitetura | [`docs/arquitetura/diagrama-arquitetural.md`](../arquitetura/diagrama-arquitetural.md) | Atualizado no working tree; render visual pendente | Revisão 0.8.0 inclui estação Edge modular, outbox contínua, MQTT autenticado, backend, SQLite e dashboard React; falta inspecionar a renderização dos três Mermaid |
 | Pré-requisitos e recursos | [`README.md`](../../README.md) | Parcial | Lista extensa existe, mas mistura itens atuais e futuros e ainda não foi ensaiada em clone limpo |
 | Dependências e instalação | `pyproject.toml`, `uv.lock`, `backend/pyproject.toml`, `backend/uv.lock`, README | Parcial | Edge/backend têm locks; Picamera2 depende do sistema; acesso DVC é externo e precisa de procedimento de autorização |
-| Configuração | `.env.example`, `compose.yaml`, `Makefile`, README | Parcial | Variáveis e comandos existem; tópicos legados e atuais precisam ser reconciliados no manual |
-| Execução | `Makefile`, `scripts/`, README | Parcial | Inferência unitária, serviços e esteira possuem comandos; faltam caminhos canônicos separados por cenário |
-| Resultado que confirma execução | `/health`, API, logs e testes | Parcial | Critérios existem dispersos; devem informar saídas observáveis e distinguir MQTT publicado de SQLite persistido |
+| Configuração | `.env.example`, `compose.yaml`, `Makefile`, `scripts/configurar_env.py`, README | Presente; ensaio limpo pendente | `make up` preserva valores existentes, completa chaves ausentes e gera credenciais locais; falta reproduzir em host sem configuração prévia |
+| Execução | `Makefile`, `scripts/`, README | Presente; ensaio físico pendente | README separa serviços, estação contínua, inferência sem hardware, verificação e encerramento seguro |
+| Resultado que confirma execução | `/health`, dashboard, API, logs e testes | Presente; evidência final pendente | README informa consultas e resultados observáveis; ainda é necessário registrar o ensaio integrado ligado ao SHA final |
 | Código compreensível | Pacotes por aquisição, inferência, mensagens, orquestração e módulos do backend | Presente | Responsabilidades principais são localizáveis; o pacote experimental de atuação não fará parte da `main` |
 | Reprodução completa por terceiro | Ainda sem evidência dedicada | Pendente | Exige clone limpo por terceiro e registro de sistema, versões, SHA, comandos, duração e bloqueios |
 
@@ -50,16 +50,19 @@ a arquitetura, a montagem, os testes nem as evidências exigidas para a Entrega 
 - publicação MQTT, backend FastAPI, migrations e persistência SQLite;
 - módulos de inspeções, estações/lotes, estados de dispositivo e alarmes;
 - outbox SQLite e recuperação de contexto na CLI `scripts/infer.py`;
+- outbox SQLite no fluxo contínuo iniciado por `scripts/run_conveyor.py`;
 - sincronizador separado de pendências em `scripts/sync_outbox.py`;
+- configuração segura do `.env` por `scripts/configurar_env.py`;
+- captura configurável e gravação opcional dos quadros inspecionados;
 - dashboard React servido por Nginx, com consumo REST/SSE do backend;
 - testes automatizados com dublês de hardware.
 
 ### Limites que não podem ser ocultados
 
-- o laço contínuo de `scripts/executar_esteira.py` publica diretamente no MQTT e
-  não usa a outbox da CLI de inspeção unitária;
-- o código experimental de LEDs e buzzer presente nesta branch está excluído da
-  versão final e não deve ser tratado como artefato da entrega;
+- a outbox protege eventos de inspeção, mas os alertas operacionais publicados
+  separadamente não possuem a mesma fila persistente;
+- o código experimental de LEDs e buzzer existe somente em branch separada,
+  está excluído da versão final e não deve ser tratado como artefato da entrega;
 - o acesso ao dataset e ao modelo depende do remote DVC e de autorização externa;
 - a interface elétrica do E18-D80NK com a GPIO de 3,3 V ainda precisa ser
   confirmada e documentada conforme a montagem real;
@@ -87,9 +90,9 @@ Validações executadas em 16/09/2026, sem alterar código-fonte:
 | --- | --- |
 | Links locais do README, arquitetura, matriz, plano e checklist | 23 links verificados; nenhum ausente |
 | Higiene do diff | `git diff --check` aprovado |
-| Testes gerais do Edge, modelo e CLIs | 145 aprovados na base `cf9438b` |
-| Testes do backend em Python 3.12 isolado | 29 aprovados, 1 integração MQTT ignorada e 1 aviso de depreciação do Starlette |
-| Ruff e frontend | Ruff aprovado; lint e build de produção do frontend aprovados |
+| Testes gerais do Edge, modelo e CLIs | 161 aprovados após integrar `68642fc` |
+| Testes do backend em Python 3.12 isolado | 33 aprovados, 1 integração MQTT ignorada e 1 aviso de depreciação do Starlette |
+| Ruff e frontend | Ruff, lint TypeScript/ESLint e build de produção aprovados |
 | Estrutura da arquitetura | 3 blocos Mermaid completos; renderização visual ainda pendente |
 | Payload de inspeção do diagrama | Aceito por `InspectionCreateDTO` no ambiente Python 3.12 do backend |
 

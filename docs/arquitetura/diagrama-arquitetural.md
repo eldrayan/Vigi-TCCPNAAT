@@ -1,8 +1,8 @@
 > **Projeto:** Vigi — Sistema Embarcado para Inspeção e Triagem de Linhas de Envase
-> <br>**Revisão:** 0.7.0
+> <br>**Revisão:** 0.8.0
 > <br>**Data da revisão:** 16/09/2026
 > <br>**Responsável:** Squad Vigi
-> <br>**Base auditada:** `origin/main`, commit `cf9438b`
+> <br>**Base auditada:** `origin/main`, commit `68642fc`
 > <br>**Arquitetura-alvo:** versão destinada à `main`, sem LEDs e buzzer
 
 # Arquitetura do Vigi
@@ -26,6 +26,7 @@ Raspberry Pi 5.
 | 0.6.0 | 16/09/2026 | Arquitetura atual do Edge/backend, outbox, estações, lotes, alarmes e SSE |
 | 0.6.1 | 16/09/2026 | Exclusão da sinalização experimental por LEDs e buzzer da arquitetura destinada à `main` |
 | 0.7.0 | 16/09/2026 | Integração da arquitetura com o dashboard React e a infraestrutura autenticada presentes na `main` |
+| 0.8.0 | 16/09/2026 | Estação Edge modular, outbox no fluxo contínuo, captura configurável e inicialização local previsível |
 
 ## Legenda de estado
 
@@ -52,7 +53,7 @@ flowchart LR
     end
 
     subgraph edge["Host Raspberry Pi 5 — processos Edge"]
-        conveyor["executar_esteira.py<br/>laço contínuo"]
+        conveyor["run_conveyor.py<br/>laço contínuo"]
         inference["Motor de inferência<br/>YOLOv8n-cls"]
         oneshot["infer.py<br/>inspeção unitária"]
         outbox[("SQLite Edge<br/>edge-outbox.db")]
@@ -64,7 +65,7 @@ flowchart LR
         mqtt["Mosquitto 2.0.22<br/>host :1883, autenticação e ACL"]
         api["FastAPI<br/>host :8000"]
         database[("SQLite backend<br/>volume backend_data")]
-        dashboard["React + Nginx<br/>host :8080"]
+        dashboard["React + Nginx<br/>host :8081"]
     end
 
     technical["Cliente técnico<br/>curl, /docs e SSE"]
@@ -72,7 +73,7 @@ flowchart LR
     sensor --> conveyor
     camera --> conveyor
     conveyor --> inference
-    conveyor -->|"publicação direta"| mqtt
+    conveyor -->|"enqueue antes do envio"| outbox
 
     camera --> oneshot
     oneshot --> inference
@@ -93,7 +94,8 @@ flowchart LR
   exige credenciais distintas para Edge e backend e restringe os tópicos por ACL.
 - A API é publicada na porta 8000 do host e ainda não possui autenticação ou
   autorização.
-- O dashboard é publicado na porta 8080; seu Nginx encaminha `/api/` ao backend.
+- O fluxo iniciado por `make up` publica o dashboard na porta 8081; seu Nginx
+  encaminha `/api/` ao backend.
 - `/docs` é a documentação interativa OpenAPI e não substitui o dashboard.
 - Imagens capturadas não são enviadas pelo payload MQTT. No modo contínuo, elas
   podem ser gravadas localmente em `captures/`.
@@ -149,9 +151,11 @@ na outbox.
 
 ### 2. Operação contínua da esteira
 
-[`scripts/executar_esteira.py`](../../scripts/executar_esteira.py) mantém câmera,
-sensor e sessão MQTT abertos. Cada disparo passa pelo orquestrador, executa a
-inferência e publica a telemetria.
+[`scripts/run_conveyor.py`](../../scripts/run_conveyor.py) mantém câmera, sensor
+e sessão MQTT abertos. Cada disparo passa pelo orquestrador, executa a inferência,
+grava o evento na outbox e tenta sincronizá-lo com o broker. Resolução, FPS,
+exposição, ganho, balanço de branco, atraso após o sensor e gravação das imagens
+são configuráveis pela CLI e pelo `Makefile`.
 
 ```mermaid
 sequenceDiagram
@@ -159,6 +163,7 @@ sequenceDiagram
     participant E as ConveyorOrchestrator
     participant C as Câmera
     participant I as Motor de inferência
+    participant O as Outbox SQLite
     participant M as Mosquitto
     participant B as Backend
     participant D as SQLite backend
@@ -168,20 +173,25 @@ sequenceDiagram
     C-->>E: frame
     E->>I: inspect(frame)
     I-->>E: decisão e tempo de processamento
-    E->>M: inspeção com QoS 1
+    E->>O: grava inspeção como PENDENTE
+    O->>M: tenta sincronizar com QoS 1
+    alt publicação concluída
+        O->>O: marca SINCRONIZADO
+        M->>B: entrega payload de inspeção
+        B->>D: valida e persiste
+        B->>B: avalia alarmes do lote
+    else publicação falha
+        O->>O: mantém PENDENTE
+    end
     opt não conformidade ou falha técnica
         E->>M: alerta operacional
     end
-    M->>B: payload de inspeção
-    B->>D: valida e persiste
-    B->>B: avalia alarmes do lote
 ```
 
 Neste fluxo, o contexto de estação/lote vem dos argumentos da CLI (padrões
-`ESTACAO_01` e `LOTE_01`). O processo não consome a configuração retida do
-dispositivo e ainda não usa `InspectionOutbox`; uma falha de publicação não é
-armazenada para reenvio. Portanto, a operação offline do modo unitário não pode
-ser atribuída automaticamente ao laço contínuo.
+`ESTACAO_01` e `LOTE_01`). A inspeção usa `InspectionOutbox`; se a publicação
+falhar, o evento permanece `PENDENTE`. Alertas operacionais continuam sendo
+publicados separadamente e não possuem a mesma garantia de fila persistente.
 
 ## Organização do código
 
@@ -194,7 +204,9 @@ continuam sendo processos/componentes separados.
 | Aquisição | Câmera CSI/USB e sensor fotoelétrico | `edge/acquisition/` |
 | Inferência | Manifesto, adaptador do modelo e decisão fail-safe | `edge/inference/` |
 | Mensageria Edge | Eventos, contexto, MQTT, status, outbox e sincronização | `edge/messaging/` |
-| Orquestração | Ciclo sensor → câmera → inferência → MQTT | `edge/orchestration/` |
+| Orquestração | Ciclo sensor → câmera → inferência → outbox → MQTT | `edge/orchestration/` |
+| Entrega da inspeção | Outbox, sincronização MQTT e alerta operacional | `edge/orchestration/inspection_dispatcher.py` |
+| Capturas | Gravação opcional do quadro por inspeção | `edge/orchestration/capture_store.py` |
 | Inspeções | DTOs, consulta, persistência e consumo MQTT | `backend/app/modules/inspections/` |
 | Operações | Estações, lotes, limite de não conformidade e estado | `backend/app/modules/operations/` |
 | Alarmes | Geração, consulta e reconhecimento de alarmes | `backend/app/modules/alarms/` |
@@ -209,7 +221,7 @@ Existem dois arquivos SQLite com papéis diferentes:
 
 | Banco | Tabelas/conteúdo principal | Responsabilidade |
 | --- | --- | --- |
-| Edge — `data/edge-outbox.db` | `inspection_outbox`, `operational_context` | Preservar eventos unitários pendentes e o último contexto estação/lote |
+| Edge — `data/edge-outbox.db` | `inspection_outbox`, `operational_context` | Preservar eventos pendentes dos fluxos unitário e contínuo e o último contexto estação/lote |
 | Backend — `/app/data/vigi.db` no Compose | `inspections`, `stations`, `station_statuses`, `batches`, `alarms` | Consulta operacional, relacionamento de lote/estação e alarmes |
 
 Os dois habilitam WAL e `busy_timeout`. A marca `SINCRONIZADO` existe apenas na
@@ -293,8 +305,7 @@ Ele não aciona nem silencia dispositivos físicos, pois a versão destinada à
 | Sensor e debounce | Implementado | Presente | Pendente de evidência final |
 | Captura CSI/USB | Implementada | Dublês e testes de integração de classe | Pendente de ensaio final |
 | Inferência e fail-safe | Implementados | Presente | Pendente no hardware alvo para a entrega |
-| Outbox da inspeção unitária | Implementada | Presente | Pendente de ensaio de queda/reconexão |
-| Laço contínuo com outbox | Não implementado | Não aplicável | Não aplicável |
+| Outbox das inspeções unitária e contínua | Implementada | Presente | Pendente de ensaio de queda/reconexão |
 | MQTT → backend → SQLite → API | Implementado | Teste de integração disponível | Reexecutar com broker isolado no SHA final |
 | Estações, lotes e alarmes | Implementados | Presente | Pendente de cenário integrado final |
 | SSE | Implementado | Presente | Pendente com cliente real |

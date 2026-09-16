@@ -10,9 +10,9 @@ em clone limpo e um ensaio físico produzem as evidências que permitem declarar
 a reprodução concluída.
 
 O planejamento foi iniciado em 16/09/2026 e transferido para a branch
-`docs/entrega-6`, criada da `origin/main` no commit `cf9438b`. A implementação
-experimental de LEDs e buzzer não será integrada à `main` e fica explicitamente
-fora da Entrega 6.
+`docs/entrega-6`, criada da `origin/main` e atualizada até o commit `68642fc`.
+A implementação experimental de LEDs e buzzer não será integrada à `main` e
+fica explicitamente fora da Entrega 6.
 
 ## Decisões de documentação
 
@@ -75,7 +75,7 @@ As tarefas detalhadas e seus critérios de aceitação estão em
   clone limpo.
 - [ ] Mosquitto, backend, SQLite e API possuem verificações de saúde e resultado
   documentadas.
-- [ ] Limitações do modo contínuo offline e da autenticação da API estão explícitas.
+- [ ] Limitações da fila de alertas e da autenticação da API estão explícitas.
 
 ### Fase 3 — Hardware e evidências
 
@@ -108,9 +108,9 @@ As tarefas detalhadas e seus critérios de aceitação estão em
 | Risco | Impacto | Mitigação |
 | --- | --- | --- |
 | Modelo e dataset dependem de remote DVC restrito | Alto | Documentar o fluxo de autorização, conferir ponteiros e ensaiar com uma identidade sem configuração prévia |
-| Montagem elétrica ainda não tem BOM fechado | Alto | Confirmar modelos, tensões, correntes e resistores antes de finalizar o esquemático |
+| Esquemático candidato inclui relé/solenoide fora do escopo | Alto | Revisar o PR #39 e manter somente conexões do sensor, câmera, alimentação e componentes realmente usados |
 | Diagrama atual mistura implementação e visão futura | Alto | Produzir diagrama "como está" e mover evolução planejada para seção própria |
-| Fila offline não cobre o laço contínuo da esteira | Alto | Documentar o limite; decidir em tarefa de código separada se a entrega exige integrar a outbox ao orquestrador |
+| Alertas operacionais não usam a outbox das inspeções | Médio | Documentar o limite e não prometer entrega offline dos alertas |
 | Dashboard recente ainda não foi ensaiado no hardware alvo | Médio | Executar lint/build e validar o fluxo integrado via Compose na Raspberry Pi 5 |
 | Testes simulados serem confundidos com homologação física | Alto | Manter estados de evidência separados e exigir registro de ensaio na Raspberry Pi 5 |
 | Instruções variarem entre `Makefile`, `.env.example` e README | Médio | Eleger o README como índice canônico e conferir cada comando contra a CLI/Compose |
@@ -122,6 +122,4 @@ As tarefas detalhadas e seus critérios de aceitação estão em
 - Qual circuito de condicionamento foi realmente usado entre o E18-D80NK e a
   GPIO de 3,3 V?
 - A case final possui desenho, dimensões, material e instruções de fixação?
-- O fluxo contínuo precisa operar com a mesma fila offline já usada pela CLI de
-  inspeção unitária?
 - Qual commit/tag será declarado como versão definitiva e pública da entrega?
