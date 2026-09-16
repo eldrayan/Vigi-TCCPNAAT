@@ -34,6 +34,17 @@ export interface InspectionSummary {
   nonconformities: Record<string, number>;
 }
 
+interface InspectionSummaryResponse {
+  total: number;
+  compliant: number;
+  noncompliant: number;
+  compliance_rate: number;
+  sem_tampa: number;
+  tampa_torta: number;
+  amassado: number;
+  falha_tecnica: number;
+}
+
 export interface Station {
   id: number;
   code: string;
@@ -90,6 +101,21 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+function normalizeInspectionSummary(summary: InspectionSummaryResponse): InspectionSummary {
+  return {
+    total: summary.total,
+    compliant: summary.compliant,
+    noncompliant: summary.noncompliant,
+    conformity_rate: summary.compliance_rate,
+    nonconformities: {
+      SEM_TAMPA: summary.sem_tampa,
+      TAMPA_TORTA: summary.tampa_torta,
+      AMASSADO: summary.amassado,
+      FALHA_TECNICA: summary.falha_tecnica,
+    },
+  };
+}
+
 export const api = {
   summary: (filters: InspectionFilters = {}) => {
     const params = new URLSearchParams();
@@ -97,7 +123,9 @@ export const api = {
       if (value) params.set(key, value);
     });
     const query = params.toString();
-    return request<InspectionSummary>(`/api/inspecoes/resumo${query ? `?${query}` : ""}`);
+    return request<InspectionSummaryResponse>(`/api/inspecoes/resumo${query ? `?${query}` : ""}`).then(
+      normalizeInspectionSummary,
+    );
   },
   inspectionsPage: async (filters: InspectionFilters = {}, limit = 10, offset = 0): Promise<InspectionPage> => {
     const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
@@ -111,12 +139,12 @@ export const api = {
     const summaryQuery = summaryParams.toString();
     const [items, summary] = await Promise.all([
       request<InspectionListResponse>(`/api/inspecoes?${params.toString()}`),
-      request<InspectionSummary>(`/api/inspecoes/resumo${summaryQuery ? `?${summaryQuery}` : ""}`),
+      request<InspectionSummaryResponse>(`/api/inspecoes/resumo${summaryQuery ? `?${summaryQuery}` : ""}`),
     ]);
     const list = Array.isArray(items) ? items : items.items;
     return {
       items: list,
-      total: summary.total,
+      total: normalizeInspectionSummary(summary).total,
       limit,
       offset,
     };

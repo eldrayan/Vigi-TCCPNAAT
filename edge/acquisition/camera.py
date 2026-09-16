@@ -50,6 +50,9 @@ class CameraFactory:
                 height=config.height,
                 fps=config.fps,
                 warmup_seconds=config.warmup_seconds,
+                exposure_us=config.exposure_us,
+                analogue_gain=config.analogue_gain,
+                awb_mode=config.awb_mode,
             )
         else:
             camera = OpenCVCamera(
