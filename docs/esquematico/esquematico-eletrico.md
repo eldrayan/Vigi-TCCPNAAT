@@ -9,7 +9,7 @@
 
 | Versão | Responsável | Data | Alterações |
 | :--- | :--- | :--- | :--- |
-| **1.0.0** | Squad Vigi | 15/09/2026 | Elaboração inicial do circuito, dimensionamento de proteção GPIO e simulação Wokwi. |
+| **1.0.0** | Squad Vigi | 15/09/2026 | Elaboração inicial do circuito e dimensionamento de proteção GPIO. |
 | **1.1.0** | Squad Vigi | 15/09/2026 | Atualização do esquemático oficial da bancada PoC (Raspberry Pi, E18-D80NK com divisor resistivo e módulo relé KY-019). Adequação de reprodutibilidade conforme Apostila PNAAT (páginas 19 e 20). Remoção de componentes não implementados nesta fase. |
 
 ---

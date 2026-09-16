@@ -116,12 +116,6 @@ Somente o frontend é implementado em **JavaScript**, com **React**. O React per
 │   └── manifest.py              # Contrato do modelo promovido
 ├── scripts/
 │   └── coletar_dataset.py       # Entrada compatível para a ferramenta modular
-├── wokwi/                       # Simulação do circuito e hardware no Wokwi
-│   ├── diagram.json             # Layout do circuito e conexões virtuais
-│   ├── main.py                  # Firmware MicroPython com debounce e telemetria
-│   ├── ssd1306.py               # Driver I2C para display OLED SSD1306
-│   ├── wokwi.toml               # Configuração da simulação para VS Code / CLI
-│   └── README.md                # Guia de execução interativa no simulador
 ├── .gitignore
 └── README.md
 ```
@@ -492,14 +486,15 @@ leitura dos artefatos. Pull requests de forks externos executam apenas o job
 de qualidade do código, pois não recebem secrets do repositório. Enquanto
 `dataset/vigi-cls.dvc` e `models.dvc` não existirem, os dois gates de ML
 informam que aguardam os primeiros artefatos e encerram com sucesso. Não há
+Docker, publicação no GHCR ou deploy automático na Raspberry Pi nesta etapa.
+
 ---
 
-## Esquema Elétrico e Simulação Wokwi
+## Esquema Elétrico da Bancada
 
-O **Vigi** conta com projeto elétrico completo e simulação interativa de hardware para validação de bancada:
+O **Vigi** conta com projeto elétrico formal para validação e reprodutibilidade da bancada física:
 
-* **Esquemático Elétrico Detalhado:** Consulte [`docs/esquematico/esquematico-eletrico.md`](docs/esquematico/esquematico-eletrico.md) para ver o diagrama visual oficial (Fritzing), mapeamento de pinos da Raspberry Pi 5, circuito de proteção por divisor de tensão para o sensor E18-D80NK, comando do módulo relé de ejeção KY-019 e lista de materiais (BOM).
-* **Simulador Wokwi:** Na pasta [`wokwi/`](wokwi/) está disponível o projeto virtual para validação em ambiente simulado. Para executar a simulação interativa, siga o [Guia do Wokwi](wokwi/README.md).
+* **Esquemático Elétrico Detalhado:** Consulte [`docs/esquematico/esquematico-eletrico.md`](docs/esquematico/esquematico-eletrico.md) para ver o diagrama visual oficial (desenvolvido no Fritzing), mapeamento de pinos da Raspberry Pi 5, circuito de proteção por divisor de tensão para o sensor industrial E18-D80NK (3.3V LVTTL), acionamento com isolamento galvânico do módulo relé de ejeção KY-019 e lista de materiais (BOM).
 
 ---
 
