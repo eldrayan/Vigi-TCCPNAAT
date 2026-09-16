@@ -494,7 +494,11 @@ Docker, publicação no GHCR ou deploy automático na Raspberry Pi nesta etapa.
 
 O **Vigi** conta com projeto elétrico formal para validação e reprodutibilidade da bancada física:
 
-* **Esquemático Elétrico Detalhado:** Consulte [`docs/esquematico/esquematico-eletrico.md`](docs/esquematico/esquematico-eletrico.md) para ver o diagrama visual oficial (desenvolvido no Fritzing), mapeamento de pinos da Raspberry Pi 5, circuito de proteção por divisor de tensão para o sensor industrial E18-D80NK (3.3V LVTTL), acionamento com isolamento galvânico do módulo relé de ejeção KY-019 e lista de materiais (BOM).
+<p align="center">
+  <img src="docs/esquematico/VigiEsquematico.png" alt="Esquemático Elétrico da Bancada Vigi" width="850">
+</p>
+
+* **Esquemático Elétrico Detalhado:** Consulte [`docs/esquematico/esquematico-eletrico.md`](docs/esquematico/esquematico-eletrico.md) para ver o detalhamento completo do circuito (desenvolvido no Fritzing), mapeamento de pinagem da Raspberry Pi 5, circuito de proteção por divisor de tensão para o sensor industrial E18-D80NK (3.3V LVTTL), acionamento com isolamento galvânico do módulo relé de ejeção KY-019 e lista de materiais (BOM).
 
 ---
 
