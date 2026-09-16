@@ -86,6 +86,8 @@ Somente o frontend é implementado em **JavaScript**, com **React**. O React per
 ├── docs/
 │   ├── arquitetura/            # Diagramas e especificações arquiteturais (Roger Pressman)
 │   │   └── diagrama-arquitetural.md
+│   ├── esquematico/            # Engenharia elétrica e esquemático da bancada
+│   │   └── esquematico-eletrico.md
 │   ├── img/                    # Diagramas visuais e esquemáticos do sistema
 │   │   └── Fluxo.jpeg
 │   └── requisitos/             # Especificação de Requisitos (IEEE 29148 / PNAAT)
@@ -528,6 +530,18 @@ de qualidade do código, pois não recebem secrets do repositório. Enquanto
 `dataset/vigi-cls.dvc` e `models.dvc` não existirem, os dois gates de ML
 informam que aguardam os primeiros artefatos e encerram com sucesso. Não há
 Docker, publicação no GHCR ou deploy automático na Raspberry Pi nesta etapa.
+
+---
+
+## Esquema Elétrico da Bancada
+
+O **Vigi** conta com projeto elétrico formal para validação e reprodutibilidade da bancada física:
+
+<p align="center">
+  <img src="docs/esquematico/VigiEsquematico.png" alt="Esquemático Elétrico da Bancada Vigi" width="850">
+</p>
+
+* **Esquemático Elétrico Detalhado:** Consulte [`docs/esquematico/esquematico-eletrico.md`](docs/esquematico/esquematico-eletrico.md) para ver o detalhamento completo do circuito (desenvolvido no Fritzing), mapeamento de pinagem da Raspberry Pi 5, circuito de proteção por divisor de tensão para o sensor industrial E18-D80NK (3.3V LVTTL), acionamento com isolamento galvânico do módulo relé de ejeção KY-019 e lista de materiais (BOM).
 
 ---
 
