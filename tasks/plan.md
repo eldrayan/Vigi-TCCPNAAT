@@ -10,7 +10,7 @@ em clone limpo e um ensaio físico produzem as evidências que permitem declarar
 a reprodução concluída.
 
 O planejamento foi iniciado em 16/09/2026 e transferido para a branch
-`docs/entrega-6`, criada da `origin/main` e atualizada até o commit `68642fc`.
+`docs/entrega-6`, criada da `origin/main` e atualizada até o commit `f335140`.
 A implementação experimental de LEDs e buzzer não será integrada à `main` e
 fica explicitamente fora da Entrega 6.
 
@@ -108,7 +108,7 @@ As tarefas detalhadas e seus critérios de aceitação estão em
 | Risco | Impacto | Mitigação |
 | --- | --- | --- |
 | Modelo e dataset dependem de remote DVC restrito | Alto | Documentar o fluxo de autorização, conferir ponteiros e ensaiar com uma identidade sem configuração prévia |
-| Esquemático candidato inclui relé/solenoide fora do escopo | Alto | Revisar o PR #39 e manter somente conexões do sensor, câmera, alimentação e componentes realmente usados |
+| Esquemático integrado inclui relé/solenoide fora do escopo e circuito ainda não validado | Alto | Corrigir fonte Fritzing, imagem, texto e BOM; manter somente sensor, câmera, alimentação e componentes realmente usados e medidos |
 | Diagrama atual mistura implementação e visão futura | Alto | Produzir diagrama "como está" e mover evolução planejada para seção própria |
 | Alertas operacionais não usam a outbox das inspeções | Médio | Documentar o limite e não prometer entrega offline dos alertas |
 | Dashboard recente ainda não foi ensaiado no hardware alvo | Médio | Executar lint/build e validar o fluxo integrado via Compose na Raspberry Pi 5 |

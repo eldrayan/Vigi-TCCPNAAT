@@ -174,8 +174,9 @@ alimentação e proteção.
 - [ ] Continuidade e tensões conferidas com a placa desenergizada/energizada conforme o teste.
 - [ ] Comparação entre esquemático e fotografia da montagem.
 
-**Dependências:** Confirmações da equipe listadas em `tasks/plan.md` e revisão
-do esquemático candidato do PR #39 para retirar componentes fora do escopo.
+**Dependências:** Confirmações da equipe listadas em `tasks/plan.md` e correção
+do esquemático incorporado pelo PR #39 para retirar componentes fora do escopo
+e validar eletricamente o circuito do sensor.
 
 **Arquivos envolvidos:**
 

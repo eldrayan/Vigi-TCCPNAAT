@@ -92,6 +92,8 @@ Somente o frontend é implementado em **JavaScript**, com **React**. O React per
 │   ├── arquitetura/            # Diagramas e especificações arquiteturais (Roger Pressman)
 │   │   └── diagrama-arquitetural.md
 │   ├── entrega-6/README.md     # Matriz de conformidade e reprodutibilidade
+│   ├── esquematico/            # Engenharia elétrica e esquemático da bancada
+│   │   └── esquematico-eletrico.md
 │   ├── img/                    # Diagramas visuais e esquemáticos do sistema
 │   │   └── Fluxo.jpeg
 │   └── requisitos/             # Especificação de Requisitos (IEEE 29148 / PNAAT)
@@ -540,6 +542,27 @@ de qualidade do código, pois não recebem secrets do repositório. Enquanto
 `dataset/vigi-cls.dvc` e `models.dvc` não existirem, os dois gates de ML
 informam que aguardam os primeiros artefatos e encerram com sucesso. Não há
 Docker, publicação no GHCR ou deploy automático na Raspberry Pi nesta etapa.
+
+---
+
+## Esquema elétrico da bancada — revisão pendente
+
+O repositório contém um projeto Fritzing candidato em `docs/esquematico/`.
+Ele ainda **não deve ser usado como instrução final de montagem**: a versão
+atual inclui relé/solenoide de ejeção, que está fora do escopo desta entrega e
+não possui integração correspondente na `main`. O circuito do sensor também
+precisa ser conferido contra o componente e a montagem reais antes de energizar
+a Raspberry Pi.
+
+<p align="center">
+  <img src="docs/esquematico/VigiEsquematico.png" alt="Esquemático Elétrico da Bancada Vigi" width="850">
+</p>
+
+Consulte a [análise do esquemático](docs/esquematico/esquematico-eletrico.md)
+para conhecer a pinagem proposta, a lista de materiais e as correções ainda
+necessárias. A montagem final da Entrega 6 deverá conter somente Raspberry Pi,
+câmera, sensor E18-D80NK, alimentação e o circuito de interface efetivamente
+validado pela equipe.
 
 ---
 

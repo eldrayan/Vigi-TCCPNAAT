@@ -19,7 +19,7 @@ terceiros.
 ## Matriz de conformidade inicial
 
 Auditoria inicialmente realizada na branch `feat/sinalizacao-fisica` e
-reconciliada em 16/09/2026 com `origin/main` no commit `68642fc`. Os estados
+reconciliada em 16/09/2026 com `origin/main` no commit `f335140`. Os estados
 abaixo descrevem a branch documental criada dessa base; não afirmam homologação
 da montagem nem publicação da documentação no repositório remoto.
 
@@ -30,7 +30,7 @@ a arquitetura, a montagem, os testes nem as evidências exigidas para a Entrega 
 | Critério da atividade | Artefato atual | Estado inicial | Evidência ou lacuna |
 | --- | --- | --- | --- |
 | Código-fonte desenvolvido | `edge/`, `backend/`, `frontend/`, `model_lifecycle/`, `scripts/`, `tests/` | Presente e testado automaticamente | 161 testes gerais e 33 testes do backend aprovados; frontend passou por lint e build |
-| Esquemáticos elétricos | Candidato no PR #39 (`docs/esquematico/`) | Em revisão, ainda fora desta branch | O material inclui sensor, câmera e BOM, mas também relé/solenoide de ejeção fora do escopo e sem integração correspondente na `main`; revisar antes de tratá-lo como artefato final |
+| Esquemáticos elétricos | [`docs/esquematico/`](../esquematico/esquematico-eletrico.md), incorporado pelo PR #39 | Presente, porém não conforme | Inclui relé/solenoide fora do escopo, afirmações ainda sem evidência e circuito do sensor que requer revisão elétrica; não usar como instrução final até corrigir fonte Fritzing, imagem, texto e BOM |
 | Instruções de montagem | Manual da câmera, sensor E18-D80NK, Raspberry Pi 5 e alimentação, a consolidar | Pendente | A montagem final não inclui LEDs nem buzzer e ainda precisa ser ensaiada fisicamente |
 | Diagramas finais de arquitetura | [`docs/arquitetura/diagrama-arquitetural.md`](../arquitetura/diagrama-arquitetural.md) | Atualizado no working tree; render visual pendente | Revisão 0.8.0 inclui estação Edge modular, outbox contínua, MQTT autenticado, backend, SQLite e dashboard React; falta inspecionar a renderização dos três Mermaid |
 | Pré-requisitos e recursos | [`README.md`](../../README.md) | Parcial | Lista extensa existe, mas mistura itens atuais e futuros e ainda não foi ensaiada em clone limpo |
@@ -88,7 +88,7 @@ Validações executadas em 16/09/2026, sem alterar código-fonte:
 
 | Verificação | Resultado |
 | --- | --- |
-| Links locais do README, arquitetura, matriz, plano e checklist | 23 links verificados; nenhum ausente |
+| Links locais do README, arquitetura, matriz, esquemático, plano e checklist | 28 links verificados; nenhum ausente |
 | Higiene do diff | `git diff --check` aprovado |
 | Testes gerais do Edge, modelo e CLIs | 161 aprovados após integrar `68642fc` |
 | Testes do backend em Python 3.12 isolado | 33 aprovados, 1 integração MQTT ignorada e 1 aviso de depreciação do Starlette |
