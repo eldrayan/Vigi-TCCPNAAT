@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vigi — Apresentação Oficial do Pitch</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #06090e;
+      color: #f1f5f9;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      user-select: none;
+    }
+    #presentation-container {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      background: radial-gradient(circle at 80% 20%, #0f172a 0%, #080c14 100%);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transform-origin: center center;
+    }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 26px 80px 0 80px;
+      z-index: 10;
+    }
+    .brand { display: flex; align-items: center; }
+    .brand img { height: 46px; border-radius: 4px; }
+    .top-nav-sections {
+      display: flex;
+      gap: 8px;
+    }
+    .section-btn {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(51, 65, 85, 0.6);
+      color: #94a3b8;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .section-btn:hover {
+      background: #334155;
+      color: #f8fafc;
+    }
+    .section-btn.active-section {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: #38bdf8;
+      color: #38bdf8;
+    }
+    .badge-part {
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: #38bdf8;
+      padding: 8px 20px;
+      border-radius: 9999px;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      min-width: 220px;
+      text-align: center;
+    }
+    .slide-area {
+      flex: 1;
+      padding: 35px 80px 25px 80px;
+      display: none;
+      flex-direction: column;
+      justify-content: flex-start;
+      animation: fadeIn 0.25s ease-in-out;
+    }
+    .slide-area.active { display: flex; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .slide-header { margin-bottom: 26px; }
+    .category-tag {
+      font-size: 15px;
+      font-weight: 700;
+      color: #38bdf8;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 8px;
+    }
+    .slide-title {
+      font-size: 46px;
+      font-weight: 800;
+      color: #ffffff;
+      line-height: 1.15;
+      letter-spacing: -1px;
+    }
+    .slide-subtitle {
+      font-size: 21px;
+      color: #94a3b8;
+      margin-top: 6px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 36px;
+      flex: 1;
+      align-items: stretch;
+      margin-bottom: 15px;
+    }
+    .grid-2-equal {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 36px;
+      flex: 1;
+      align-items: stretch;
+      margin-bottom: 15px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 30px;
+      flex: 1;
+      align-items: stretch;
+      margin-bottom: 15px;
+    }
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      flex: 1;
+      align-items: stretch;
+      margin-bottom: 15px;
+    }
+    .card {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(51, 65, 85, 0.8);
+      border-radius: 20px;
+      padding: 30px;
+      backdrop-filter: blur(12px);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      position: relative;
+    }
+    .card-highlight {
+      border-color: rgba(56, 189, 248, 0.4);
+      background: rgba(15, 23, 42, 0.85);
+      box-shadow: 0 10px 30px -10px rgba(56, 189, 248, 0.15);
+    }
+    .card-title {
+      font-size: 23px;
+      font-weight: 700;
+      color: #f8fafc;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .card p, .card li {
+      font-size: 19px;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+    .card ul {
+      list-style-type: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .card ul li::before {
+      content: "—";
+      color: #38bdf8;
+      font-weight: bold;
+      display: inline-block;
+      width: 1.2em;
+      margin-left: -1.2em;
+    }
+    .sample-card {
+      background: #0f172a;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid #334155;
+      display: flex;
+      flex-direction: column;
+    }
+    .sample-img-container {
+      width: 100%;
+      height: 310px;
+      overflow: hidden;
+      position: relative;
+      background: #020617;
+    }
+    .sample-img-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 30%;
+    }
+    .sample-info {
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+    }
+    .sample-tag {
+      display: inline-block;
+      align-self: flex-start;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .tag-conforme { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+    .tag-sem-tampa { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+    .tag-tampa-torta { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+    .tag-amassado { background: rgba(249, 115, 22, 0.2); color: #fb923c; border: 1px solid rgba(249, 115, 22, 0.4); }
+    .sample-impact { font-size: 16px; color: #94a3b8; line-height: 1.45; }
+    .flow-container {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      width: 100%;
+      margin: 10px 0 25px 0;
+    }
+    .flow-step {
+      flex: 1;
+      background: #0f172a;
+      border: 1px solid #334155;
+      padding: 22px 18px;
+      border-radius: 16px;
+      text-align: center;
+    }
+    .flow-step.active-step {
+      border-color: #38bdf8;
+      background: rgba(56, 189, 248, 0.1);
+      box-shadow: 0 0 25px rgba(56, 189, 248, 0.2);
+    }
+    .flow-step h4 { font-size: 19px; color: #fff; margin-bottom: 5px; }
+    .flow-step p { font-size: 14px; color: #94a3b8; }
+    .flow-arrow { font-size: 22px; color: #475569; font-weight: bold; }
+    .code-box {
+      background: #020617;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 20px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 15px;
+      color: #38bdf8;
+      line-height: 1.55;
+      overflow: hidden;
+      white-space: pre;
+    }
+    .bottom-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 80px 22px 80px;
+      border-top: 1px solid rgba(51, 65, 85, 0.4);
+      z-index: 10;
+    }
+    .nav-controls { display: flex; align-items: center; gap: 12px; }
+    .btn {
+      background: #1e293b;
+      border: 1px solid #475569;
+      color: #f1f5f9;
+      padding: 8px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .btn:hover { background: #334155; border-color: #64748b; }
+    .slide-counter { font-size: 16px; color: #94a3b8; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+  <div id="presentation-container">
+    <div class="top-bar">
+      <div class="brand">
+        <img src="../../img/logos/vigi_vetor_azul.svg" alt="Vigi">
+      </div>
+      
+      <div class="top-nav-sections">
+        <button class="section-btn" onclick="goToSlide(1)">Contexto & Problema</button>
+        <button class="section-btn" onclick="goToSlide(5)">Arquitetura & Solução</button>
+        <button class="section-btn" onclick="goToSlide(9)">Demonstração Prática</button>
+        <button class="section-btn" onclick="goToSlide(12)">Integração & Software</button>
+        <button class="section-btn" onclick="goToSlide(16)">Impacto & OEE</button>
+        <button class="section-btn" onclick="goToSlide(18)">Conclusão</button>
+      </div>
+
+      <div class="badge-part" id="badge-presenter">Apresentação • Rayan</div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- PARTE 1: RAYAN (00:00 a 02:30) -->
+    <!-- ========================================== -->
+
+    <!-- SLIDE 1 (Rayan) -->
+    <div class="slide-area active" id="slide-1" data-presenter="Rayan">
+      <div class="slide-header">
+        <div class="category-tag">Abertura & Contexto</div>
+        <h1 class="slide-title">Vigi — Sistema Embarcado de Inspeção e Triagem</h1>
+        <p class="slide-subtitle">Visão Computacional na Borda (Edge AI) para Garantia da Qualidade em Linhas de Envase</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card card-highlight" style="justify-content: center; gap: 22px;">
+          <div>
+            <span style="font-size: 16px; color: #38bdf8; font-weight: 700; text-transform: uppercase;">Objetivo Central</span>
+            <h2 style="font-size: 30px; color: #fff; margin-top: 6px;">Monitoramento Determinístico e Autônomo</h2>
+          </div>
+          <p style="font-size: 20px; line-height: 1.6;">
+            Desenvolvido para atuar no ponto crítico entre o <strong>envase</strong> e o <strong>empacotamento</strong>, prevenindo que frascos defeituosos comprometam a integridade mecânica da esteira e a qualidade final do lote.
+          </p>
+          <div style="display: flex; gap: 16px; margin-top: 6px;">
+            <div style="background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); padding: 12px 18px; border-radius: 12px;">
+              <span style="font-size: 13px; color: #94a3b8; display: block;">Hardware Edge</span>
+              <strong style="font-size: 16px; color: #fff;">Raspberry Pi 5 (8GB)</strong>
+            </div>
+            <div style="background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); padding: 12px 18px; border-radius: 12px;">
+              <span style="font-size: 13px; color: #94a3b8; display: block;">Inferência de Borda</span>
+              <strong style="font-size: 16px; color: #fff;">YOLOv8n / TFLite INT8</strong>
+            </div>
+            <div style="background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); padding: 12px 18px; border-radius: 12px;">
+              <span style="font-size: 13px; color: #94a3b8; display: block;">Comunicação</span>
+              <strong style="font-size: 16px; color: #fff;">MQTT + FastAPI + SQLite</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="justify-content: center; gap: 22px;">
+          <div>
+            <span style="font-size: 15px; color: #94a3b8; font-weight: 600;">Squad de Engenharia Vigi</span>
+            <h3 style="font-size: 25px; color: #f8fafc; margin-top: 6px;">PNAAT 2026 — Capacitação e TCC</h3>
+          </div>
+          <ul style="font-size: 19px; gap: 14px;">
+            <li><strong>Elder Rayan Oliveira Silva</strong></li>
+            <li><strong>Samuel Wagner Tiburi Silveira</strong></li>
+            <li><strong>Leôncio Ferreira</strong></li>
+            <li><strong>Alan Mendes Vieira</strong></li>
+          </ul>
+          <p style="font-size: 15px; color: #64748b;">Trabalho de Conclusão de Capacitação em Sistemas Inteligentes Embarcados.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 2 (Rayan) -->
+    <div class="slide-area" id="slide-2" data-presenter="Rayan">
+      <div class="slide-header">
+        <div class="category-tag">O Problema Industrial</div>
+        <h1 class="slide-title">O Gargalo Crítico entre Envase e Empacotamento</h1>
+        <p class="slide-subtitle">A alta velocidade da esteira impede a inspeção visual humana 100% contínua</p>
+      </div>
+
+      <div class="flow-container">
+        <div class="flow-step">
+          <h4>1. Alimentação</h4>
+          <p>Entrada de frascos vazios</p>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <h4>2. Enchedora & Tampadora</h4>
+          <p>Dosagem e rosqueamento</p>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step active-step">
+          <h4 style="color: #38bdf8;">3. Inspeção Vigi</h4>
+          <p style="color: #cbd5e1;">Ponto crítico de triagem rápida</p>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <h4>4. Encaixotadora</h4>
+          <p>Embalagem secundária</p>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <h4>5. Paletização</h4>
+          <p>Expedição e logística</p>
+        </div>
+      </div>
+
+      <div class="grid-2-equal">
+        <div class="card">
+          <div class="card-title">O Que Acontece sem Inspeção Automatizada</div>
+          <ul>
+            <li><strong>Derramamento em cascata:</strong> Garrafas sem tampa ou inclinadas tombam e despejam o líquido na esteira.</li>
+            <li><strong>Travamentos mecânicos severos:</strong> Frascos deformados trancam os alimentadores mecânicos da máquina de encaixotamento.</li>
+            <li><strong>Contaminação de lotes:</strong> Falha de vedação que inutiliza caixas inteiras de produto final.</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Impactos Diretos na Operação Fabril</div>
+          <ul>
+            <li><strong>Paradas Não Programadas:</strong> Tempo ocioso para desobstrução mecânica e limpeza da linha.</li>
+            <li><strong>Desperdício de Insumos:</strong> Descarte forçado de caixas de papelão encharcadas e produto alimentício.</li>
+            <li><strong>Sobrecarga Operacional:</strong> Operadores dedicados ao retrabalho manual em vez da supervisão técnica.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 3 (Rayan) -->
+    <div class="slide-area" id="slide-3" data-presenter="Rayan">
+      <div class="slide-header">
+        <div class="category-tag">Classes de Inspeção</div>
+        <h1 class="slide-title">As Não Conformidades Capturadas em Bancada</h1>
+        <p class="slide-subtitle">Imagens reais coletadas e validadas pelo hardware do Vigi para o treinamento da rede</p>
+      </div>
+
+      <div class="grid-4">
+        <div class="sample-card">
+          <div class="sample-img-container">
+            <img src="./assets/01_conforme.jpg" alt="Conforme">
+          </div>
+          <div class="sample-info">
+            <span class="sample-tag tag-conforme">01 Conforme</span>
+            <h4 style="font-size: 20px; color: #fff;">Lote Padrão</h4>
+            <p class="sample-impact">Frasco íntegro, tampa devidamente rosqueada e vedada. Aprovado para empacotamento.</p>
+          </div>
+        </div>
+
+        <div class="sample-card">
+          <div class="sample-img-container">
+            <img src="./assets/02_sem_tampa.jpg" alt="Sem Tampa">
+          </div>
+          <div class="sample-info">
+            <span class="sample-tag tag-sem-tampa">02 Sem Tampa</span>
+            <h4 style="font-size: 20px; color: #fff;">Ausência de Tampa</h4>
+            <p class="sample-impact">Risco imediato de derramamento de líquido, contaminação microbiológica e perda do produto.</p>
+          </div>
+        </div>
+
+        <div class="sample-card">
+          <div class="sample-img-container">
+            <img src="./assets/03_tampa_torta.jpg" alt="Tampa Torta">
+          </div>
+          <div class="sample-info">
+            <span class="sample-tag tag-tampa-torta">03 Tampa Torta</span>
+            <h4 style="font-size: 20px; color: #fff;">Falha de Rosca</h4>
+            <p class="sample-impact">Vedação imperfeita e vazamento sutil que inutiliza a embalagem secundária no transporte.</p>
+          </div>
+        </div>
+
+        <div class="sample-card">
+          <div class="sample-img-container">
+            <img src="./assets/04_amassado.jpg" alt="Amassado">
+          </div>
+          <div class="sample-info">
+            <span class="sample-tag tag-amassado">04 Amassado</span>
+            <h4 style="font-size: 20px; color: #fff;">Dano Estrutural</h4>
+            <p class="sample-impact">Gera emperramento imediato nas garras mecânicas da máquina empacotadora automática.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 4 (Rayan) -->
+    <div class="slide-area" id="slide-4" data-presenter="Rayan">
+      <div class="slide-header">
+        <div class="category-tag">A Solução Vigi</div>
+        <h1 class="slide-title">A Proposta do Vigi: Autonomia e Decisão na Borda</h1>
+        <p class="slide-subtitle">Integração ponta a ponta sem dependência de processamento em nuvem</p>
+      </div>
+
+      <div class="grid-3">
+        <div class="card card-highlight">
+          <div class="card-title">1. Gatilho Físico</div>
+          <p style="margin-bottom: 14px; font-weight: 600; color: #38bdf8; font-size: 20px;">Sensor E18-D80NK (3.3V)</p>
+          <ul>
+            <li>Detecção ótica determinística do frasco na esteira.</li>
+            <li>Filtro debounce (50 ms) contra trepidações e ruídos.</li>
+            <li>Sincronismo milimétrico com o campo de visão da câmera.</li>
+          </ul>
+        </div>
+
+        <div class="card card-highlight">
+          <div class="card-title">2. Visão Computacional</div>
+          <p style="margin-bottom: 14px; font-weight: 600; color: #38bdf8; font-size: 20px;">Raspberry Pi 5 (8GB)</p>
+          <ul>
+            <li>Inferência de rede neural ultrarrápida em borda.</li>
+            <li>Latência total ponta a ponta inferior a 500 ms (RNF01).</li>
+            <li>Ejeção preventiva Fail-Safe em caso de incerteza (RN02).</li>
+          </ul>
+        </div>
+
+        <div class="card card-highlight">
+          <div class="card-title">3. Rastreabilidade Total</div>
+          <p style="margin-bottom: 14px; font-weight: 600; color: #38bdf8; font-size: 20px;">MQTT + SQLite + Dashboard</p>
+          <ul>
+            <li>Registro imediato de metadados de cada inspeção.</li>
+            <li>Fila local para garantia de operação sem rede externa.</li>
+            <li>Supervisão operacional e gráficos em tempo real.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- PARTE 2: SAMUEL (02:30 a 06:00) -->
+    <!-- ========================================== -->
+
+    <!-- SLIDE 5 (Samuel) -->
+    <div class="slide-area" id="slide-5" data-presenter="Samuel">
+      <div class="slide-header">
+        <div class="category-tag">Arquitetura de Hardware</div>
+        <h1 class="slide-title">Montagem Física, Case e Conectividade Edge</h1>
+        <p class="slide-subtitle">Integração compacta para acomodação direta na lateral da esteira industrial</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card card-highlight" style="justify-content: center; gap: 20px;">
+          <div class="card-title">Estrutura Física da Estação</div>
+          <ul>
+            <li><strong>Case Compacta:</strong> Abriga com segurança a Raspberry Pi 5 e o módulo de câmera CSI, protegendo contra umidade e poeira da linha.</li>
+            <li><strong>Posicionamento Ótico:</strong> Enquadramento calibrado no plano focal exato por onde os frascos transitam.</li>
+            <li><strong>Alimentação Estável:</strong> Fonte USB-C PD de 27W garantindo fornecimento contínuo de 5V / 5A para placa e periféricos.</li>
+            <li><strong>Isolamento Galvânico:</strong> Comando do atuador mecânico por módulo relé KY-019 com diodo flyback para proteção da GPIO.</li>
+          </ul>
+        </div>
+
+        <div class="card" style="padding: 15px; align-items: center; justify-content: center; overflow: hidden;">
+          <img src="../../esquematico/VigiEsquematico.png" alt="Esquemático Elétrico" style="width: 100%; height: 100%; object-fit: contain; border-radius: 12px;">
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 6 (Samuel) -->
+    <div class="slide-area" id="slide-6" data-presenter="Samuel">
+      <div class="slide-header">
+        <div class="category-tag">Arquitetura de Software</div>
+        <h1 class="slide-title">Fluxo de Dados e Monólito Modular</h1>
+        <p class="slide-subtitle">Pipeline desacoplado com mensageria assíncrona e persistência transacional</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card" style="padding: 15px; align-items: center; justify-content: center; overflow: hidden;">
+          <img src="../../img/Fluxo.jpeg" alt="Arquitetura de Fluxo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 12px;">
+        </div>
+
+        <div class="card card-highlight" style="justify-content: center; gap: 20px;">
+          <div class="card-title">Caminho do Dado no Sistema</div>
+          <ul>
+            <li><strong>Nó Edge (Python 3.12):</strong> Coleta o frame, executa o pré-processamento e a inferência TFLite em menos de 25 ms.</li>
+            <li><strong>Mensageria MQTT (Mosquitto):</strong> Publicação assíncrona de eventos estruturados em JSON no tópico industrial.</li>
+            <li><strong>Backend FastAPI:</strong> Arquitetura em monólito modular, consumindo a fila MQTT e orquestrando as regras de negócio.</li>
+            <li><strong>Banco SQLite:</strong> Armazenamento transacional leve, determinístico e local para histórico de auditoria.</li>
+            <li><strong>Dashboard React:</strong> Interface em tempo real atualizada via Server-Sent Events (SSE).</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 7 (Samuel) -->
+    <div class="slide-area" id="slide-7" data-presenter="Samuel">
+      <div class="slide-header">
+        <div class="category-tag">Resiliência Operacional</div>
+        <h1 class="slide-title">Autonomia Local e Operação Offline</h1>
+        <p class="slide-subtitle">O laço crítico de inspeção e rejeição não depende de rede externa para operar</p>
+      </div>
+
+      <div class="grid-3">
+        <div class="card card-highlight">
+          <div class="card-title">Processamento 100% Local</div>
+          <p style="font-size: 19px; line-height: 1.6; color: #cbd5e1;">
+            Toda a visão computacional e a lógica de decisão acontecem no processador ARM Cortex-A76 da Raspberry Pi 5. Nenhuma imagem trafega para servidores externos ou serviços de nuvem durante o ciclo de inspeção.
+          </p>
+        </div>
+
+        <div class="card card-highlight">
+          <div class="card-title">Fila Local de Contingência</div>
+          <p style="font-size: 19px; line-height: 1.6; color: #cbd5e1;">
+            Em eventual falha de rede ou queda momentânea do broker MQTT, o nó Edge enfileira os eventos localmente. A esteira não para e nenhum registro de não conformidade é perdido, sendo sincronizado assim que a conexão restabelece.
+          </p>
+        </div>
+
+        <div class="card card-highlight">
+          <div class="card-title">Determinismo Temporal</div>
+          <p style="font-size: 19px; line-height: 1.6; color: #cbd5e1;">
+            O controle direto dos GPIOs via chip RP1 garante resposta rápida na leitura de borda do sensor e no acionamento do relé, eliminando variações de latência induzidas por tráfego de rede.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 8 (Samuel) -->
+    <div class="slide-area" id="slide-8" data-presenter="Samuel">
+      <div class="slide-header">
+        <div class="category-tag">Inteligência Artificial de Borda</div>
+        <h1 class="slide-title">Classificador YOLOv8n-cls e Otimização TFLite</h1>
+        <p class="slide-subtitle">Modelo compacto com quantização INT8 para altíssimo throughput com baixo consumo térmico</p>
+      </div>
+
+      <div class="grid-2-equal">
+        <div class="card">
+          <div class="card-title">Treinamento vs. Inferência</div>
+          <ul>
+            <li><strong>Treinamento no Ambiente MLOps:</strong> Modelo supervisionado treinado com dataset versionado via DVC e rastreado no DagsHub.</li>
+            <li><strong>Exportação Otimizada:</strong> Conversão dos pesos para TensorFlow Lite com quantização pós-treinamento em inteiros de 8 bits (INT8).</li>
+            <li><strong>Ganhos Práticos:</strong> Redução de 75% no consumo de memória RAM e inferência média de <strong>23,4 ms</strong> por imagem na Pi 5.</li>
+          </ul>
+        </div>
+
+        <div class="card card-highlight">
+          <div class="card-title">As 4 Classes Reconhecidas</div>
+          <ul>
+            <li><strong>01_conforme:</strong> Garrafa em perfeito estado de vedação e volume.</li>
+            <li><strong>02_sem_tampa:</strong> Ausência total da tampa de rosca.</li>
+            <li><strong>03_tampa_torta:</strong> Desalinhamento angular com perda de lacre.</li>
+            <li><strong>04_amassado:</strong> Deformações na estrutura plástica do corpo.</li>
+            <li><strong>Fail-Safe (RN02):</strong> Classificações com baixa confiança são rejeitadas preventivamente.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- PARTE 3: LEÔNCIO (06:00 a 09:20) -->
+    <!-- ========================================== -->
+
+    <!-- SLIDE 9 (Leôncio) -->
+    <div class="slide-area" id="slide-9" data-presenter="Leôncio">
+      <div class="slide-header">
+        <div class="category-tag">Demonstração Prática</div>
+        <h1 class="slide-title">A Bancada de Testes e Validação Física</h1>
+        <p class="slide-subtitle">Elementos reais em operação contínua simulando o ambiente fabril</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card card-highlight" style="justify-content: center; gap: 20px;">
+          <div class="card-title">Montagem Operacional da Bancada</div>
+          <ul>
+            <li><strong>Sensor Fotoelétrico E18-D80NK:</strong> Feixe infravermelho posicionado milimetricamente no plano da esteira para detecção da borda frontal do frasco.</li>
+            <li><strong>Circuito Divisor de Tensão:</strong> Condiciona o nível de saída do sensor (5V) para a tensão segura da GPIO (3.3V LVTTL).</li>
+            <li><strong>Câmera Digital:</strong> Ajustada com iluminação controlada para congelar o movimento do recipiente sem borrão.</li>
+            <li><strong>Mecanismo de Descarte:</strong> Módulo relé acionado instantaneamente na identificação de defeito para rejeição da peça.</li>
+          </ul>
+        </div>
+
+        <div class="card" style="padding: 15px; align-items: center; justify-content: center; overflow: hidden;">
+          <img src="../../esquematico/VigiEsquematico.png" alt="Bancada Física" style="width: 100%; height: 100%; object-fit: contain; border-radius: 12px;">
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 10 (Leôncio) -->
+    <div class="slide-area" id="slide-10" data-presenter="Leôncio">
+      <div class="slide-header">
+        <div class="category-tag">Ciclo de Demonstração 1</div>
+        <h1 class="slide-title">Execução com Amostra Conforme</h1>
+        <p class="slide-subtitle">Validação do fluxo padrão de aprovação de frasco na linha</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="sample-card">
+          <div class="sample-img-container" style="height: 380px;">
+            <img src="./assets/01_conforme.jpg" alt="Conforme">
+          </div>
+          <div class="sample-info">
+            <span class="sample-tag tag-conforme">Amostra A: Conforme</span>
+            <p class="sample-impact">Garrafa íntegra com tampa rosqueada perfeitamente no padrão de controle de qualidade.</p>
+          </div>
+        </div>
+
+        <div class="card card-highlight" style="justify-content: center; gap: 16px;">
+          <div class="card-title">Resposta do Sistema no Ciclo</div>
+          <div class="code-box">{
+  "inspection_id": "insp_20260915_001",
+  "result": "CONFORME",
+  "confidence": 0.984,
+  "inference_time_ms": 23.4,
+  "action": "LIBERADO",
+  "relay_triggered": false
+}</div>
+          <ul>
+            <li>Interrupção da GPIO 17 disparada sem falsos positivos.</li>
+            <li>Frame capturado e classificado com alta confiança (98.4%).</li>
+            <li>Atuador permanece em repouso e o frasco segue na esteira.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 11 (Leôncio) -->
+    <div class="slide-area" id="slide-11" data-presenter="Leôncio">
+      <div class="slide-header">
+        <div class="category-tag">Ciclo de Demonstração 2</div>
+        <h1 class="slide-title">Execução com Não Conformidade e Fail-Safe</h1>
+        <p class="slide-subtitle">Identificação em tempo real de falha crítica e rejeição mecânica preventiva</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="sample-card">
+          <div class="sample-img-container" style="height: 380px;">
+            <img src="./assets/02_sem_tampa.jpg" alt="Sem Tampa">
+          </div>
+          <div class="sample-info">
+            <span class="sample-tag tag-sem-tampa">Amostra B: Não Conforme</span>
+            <p class="sample-impact">Frasco sem tampa identificado no ponto de inspeção antes de avançar para a embaladora.</p>
+          </div>
+        </div>
+
+        <div class="card card-highlight" style="justify-content: center; gap: 16px;">
+          <div class="card-title">Disparo Imediato de Fail-Safe (RN02)</div>
+          <div class="code-box">{
+  "inspection_id": "insp_20260915_002",
+  "result": "NAO_CONFORME",
+  "nonconformity_type": "SEM_TAMPA",
+  "confidence": 0.971,
+  "action": "EJECAO_MECANICA",
+  "relay_triggered": true
+}</div>
+          <ul>
+            <li>Classificação imediata como não conforme em 24 ms.</li>
+            <li>GPIO 23 comutada em nível alto, energizando o relé KY-019.</li>
+            <li>Frasco ejetado para o canal de descarte sem contaminar a esteira.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- PARTE 4: ALAN (09:20 a 13:00) -->
+    <!-- ========================================== -->
+
+    <!-- SLIDE 12 (Alan) -->
+    <div class="slide-area" id="slide-12" data-presenter="Alan">
+      <div class="slide-header">
+        <div class="category-tag">Integração & Telemetria</div>
+        <h1 class="slide-title">Telemetria MQTT e Persistência no SQLite</h1>
+        <p class="slide-subtitle">Estrutura de dados desacoplada garantindo rastreabilidade completa por lote</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card card-highlight" style="justify-content: center; gap: 18px;">
+          <div class="card-title">Contrato de Dados da Inspeção</div>
+          <div class="code-box">{
+  "timestamp": "2026-09-15T23:58:00Z",
+  "station_id": "estacao-edge-01",
+  "inspection_id": "insp_8f91a2bc",
+  "result": "NAO_CONFORME",
+  "nonconformity": "TAMPA_TORTA",
+  "confidence": 0.962,
+  "latency_ms": 28.1
+}</div>
+          <p style="font-size: 17px; color: #94a3b8;">
+            Payload validado por schema Pydantic e publicado assincronamente no tópico MQTT <code>vigi/estacoes/{id}/inspecoes</code>.
+          </p>
+        </div>
+
+        <div class="card" style="justify-content: center; gap: 20px;">
+          <div class="card-title">Desacoplamento e Confiabilidade</div>
+          <ul>
+            <li><strong>Broker Mosquitto:</strong> Trata a concorrência e desconecta o tempo da câmera do tempo de gravação no banco.</li>
+            <li><strong>Consumidor Transacional:</strong> Grava cada registro de forma atômica no banco relacional SQLite local.</li>
+            <li><strong>Rastreabilidade de Turno:</strong> Permite consultas cronológicas para fiscalização de qualidade e auditoria.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 13 (Alan) -->
+    <div class="slide-area" id="slide-13" data-presenter="Alan">
+      <div class="slide-header">
+        <div class="category-tag">Arquitetura de API</div>
+        <h1 class="slide-title">Backend FastAPI e Documentação Interativa</h1>
+        <p class="slide-subtitle">Monólito modular provendo endpoints REST e canal de streaming SSE</p>
+      </div>
+
+      <div class="grid-3">
+        <div class="card card-highlight">
+          <div class="card-title">Endpoints REST Padronizados</div>
+          <p style="font-size: 18px; line-height: 1.6; color: #cbd5e1;">
+            Rotas semânticas para consulta de inspeções por ID, filtros de não conformidade por data e métricas agregadas por turno.
+          </p>
+        </div>
+
+        <div class="card card-highlight">
+          <div class="card-title">Documentação Interativa /docs</div>
+          <p style="font-size: 18px; line-height: 1.6; color: #cbd5e1;">
+            Swagger UI gerado automaticamente com esquemas OpenAPI 3.0, facilitando testes e integração com sistemas MES da fábrica.
+          </p>
+        </div>
+
+        <div class="card card-highlight">
+          <div class="card-title">Streaming em Tempo Real (SSE)</div>
+          <p style="font-size: 18px; line-height: 1.6; color: #cbd5e1;">
+            Conexão Server-Sent Events que transmite cada nova inspeção instantaneamente para os dashboards conectados sem necessidade de polling.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 14 (Alan) -->
+    <div class="slide-area" id="slide-14" data-presenter="Alan">
+      <div class="slide-header">
+        <div class="category-tag">Interface com o Usuário</div>
+        <h1 class="slide-title">Dashboard Operacional em React</h1>
+        <p class="slide-subtitle">Supervisão visual para operadores e gerentes de qualidade em tempo real</p>
+      </div>
+
+      <div class="grid-2-equal">
+        <div class="card card-highlight">
+          <div class="card-title">Painel de Indicadores Centrais</div>
+          <ul>
+            <li><strong>Total de Inspeções:</strong> Contador em tempo real com taxa de aprovação percentual do lote.</li>
+            <li><strong>Distribuição de Falhas:</strong> Gráficos categorizados (Sem Tampa, Tampa Torta, Amassado).</li>
+            <li><strong>Status da Estação:</strong> Monitoramento do hardware, temperatura da CPU da Raspberry Pi e taxa de quadros.</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Gestão de Alarmes Críticos</div>
+          <ul>
+            <li><strong>Configuração de Limiares:</strong> Definição de tolerância máxima de rejeições consecutivas.</li>
+            <li><strong>Alerta Visual em Destaque:</strong> Modal crítico acionado ao atingir o limite para intervenção na tampadora.</li>
+            <li><strong>Reconhecimento de Falha:</strong> Registro de ciência do operador para fins de auditoria de processo.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 15 (Alan) -->
+    <div class="slide-area" id="slide-15" data-presenter="Alan">
+      <div class="slide-header">
+        <div class="category-tag">Métricas & Evolução</div>
+        <h1 class="slide-title">Resultados Verificados, Limitações e Próximos Passos</h1>
+        <p class="slide-subtitle">Balanço técnico entre os requisitos homologados e a rota para industrialização</p>
+      </div>
+
+      <div class="grid-3">
+        <div class="card card-highlight">
+          <div class="card-title">Resultados Homologados</div>
+          <ul>
+            <li>Latência total &lt; 500 ms (inferência INT8 em 23,4 ms).</li>
+            <li>Isolamento de borda sem dependência de internet externa.</li>
+            <li>Integração completa: Gatilho → IA → MQTT → API → UI.</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Limitações Mapeadas</div>
+          <ul>
+            <li>Sensibilidade a variações drásticas de iluminação ambiente.</li>
+            <li>Validação focada em 4 classes principais de embalagem.</li>
+            <li>Necessidade de testes contínuos em cadências acima de 120 bpm.</li>
+          </ul>
+        </div>
+
+        <div class="card card-highlight">
+          <div class="card-title">Próximos Passos</div>
+          <ul>
+            <li>Treinamento contínuo com mais variações de iluminação.</li>
+            <li>Integração direta com protocolos industriais (ex: OPC UA).</li>
+            <li>Suporte a múltiplos nós de inspeção publicando no mesmo painel.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- PARTE 5: RAYAN (13:00 a 14:20) -->
+    <!-- ========================================== -->
+
+    <!-- SLIDE 16 (Rayan) -->
+    <div class="slide-area" id="slide-16" data-presenter="Rayan">
+      <div class="slide-header">
+        <div class="category-tag">Conclusão & Impacto Fabril</div>
+        <h1 class="slide-title">Atuação Operacional e Visibilidade Gerencial</h1>
+        <p class="slide-subtitle">Como as informações geradas pelo Vigi transformam a rotina na esteira de envase</p>
+      </div>
+
+      <div class="grid-2-equal">
+        <div class="card">
+          <div class="card-title">Para o Operador de Linha</div>
+          <p style="font-size: 21px; color: #38bdf8; font-weight: 600; margin-bottom: 14px;">Ação Imediata e Segregação</p>
+          <ul>
+            <li><strong>Alerta visual instantâneo:</strong> Notificação do defeito antes que o recipiente avance para a máquina empacotadora.</li>
+            <li><strong>Segregação automatizada:</strong> Comando elétrico de relé para desvio mecânico de frascos reprovados.</li>
+            <li><strong>Intervenção ágil:</strong> Correção rápida na alimentação da tampadora sem necessidade de parar a linha inteira.</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Para a Engenharia & Supervisão</div>
+          <p style="font-size: 21px; color: #818cf8; font-weight: 600; margin-bottom: 14px;">Histórico e Análise de Causa-Raiz</p>
+          <ul>
+            <li><strong>Telemetria consolidada:</strong> Identificação clara de qual defeito tem maior incidência ao longo do turno.</li>
+            <li><strong>Diagnóstico de máquina:</strong> Picos de tampa torta indicam fadiga mecânica ou desregulagem no cabeçote de rosca.</li>
+            <li><strong>Rastreabilidade de lote:</strong> Histórico estruturado de conformidade para auditorias de qualidade.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 17 (Rayan) -->
+    <div class="slide-area" id="slide-17" data-presenter="Rayan">
+      <div class="slide-header">
+        <div class="category-tag">Eficiência Industrial</div>
+        <h1 class="slide-title">Relação Direta com os Pilares do OEE</h1>
+        <p class="slide-subtitle">Overall Equipment Effectiveness — Maximizando a produtividade do envase</p>
+      </div>
+
+      <div class="grid-3">
+        <div class="card card-highlight">
+          <div class="card-title">Disponibilidade</div>
+          <p style="font-weight: 700; color: #38bdf8; margin-bottom: 12px; font-size: 20px;">Menos Tempo de Parada</p>
+          <p style="font-size: 19px; line-height: 1.55; color: #cbd5e1;">
+            Ao barrar frascos deformados antes da encaixotadora, elimina-se o tempo perdido com paradas para desobstrução mecânica de esteiras e limpeza de líquidos derramados.
+          </p>
+        </div>
+
+        <div class="card card-highlight">
+          <div class="card-title">Performance</div>
+          <p style="font-weight: 700; color: #38bdf8; margin-bottom: 12px; font-size: 20px;">Cadência Nominal</p>
+          <p style="font-size: 19px; line-height: 1.55; color: #cbd5e1;">
+            A linha opera em sua velocidade nominal de projeto, sem necessidade de desaceleração da esteira para viabilizar inspeção visual manual por amostragem.
+          </p>
+        </div>
+
+        <div class="card card-highlight">
+          <div class="card-title">Qualidade</div>
+          <p style="font-weight: 700; color: #38bdf8; margin-bottom: 12px; font-size: 20px;">Zero Defeito no Lote</p>
+          <p style="font-size: 19px; line-height: 1.55; color: #cbd5e1;">
+            Garantia de que 100% dos produtos expedidos estejam conformes e lacrados, eliminando retrabalhos, descarte de embalagens secundárias e devoluções.
+          </p>
+        </div>
+      </div>
+
+      <div style="background: rgba(15, 23, 42, 0.9); border: 1px dashed #475569; padding: 14px 24px; border-radius: 12px; margin-top: 15px;">
+        <p style="font-size: 16px; color: #94a3b8; font-style: italic;">
+          * <strong>Nota Técnica:</strong> Os ganhos percentuais quantitativos no OEE dependem de amostragem em regime contínuo de produção industrial. A presente avaliação valida qualitativamente o impacto direto do sistema sobre os fatores causadores de perda.
+        </p>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- PARTE 6: LEÔNCIO (14:20 a 15:00) -->
+    <!-- ========================================== -->
+
+    <!-- SLIDE 18 (Leôncio) -->
+    <div class="slide-area" id="slide-18" data-presenter="Leôncio">
+      <div class="slide-header">
+        <div class="category-tag">Encerramento Oficial</div>
+        <h1 class="slide-title">Conclusão do Projeto e Reprodutibilidade</h1>
+        <p class="slide-subtitle">Sistema validado de ponta a ponta com documentação completa para replicação</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card card-highlight" style="justify-content: center; gap: 22px;">
+          <div class="card-title">Síntese do Escopo Homologado</div>
+          <ul>
+            <li><strong>Hardware PoC:</strong> Raspberry Pi 5 conectada de forma segura ao sensor E18-D80NK e módulo relé.</li>
+            <li><strong>Pipeline MLOps:</strong> Dataset versionado, modelo YOLOv8n quantizado e inferência local determinística.</li>
+            <li><strong>Supervisão Integrada:</strong> Telemetria MQTT, backend FastAPI e Dashboard React em tempo real.</li>
+            <li><strong>Reprodutibilidade:</strong> Manual passo a passo no README e esquemáticos oficiais em Fritzing.</li>
+          </ul>
+        </div>
+
+        <div class="card" style="justify-content: center; gap: 24px;">
+          <div>
+            <span style="font-size: 16px; color: #38bdf8; font-weight: 700; text-transform: uppercase;">Repositório Oficial do Projeto</span>
+            <h3 style="font-size: 26px; color: #f8fafc; margin-top: 6px;">github.com/eldrayan/Vigi-TCCPNAAT</h3>
+          </div>
+          <p style="font-size: 19px; line-height: 1.6; color: #cbd5e1;">
+            Todo o código-fonte, diagramas arquiteturais, esquemático elétrico e testes automatizados estão disponíveis no repositório do projeto.
+          </p>
+          <div style="background: rgba(15, 23, 42, 0.9); border: 1px solid #334155; padding: 18px 24px; border-radius: 14px;">
+            <p style="font-size: 20px; font-weight: 700; color: #38bdf8;">Agradecemos à banca examinadora e ao programa PNAAT 2026.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Navigation Bar -->
+    <div class="bottom-bar">
+      <div class="slide-counter" id="counter">Slide 1 / 18</div>
+      <div class="nav-controls">
+        <button class="btn" onclick="prevSlide()">Anterior</button>
+        <button class="btn" onclick="nextSlide()">Próximo</button>
+        <button class="btn" onclick="toggleFullScreen()">Tela Cheia (F11)</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 18;
+
+    function updatePresenterBadge() {
+      const activeSlideEl = document.getElementById(`slide-${currentSlide}`);
+      if (activeSlideEl) {
+        const presenter = activeSlideEl.getAttribute('data-presenter') || 'Rayan';
+        document.getElementById('badge-presenter').innerText = `Apresentação • ${presenter}`;
+      }
+
+      // Update active section buttons
+      const sectionButtons = document.querySelectorAll('.section-btn');
+      sectionButtons.forEach(btn => btn.classList.remove('active-section'));
+
+      if (currentSlide >= 1 && currentSlide <= 4) sectionButtons[0]?.classList.add('active-section');
+      else if (currentSlide >= 5 && currentSlide <= 8) sectionButtons[1]?.classList.add('active-section');
+      else if (currentSlide >= 9 && currentSlide <= 11) sectionButtons[2]?.classList.add('active-section');
+      else if (currentSlide >= 12 && currentSlide <= 15) sectionButtons[3]?.classList.add('active-section');
+      else if (currentSlide >= 16 && currentSlide <= 17) sectionButtons[4]?.classList.add('active-section');
+      else if (currentSlide >= 18) sectionButtons[5]?.classList.add('active-section');
+    }
+
+    function showSlide(index) {
+      if (index < 1) index = 1;
+      if (index > totalSlides) index = totalSlides;
+      currentSlide = index;
+
+      for (let i = 1; i <= totalSlides; i++) {
+        const el = document.getElementById(`slide-${i}`);
+        if (el) {
+          if (i === currentSlide) el.classList.add('active');
+          else el.classList.remove('active');
+        }
+      }
+
+      document.getElementById('counter').innerText = `Slide ${currentSlide} / ${totalSlides}`;
+      updatePresenterBadge();
+    }
+
+    function goToSlide(index) {
+      showSlide(index);
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) showSlide(currentSlide + 1);
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) showSlide(currentSlide - 1);
+    }
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => console.error(err));
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
+    }
+
+    function resizePresentation() {
+      const container = document.getElementById('presentation-container');
+      const scaleX = window.innerWidth / 1920;
+      const scaleY = window.innerHeight / 1080;
+      container.style.transform = `scale(${Math.min(scaleX, scaleY)})`;
+    }
+
+    window.addEventListener('resize', resizePresentation);
+    window.addEventListener('DOMContentLoaded', () => {
+      resizePresentation();
+      showSlide(1);
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        prevSlide();
+      } else if (e.key === 'f' || e.key === 'F') {
+        toggleFullScreen();
+      }
+    });
+  </script>
+</body>
+</html>
