@@ -1,7 +1,7 @@
 """Testes do orquestrador ponta a ponta da esteira de inspeção."""
 
 from typing import Any
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from edge.acquisition.sensor import SimulatedPhotoelectricSensor
 from edge.inference.schemas import InspectionDecision
@@ -82,6 +82,64 @@ def test_conveyor_process_cycle_conforme() -> None:
     assert call_topic == "vigi/esteira/inspecoes"
 
 
+def test_conveyor_applies_capture_delay_before_reading_camera() -> None:
+    sensor = SimulatedPhotoelectricSensor()
+    camera = CameraStub()
+    decision = InspectionDecision(
+        result="CONFORME",
+        category=None,
+        nonconformity_type=None,
+        technical_failure_type=None,
+        confidence=0.98,
+        processing_time_ms=45.0,
+        model_format="pytorch",
+    )
+    orchestrator = ConveyorOrchestrator(
+        sensor=sensor,
+        camera=camera,
+        engine=InferenceEngineStub(decision),
+        publisher=MagicMock(),
+        capture_delay_s=0.18,
+    )
+
+    with patch("edge.orchestration.conveyor.time.sleep") as sleep:
+        orchestrator.process_cycle()
+
+    sleep.assert_called_once_with(0.18)
+
+
+def test_conveyor_persists_and_delivers_through_outbox() -> None:
+    sensor = SimulatedPhotoelectricSensor()
+    camera = CameraStub()
+    decision = InspectionDecision(
+        result="CONFORME",
+        category=None,
+        nonconformity_type=None,
+        technical_failure_type=None,
+        confidence=0.98,
+        processing_time_ms=45.0,
+        model_format="pytorch",
+    )
+    engine = InferenceEngineStub(decision)
+    publisher = MagicMock()
+    outbox = MagicMock()
+
+    orchestrator = ConveyorOrchestrator(
+        sensor=sensor,
+        camera=camera,
+        engine=engine,
+        publisher=publisher,
+        outbox=outbox,
+    )
+
+    event, _ = orchestrator.process_cycle()
+
+    outbox.enqueue.assert_called_once_with(event)
+    outbox.deliver.assert_called_once_with(publisher)
+    outbox.purge_expired.assert_called_once()
+    publisher.publish_inspection.assert_not_called()
+
+
 def test_conveyor_process_cycle_nonconformity_triggers_alarm() -> None:
     sensor = SimulatedPhotoelectricSensor()
     camera = CameraStub()
@@ -149,3 +207,31 @@ def test_conveyor_runs_and_stops_on_max_cycles() -> None:
 
     assert orchestrator.inspections_count == 2
     assert camera.released
+
+
+def test_conveyor_reports_idle_state_only_on_transitions() -> None:
+    sensor = MagicMock()
+    sensor.wait_for_trigger.side_effect = [False, False, True]
+    camera = CameraStub()
+    decision = InspectionDecision(
+        result="CONFORME",
+        category=None,
+        nonconformity_type=None,
+        technical_failure_type=None,
+        confidence=0.99,
+        processing_time_ms=30.0,
+        model_format="pytorch",
+    )
+    idle_states: list[bool] = []
+
+    orchestrator = ConveyorOrchestrator(
+        sensor=sensor,
+        camera=camera,
+        engine=InferenceEngineStub(decision),
+        publisher=MagicMock(),
+        on_idle=idle_states.append,
+    )
+
+    orchestrator.run(max_cycles=1, poll_interval=0.01)
+
+    assert idle_states == [True, False]
