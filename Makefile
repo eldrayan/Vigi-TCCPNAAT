@@ -1,4 +1,4 @@
-.PHONY: help setup setup-dev setup-rpi configure-env ensure-env model-pull health test lint up down build ps logs \
+.PHONY: help setup setup-dev setup-rpi configure-env ensure-env model-pull health test lint up compose-up reset-data down build ps logs \
 	backend-up backend-down frontend-up frontend-build edge-up migrate infer-help \
 	infer-image infer-camera preview-camera run-conveyor run-esteira monitor-edge sync-outbox mqtt-sub mqtt-pub test-backend \
 	check-env collect collect-headless dvc-login dvc-pull dataset-validate dataset-add dataset-push \
@@ -56,6 +56,7 @@ help:
 	@echo "make test-backend                  Executa os testes unitários do backend"
 	@echo "make lint                          Verifica o código com Ruff"
 	@echo "make up                            Prepara .env e sobe dashboard, API e MQTT"
+	@echo "make reset-data                    Remove dados locais e sobe a solução zerada"
 	@echo "make down                          Para os serviços"
 	@echo "make backend-up                    Sobe MQTT, aplica migrations e inicia a API"
 	@echo "make backend-down                  Para MQTT e API"
@@ -212,7 +213,15 @@ benchmark-model:
 		--output "$(BENCHMARK_OUTPUT)"
 
 up: ensure-env
+	$(MAKE) --no-print-directory compose-up
+
+compose-up:
 	docker compose up --build --detach
+
+reset-data:
+	docker compose down
+	-docker volume rm vigi_backend_data
+	$(MAKE) --no-print-directory up
 
 down:
 	docker compose down
