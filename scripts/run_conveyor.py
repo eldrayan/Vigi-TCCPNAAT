@@ -6,7 +6,6 @@ Autor: Leôncio Ferreira
 
 from __future__ import annotations
 
-import argparse
 import socket
 import sys
 from pathlib import Path
@@ -27,6 +26,7 @@ from edge.messaging import (  # noqa: E402
     OperationalContext,
 )
 from edge.orchestration import ConveyorOrchestrator  # noqa: E402
+from scripts.conveyor_cli import build_parser, validate_arguments  # noqa: E402
 
 
 def readiness_ok(name: str, detail: str) -> None:
@@ -42,33 +42,9 @@ def check_broker(host: str, port: int) -> None:
         return
 
 
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--manifest", type=Path, default=Path("models/active/manifest.json")
-    )
-    parser.add_argument("--mqtt-host", default="localhost")
-    parser.add_argument("--mqtt-port", type=int, default=1883)
-    parser.add_argument("--mqtt-username", default=None)
-    parser.add_argument("--mqtt-password", default=None)
-    parser.add_argument("--station-code", default="ESTACAO_01")
-    parser.add_argument("--device-id", default="ESTACAO_01")
-    parser.add_argument("--batch-code", default="LOTE_01")
-    parser.add_argument("--gpio-pin", type=int, default=17)
-    parser.add_argument("--debounce-ms", type=float, default=50)
-    parser.add_argument("--camera", type=int, default=0)
-    parser.add_argument(
-        "--backend", choices=("picamera2", "opencv", "auto"), default="picamera2"
-    )
-    parser.add_argument(
-        "--outbox-path", type=Path, default=Path("data/edge-outbox.db")
-    )
-    parser.add_argument("--max-inspections", type=int)
-    return parser
-
-
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    validate_arguments(args)
 
     print("\nDiagnóstico de prontidão — Estação 01")
     print("-" * 42)
@@ -89,9 +65,9 @@ def main(argv: list[str] | None = None) -> int:
         config = CollectionConfig(
             backend=args.backend,
             camera=args.camera,
-            width=1280,
-            height=720,
-            fps=20,
+            width=args.width,
+            height=args.height,
+            fps=args.fps,
             warmup_seconds=2,
             output=Path("captures"),
             session=socket.gethostname(),
@@ -102,6 +78,9 @@ def main(argv: list[str] | None = None) -> int:
             guide_height=0.88,
             crop_guide=False,
             headless=True,
+            exposure_us=args.exposure_us,
+            analogue_gain=args.analogue_gain,
+            awb_mode=args.awb_mode,
         )
         backend = CameraFactory.resolve_backend(args.backend)
         cv2 = load_opencv() if backend == "opencv" else None
@@ -110,6 +89,25 @@ def main(argv: list[str] | None = None) -> int:
         if not ok:
             raise RuntimeError("não foi possível capturar o quadro de teste")
         readiness_ok("Câmera", f"{backend} no dispositivo {args.camera}")
+        readiness_ok(
+            "Captura",
+            f"{args.width}x{args.height} a {args.fps} FPS; "
+            + (
+                f"exposição {args.exposure_us} µs, ganho {args.analogue_gain:g}"
+                if args.exposure_us is not None
+                else "exposição automática"
+            ),
+        )
+        readiness_ok(
+            "Atraso de captura", f"{args.capture_delay_ms:g} ms após o sensor"
+        )
+        readiness_ok("Balanço de branco", args.awb_mode)
+        readiness_ok(
+            "Capturas",
+            f"salvas em {args.capture_dir}"
+            if args.save_captures
+            else "não serão salvas",
+        )
 
         check_broker(args.mqtt_host, args.mqtt_port)
         readiness_ok("Broker MQTT", f"{args.mqtt_host}:{args.mqtt_port}")
@@ -154,6 +152,8 @@ def main(argv: list[str] | None = None) -> int:
         ),
         context=context,
         on_idle=report_idle,
+        save_dir=args.capture_dir if args.save_captures else None,
+        capture_delay_s=args.capture_delay_ms / 1000.0,
     )
     try:
         orchestrator.run(max_cycles=args.max_inspections)

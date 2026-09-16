@@ -1,4 +1,4 @@
-.PHONY: help setup setup-dev setup-rpi configure-env ensure-env model-pull health test lint up down build ps logs \
+.PHONY: help setup setup-dev setup-rpi configure-env ensure-env model-pull health test lint up compose-up reset-data down build ps logs \
 	backend-up backend-down frontend-up frontend-build edge-up migrate infer-help \
 	infer-image infer-camera preview-camera run-conveyor run-esteira monitor-edge sync-outbox mqtt-sub mqtt-pub test-backend \
 	check-env collect collect-headless dvc-login dvc-pull dataset-validate dataset-add dataset-push \
@@ -14,11 +14,20 @@ TOPIC ?= vigi/teste
 MANIFEST ?= models/active/manifest.json
 CAMERA ?= 0
 CAMERA_BACKEND ?= picamera2
+WIDTH ?= 1280
+HEIGHT ?= 720
+FPS ?= 20
+EXPOSURE_US ?=
+ANALOGUE_GAIN ?= 4.0
+AWB_MODE ?= auto
 STATION_CODE ?= ESTACAO_01
 DEVICE_ID ?= $(STATION_CODE)
 BATCH_CODE ?= LOTE_01
 GPIO_PIN ?= 17
 DEBOUNCE_MS ?= 50
+CAPTURE_DELAY_MS ?= 0
+SAVE_CAPTURES ?= false
+CAPTURE_DIR ?= captures
 FRONTEND_HOST ?= 0.0.0.0
 FRONTEND_PORT ?= 8081
 API_URL ?= http://127.0.0.1:8000
@@ -46,13 +55,15 @@ help:
 	@echo "make test                          Executa os testes do Edge"
 	@echo "make test-backend                  Executa os testes unitários do backend"
 	@echo "make lint                          Verifica o código com Ruff"
-	@echo "make up                            Sobe dashboard, API e MQTT em containers"
+	@echo "make up                            Prepara .env e sobe dashboard, API e MQTT"
+	@echo "make reset-data                    Remove dados locais e sobe a solução zerada"
 	@echo "make down                          Para os serviços"
 	@echo "make backend-up                    Sobe MQTT, aplica migrations e inicia a API"
 	@echo "make backend-down                  Para MQTT e API"
 	@echo "make frontend-up                   Inicia o dashboard React na rede local"
 	@echo "make frontend-build                Gera o build local do dashboard"
 	@echo "make edge-up                       Inicia a Estação 01 com sensor E18-D80NK"
+	@echo "make edge-up SAVE_CAPTURES=true    Inicia a estação e salva as imagens"
 	@echo "make build                         Reconstrói o backend"
 	@echo "make ps                            Mostra os serviços"
 	@echo "make health                        Consulta a saúde da API"
@@ -101,16 +112,10 @@ setup-rpi:
 	uv sync --frozen --no-dev
 
 configure-env:
-	@test ! -e .env || (echo ".env já existe; preserve-o ou remova-o conscientemente antes de recriar." && exit 1)
-	@cp .env.example .env
-	@edge_password=$$(openssl rand -hex 24); backend_password=$$(openssl rand -hex 24); \
-		sed -i "s/^MQTT_EDGE_PASSWORD=.*/MQTT_EDGE_PASSWORD=$$edge_password/; s/^MQTT_BACKEND_PASSWORD=.*/MQTT_BACKEND_PASSWORD=$$backend_password/" .env
-	@printf "FRONTEND_PORT=$(FRONTEND_PORT)\n" >> .env
-	@chmod 600 .env
-	@echo ".env criado com credenciais MQTT locais."
+	@python3 scripts/configurar_env.py --create-only --frontend-port "$(FRONTEND_PORT)"
 
 ensure-env:
-	@test -f .env || $(MAKE) --no-print-directory configure-env
+	@python3 scripts/configurar_env.py --frontend-port "$(FRONTEND_PORT)"
 
 model-pull:
 	$(UV_RUN) dvc pull models.dvc
@@ -208,7 +213,15 @@ benchmark-model:
 		--output "$(BENCHMARK_OUTPUT)"
 
 up: ensure-env
+	$(MAKE) --no-print-directory compose-up
+
+compose-up:
 	docker compose up --build --detach
+
+reset-data:
+	docker compose down
+	-docker volume rm vigi_backend_data
+	$(MAKE) --no-print-directory up
 
 down:
 	docker compose down
@@ -275,13 +288,19 @@ run-conveyor:
 		--manifest "$(MANIFEST)" \
 		--backend "$(CAMERA_BACKEND)" \
 		--camera "$(CAMERA)" \
+		--width "$(WIDTH)" \
+		--height "$(HEIGHT)" \
+		--fps "$(FPS)" \
 		--mqtt-host "$(HOST)" \
 		--mqtt-port "$(PORT)" \
 		--station-code "$(STATION_CODE)" \
 		--device-id "$(DEVICE_ID)" \
 		--batch-code "$(BATCH_CODE)" \
 		--gpio-pin "$(GPIO_PIN)" \
-		--debounce-ms "$(DEBOUNCE_MS)"
+		--debounce-ms "$(DEBOUNCE_MS)" \
+		--capture-delay-ms "$(CAPTURE_DELAY_MS)" \
+		--awb-mode "$(AWB_MODE)" \
+		$(if $(strip $(EXPOSURE_US)),--exposure-us "$(EXPOSURE_US)" --analogue-gain "$(ANALOGUE_GAIN)" )$(if $(filter true 1 yes,$(SAVE_CAPTURES)),--save-captures )--capture-dir "$(CAPTURE_DIR)"
 
 edge-up: run-conveyor
 

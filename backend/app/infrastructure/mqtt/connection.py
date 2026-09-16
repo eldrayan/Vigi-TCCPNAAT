@@ -17,6 +17,11 @@ class MQTTConnection:
             clean_session=False,
             manual_ack=True,
         )
+        if settings.mqtt_username:
+            self.client.username_pw_set(
+                settings.mqtt_username,
+                settings.mqtt_password,
+            )
         self.client.reconnect_delay_set(min_delay=1, max_delay=30)
 
     def start(self) -> None:

@@ -23,6 +23,8 @@ class Settings(BaseSettings):
 
     mqtt_host: str = "mqtt"
     mqtt_port: int = 1883
+    mqtt_username: str | None = None
+    mqtt_password: str | None = None
     mqtt_client_id: str = "vigi-backend"
     mqtt_qos: int = 1
     mqtt_max_retries: int = 5
