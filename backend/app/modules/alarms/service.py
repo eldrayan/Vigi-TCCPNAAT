@@ -56,18 +56,7 @@ class AlarmService:
                 latest_consecutive = await self.repository.find_latest(
                     session, batch.id, alarm_type="FALHAS_RECORRENTES"
                 )
-                should_trigger_consecutive = True
-                if latest_consecutive is not None:
-                    count_since = await session.scalar(
-                        select(func.count(Inspection.inspection_id)).where(
-                            Inspection.batch_id == batch.id,
-                            Inspection.timestamp > latest_consecutive.created_at,
-                        )
-                    )
-                    if count_since is not None and count_since < consecutive_threshold:
-                        should_trigger_consecutive = False
-
-                if should_trigger_consecutive:
+                if latest_consecutive is None:
                     alarm = await self.repository.create_open(
                         session,
                         station_id=inspection.station_id,
@@ -98,7 +87,7 @@ class AlarmService:
                     latest = await self.repository.find_latest(
                         session, batch.id, alarm_type="LIMITE_NAO_CONFORMIDADE"
                     )
-                    if latest is None or rate > (latest.rate + 5.0):
+                    if latest is None:
                         alarm = await self.repository.create_open(
                             session,
                             station_id=inspection.station_id,

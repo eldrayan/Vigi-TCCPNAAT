@@ -29,6 +29,9 @@ class CollectionConfig:
     guide_height: float
     crop_guide: bool
     headless: bool
+    exposure_us: int | None = None
+    analogue_gain: float = 4.0
+    awb_mode: str = "auto"
 
 
 def parse_collection_config(argv: list[str] | None = None) -> CollectionConfig:

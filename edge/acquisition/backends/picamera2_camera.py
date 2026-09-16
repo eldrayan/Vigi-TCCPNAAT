@@ -15,6 +15,9 @@ class Picamera2Camera:
         height: int,
         fps: int,
         warmup_seconds: float,
+        exposure_us: int | None = None,
+        analogue_gain: float = 4.0,
+        awb_mode: str = "auto",
     ) -> None:
         try:
             picamera2_module = importlib.import_module("picamera2")
@@ -27,9 +30,24 @@ class Picamera2Camera:
         self.camera = picamera2_module.Picamera2(camera_num=device)
         self.started = False
         try:
+            controls: dict[str, float | int | bool] = {
+                "FrameRate": float(fps)
+            }
+            if exposure_us is not None:
+                controls.update(
+                    {
+                        "AeEnable": False,
+                        "ExposureTime": exposure_us,
+                        "AnalogueGain": analogue_gain,
+                    }
+                )
+            if awb_mode != "auto":
+                libcamera = importlib.import_module("libcamera")
+                awb_enum = getattr(libcamera.controls.AwbModeEnum, awb_mode.title())
+                controls.update({"AwbEnable": True, "AwbMode": awb_enum})
             configuration = self.camera.create_video_configuration(
                 main={"size": (width, height), "format": "RGB888"},
-                controls={"FrameRate": float(fps)},
+                controls=controls,
                 buffer_count=4,
             )
             self.camera.configure(configuration)
