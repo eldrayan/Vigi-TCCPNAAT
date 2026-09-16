@@ -21,7 +21,8 @@ O sistema **Vigi** atua como uma estação intermediária de inspeção não-int
 
 ## 🎯 Delimitação de Escopo (*Scope Boundaries*)
 
-### Dentro do Escopo (*In-Scope*):
+### Dentro do Escopo (*In-Scope*)
+
 1. Detecção física determinística da passagem de recipientes na esteira de testes via sensor fotoelétrico infravermelho **E18-D80NK**.
 2. Captura sincronizada de imagem do recipiente inspecionado no ponto focal.
 3. Classificação automatizada entre recipientes conformes e não-conformes por visão computacional na borda (Edge AI na Raspberry Pi 5).
@@ -29,9 +30,13 @@ O sistema **Vigi** atua como uma estação intermediária de inspeção não-int
 5. Envio de telemetria e alertas via MQTT para o broker Mosquitto, com consumo pelo **FastAPI** e visualização no dashboard **React**.
 6. Operação autônoma com sincronização de eventos pendentes após restabelecimento de conexão.
 
-### Fora do Escopo (*Out-of-Scope*):
+### Fora do Escopo (*Out-of-Scope*)
+
 1. Atuação mecânica de braços ejetores, cilindros pneumáticos ou comandos de potência na bancada de testes.
-2. Instalação e acionamento de atuadores físicos dedicados (torres luminosas e buzzers externos de painel).
+2. Qualquer sinalização ou atuação física por LEDs, buzzer, torres luminosas,
+   sirenes ou atuadores de potência. A implementação experimental existente na
+   branch `feat/sinalizacao-fisica` não será integrada à `main` e não faz parte
+   da Entrega 6.
 3. Substituição de sistemas normatizados de segurança humana (NR-12).
 4. Integração direta com sistemas corporativos de gestão (ERP/SAP).
 5. Análise de parâmetros físico-químicos ou microbiológicos do líquido envasado.
@@ -86,6 +91,7 @@ Somente o frontend é implementado em **JavaScript**, com **React**. O React per
 ├── docs/
 │   ├── arquitetura/            # Diagramas e especificações arquiteturais (Roger Pressman)
 │   │   └── diagrama-arquitetural.md
+│   ├── entrega-6/README.md     # Matriz de conformidade e reprodutibilidade
 │   ├── img/                    # Diagramas visuais e esquemáticos do sistema
 │   │   └── Fluxo.jpeg
 │   └── requisitos/             # Especificação de Requisitos (IEEE 29148 / PNAAT)
@@ -106,6 +112,7 @@ Somente o frontend é implementado em **JavaScript**, com **React**. O React per
 │   ├── tools/
 │   │   └── collect_dataset.py   # Composição da ferramenta
 │   └── tests/                   # Testes unitários do Edge
+├── frontend/                    # Dashboard React, build Vite e servidor Nginx
 ├── model_lifecycle/             # Ciclo de vida do modelo de classificação
 │   ├── inspection_classes.py    # Classes e códigos reconhecidos pelo Vigi
 │   ├── dataset_validation.py    # Integridade e identificação do dataset
@@ -114,6 +121,7 @@ Somente o frontend é implementado em **JavaScript**, com **React**. O React per
 │   └── manifest.py              # Contrato do modelo promovido
 ├── scripts/
 │   └── coletar_dataset.py       # Entrada compatível para a ferramenta modular
+├── tasks/                       # Plano e checklist da Entrega 6
 ├── .gitignore
 └── README.md
 ```
@@ -206,10 +214,9 @@ o DVC e o cliente DagsHub antes de iniciar um treinamento longo.
 
 ### Versionamento dos artefatos
 
-O DagsHub é o único remoto DVC do projeto. Para publicar artefatos ou
-baixá-los em um clone, siga [`docs/dvc-dagshub.md`](docs/dvc-dagshub.md).
-O login do cliente DagsHub não é repassado automaticamente ao DVC: use o
-script indicado no guia.
+O DagsHub é o único remoto DVC do projeto. O login do cliente DagsHub não é
+repassado automaticamente ao DVC: use o procedimento e o script indicados
+abaixo.
 
 ```ini
 [core]
@@ -429,6 +436,10 @@ make down
 
 O histórico do backend e a outbox local do Edge são preservados. Para consultar
 todos os atalhos disponíveis, execute `make help`.
+
+O acompanhamento dos artefatos, lacunas e evidências da documentação final está
+na [matriz da Entrega 6](docs/entrega-6/README.md). O trabalho restante está
+organizado no [plano](tasks/plan.md) e na [checklist executável](tasks/todo.md).
 
 Para executar somente a inferência local, sem publicação MQTT, use diretamente a CLI:
 
