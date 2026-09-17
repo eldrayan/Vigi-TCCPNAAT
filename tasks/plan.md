@@ -65,17 +65,17 @@ As tarefas detalhadas e seus critérios de aceitação estão em
 
 ### Fase 2 — Manual e arquitetura
 
-- [ ] Tarefa 4: consolidar pré-requisitos, instalação e configuração no README.
-- [ ] Tarefa 5: documentar execução e resultados observáveis por cenário.
-- [ ] Tarefa 6: atualizar diagramas e contratos da arquitetura implementada.
+- [x] Tarefa 4: consolidar pré-requisitos, instalação e configuração no README.
+- [x] Tarefa 5: documentar execução e resultados observáveis por cenário.
+- [x] Tarefa 6: atualizar diagramas e contratos da arquitetura implementada.
 
 ### Checkpoint — Reprodução por software
 
 - [ ] Uma pessoa consegue executar testes e o fluxo sem hardware a partir de um
   clone limpo.
-- [ ] Mosquitto, backend, SQLite e API possuem verificações de saúde e resultado
+- [x] Mosquitto, backend, SQLite e API possuem verificações de saúde e resultado
   documentadas.
-- [ ] Limitações da fila de alertas e da autenticação da API estão explícitas.
+- [x] Limitações da fila de alertas e da autenticação da API estão explícitas.
 
 ### Fase 3 — Hardware e evidências
 
@@ -109,7 +109,7 @@ As tarefas detalhadas e seus critérios de aceitação estão em
 | --- | --- | --- |
 | Modelo e dataset dependem de remote DVC restrito | Alto | Documentar o fluxo de autorização, conferir ponteiros e ensaiar com uma identidade sem configuração prévia |
 | Circuito do sensor ainda não possui validação elétrica registrada | Alto | Conferir fonte Fritzing, imagem, texto e BOM contra os componentes realmente usados e as medições da bancada |
-| Diagrama atual mistura implementação e visão futura | Alto | Produzir diagrama "como está" e mover evolução planejada para seção própria |
+| Diagrama misturar implementação e visão futura | Alto | Manter como referência vigente apenas os diagramas Mermaid conferidos contra o código |
 | Alertas operacionais não usam a outbox das inspeções | Médio | Documentar o limite e não prometer entrega offline dos alertas |
 | Dashboard recente ainda não foi ensaiado no hardware alvo | Médio | Executar lint/build e validar o fluxo integrado via Compose na Raspberry Pi 5 |
 | Testes simulados serem confundidos com homologação física | Alto | Manter estados de evidência separados e exigir registro de ensaio na Raspberry Pi 5 |

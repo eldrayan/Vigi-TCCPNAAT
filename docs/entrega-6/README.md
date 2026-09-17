@@ -31,15 +31,15 @@ a arquitetura, a montagem, os testes nem as evidências exigidas para a Entrega 
 | --- | --- | --- | --- |
 | Código-fonte desenvolvido | `edge/`, `backend/`, `frontend/`, `model_lifecycle/`, `scripts/`, `tests/` | Presente e testado automaticamente | 167 testes gerais e 37 testes do backend aprovados; frontend passou por lint e build |
 | Esquemáticos elétricos | [`docs/esquematico/`](../esquematico/esquematico-eletrico.md), incorporado pelo PR #39 | Presente, revisão elétrica pendente | O escopo documental foi limitado a Raspberry Pi, câmera e sensor; o circuito ainda requer conferência elétrica e evidência da montagem real |
-| Instruções de montagem | Manual da câmera, sensor E18-D80NK, Raspberry Pi 5 e alimentação, a consolidar | Pendente | A montagem final não inclui LEDs nem buzzer e ainda precisa ser ensaiada fisicamente |
-| Diagramas finais de arquitetura | [`docs/arquitetura/diagrama-arquitetural.md`](../arquitetura/diagrama-arquitetural.md) | Atualizado no working tree; render visual pendente | Revisão 0.9.0 inclui múltiplas estações, preview HTTP, outbox contínua, MQTT autenticado, backend, SQLite e dashboard React; falta inspecionar a renderização dos quatro Mermaid |
-| Pré-requisitos e recursos | [`README.md`](../../README.md) | Parcial | Lista extensa existe, mas mistura itens atuais e futuros e ainda não foi ensaiada em clone limpo |
-| Dependências e instalação | `pyproject.toml`, `uv.lock`, `backend/pyproject.toml`, `backend/uv.lock`, README | Parcial | Edge/backend têm locks; Picamera2 depende do sistema; acesso DVC é externo e precisa de procedimento de autorização |
-| Configuração | `.env.example`, `compose.yaml`, `Makefile`, `scripts/configurar_env.py`, README | Presente; ensaio limpo pendente | `make up` preserva valores existentes, completa chaves ausentes e gera credenciais locais; falta reproduzir em host sem configuração prévia |
-| Execução | `Makefile`, `scripts/`, README e [`docs/operacao/01-multiplas-estacoes.md`](../operacao/01-multiplas-estacoes.md) | Presente; ensaio físico pendente | README separa serviços, preview, estação contínua, inferência sem hardware, múltiplas estações, verificação e encerramento seguro |
-| Resultado que confirma execução | `/health`, dashboard, API, logs e testes | Presente; evidência final pendente | README informa consultas e resultados observáveis; ainda é necessário registrar o ensaio integrado ligado ao SHA final |
+| Instruções de montagem | [`docs/esquematico/esquematico-eletrico.md`](../esquematico/esquematico-eletrico.md) | Presente; validação física pendente | O guia identifica componentes, pinagem lógica, procedimento seguro e checklist; o circuito definitivo ainda precisa de revisão e ensaio na bancada |
+| Diagramas finais de arquitetura | [`docs/arquitetura/diagrama-arquitetural.md`](../arquitetura/diagrama-arquitetural.md) | Presente e renderizado | Diagramas de componentes, sequência e contratos foram renderizados e inspecionados; não certificam a montagem física |
+| Pré-requisitos e recursos | [`README.md`](../../README.md) | Presente | Inclui Raspberry Pi OS 64 bits, câmera CSI/USB, sensor, alimentação, armazenamento, rede, pacotes do sistema, Docker, Compose, Git e `uv` |
+| Dependências e instalação | `pyproject.toml`, `uv.lock`, `backend/pyproject.toml`, `backend/uv.lock`, README e [`docs/dvc-dagshub.md`](../dvc-dagshub.md) | Presente; ensaio limpo na Pi pendente | Há clone, instalação, ambiente CSI, autenticação e diagnóstico DVC; a instalação completa ainda não foi repetida por terceiro na Raspberry Pi |
+| Configuração | `.env.example`, `compose.yaml`, `Makefile`, `scripts/configurar_env.py`, README | Presente; ensaio limpo pendente | Credenciais, portas, câmera, estação, lote e múltiplas estações estão documentados; falta reprodução independente em host sem configuração prévia |
+| Execução | `Makefile`, `scripts`, README e manuais de [`múltiplas estações`](../operacao/01-multiplas-estacoes.md) e [`dashboard`](../operacao/02-dashboard-e-diagnostico.md) | Presente; ensaio físico pendente | O fluxo por software foi verificado; sensor e câmera reais ainda dependem da bancada |
+| Resultado que confirma execução | [`docs/validacao-entrega-6.md`](../validacao-entrega-6.md), `/health`, dashboard, API, logs e testes | Presente para software; evidência física pendente | Smoke registrou saúde dos serviços e o mesmo `inspection_id` da emissão até a API; não comprova montagem, acurácia ou latência na Pi |
 | Código compreensível | Pacotes por aquisição, inferência, mensagens, orquestração e módulos do backend | Presente | Responsabilidades principais são localizáveis; o pacote experimental de atuação não fará parte da `main` |
-| Reprodução completa por terceiro | Ainda sem evidência dedicada | Pendente | Exige clone limpo por terceiro e registro de sistema, versões, SHA, comandos, duração e bloqueios |
+| Reprodução completa por terceiro | README e relatório de validação | Parcial | A reprodução por software foi ensaiada no ambiente de auditoria; ainda exige clone limpo por terceiro e ensaio físico na Raspberry Pi |
 
 ## Estado real que deve orientar a revisão
 
@@ -86,19 +86,21 @@ a arquitetura, a montagem, os testes nem as evidências exigidas para a Entrega 
 7. Resultado observado e responsável por cada item que dependa de credencial ou
    infraestrutura externa.
 
-## Evidências da primeira fatia
+## Evidências consolidadas
 
-Validações executadas em 16/09/2026, sem alterar código-fonte:
+Validações executadas entre 16 e 17/09/2026, sem alterar código-fonte:
 
 | Verificação | Resultado |
 | --- | --- |
-| Links locais do README, arquitetura, matriz, esquemático, operação, plano e checklist | 31 links verificados; nenhum ausente |
+| Links locais da documentação versionada | 110 links Markdown e 10 referências de assets dos slides verificados; nenhum ausente |
 | Higiene do diff | `git diff --check` aprovado |
 | Testes gerais do Edge, modelo e CLIs | 167 aprovados após integrar `962e4b7` |
 | Testes do backend em Python 3.12 isolado | 37 aprovados, 1 integração MQTT ignorada e 1 aviso de depreciação do Starlette |
 | Ruff e frontend | Ruff, lint TypeScript/ESLint e build de produção aprovados |
-| Estrutura da arquitetura | 4 blocos Mermaid completos; renderização visual ainda pendente |
+| Estrutura da arquitetura | Diagramas Mermaid renderizados e inspecionados visualmente |
 | Payload de inspeção do diagrama | Aceito por `InspectionCreateDTO` no ambiente Python 3.12 do backend |
+| Smoke integrado | Compose saudável e o mesmo `inspection_id` confirmado da emissão até a API, conforme [`docs/validacao-entrega-6.md`](../validacao-entrega-6.md) |
+| Artefatos MLOps | Modelo recuperado pelo DVC/DagsHub e manifesto/peso validados; dataset e modelo também passaram pelos gates do CI |
 
 A suíte do backend precisou ser executada fora da restrição do sandbox porque a
 thread do `aiosqlite` não completava sequer uma conexão mínima nesse ambiente.
@@ -109,6 +111,6 @@ ser executado com broker isolado no checkpoint de reprodução por software.
 ## Próximos passos
 
 O plano e a checklist executável estão em [`tasks/plan.md`](../../tasks/plan.md)
-e [`tasks/todo.md`](../../tasks/todo.md). O primeiro checkpoint fecha as
-divergências prioritárias do README; em seguida, arquitetura e hardware serão
-atualizados antes dos ensaios de reprodução.
+e [`tasks/todo.md`](../../tasks/todo.md). O manual, a arquitetura e o ensaio por
+software foram consolidados; as pendências restantes dependem principalmente
+da montagem física e do ensaio independente em clone limpo.

@@ -83,9 +83,9 @@ CSI/USB.
 
 **Critérios de aceitação:**
 
-- [ ] Pré-requisitos de host, Python, Docker, câmera e acesso DVC são explícitos.
-- [ ] Comandos podem ser copiados na ordem apresentada.
-- [ ] Segredos e caminhos pessoais não são exigidos no Git.
+- [x] Pré-requisitos de host, Python, Docker, câmera e acesso DVC são explícitos.
+- [x] Comandos podem ser copiados na ordem apresentada.
+- [x] Segredos e caminhos pessoais não são exigidos no Git.
 
 **Verificação:**
 
@@ -111,15 +111,15 @@ fluxo MQTT até API, modo offline e operação contínua em hardware.
 
 **Critérios de aceitação:**
 
-- [ ] Cada cenário informa comando, pré-condição, saída esperada e falha comum.
-- [ ] `/health`, inspeção persistida e resumo da API têm critérios verificáveis.
-- [ ] Execução simulada não é apresentada como validação da bancada.
+- [x] Cada cenário informa comando, pré-condição, saída esperada e falha comum.
+- [x] `/health`, inspeção persistida e resumo da API têm critérios verificáveis.
+- [x] Execução simulada não é apresentada como validação da bancada.
 
 **Verificação:**
 
-- [ ] Testes focados e suíte completa passam.
-- [ ] Smoke do Compose passa quando o daemon estiver disponível.
-- [ ] Saídas esperadas são comparadas às saídas observadas.
+- [x] Testes focados e suíte completa passam.
+- [x] Smoke do Compose passa quando o daemon estiver disponível.
+- [x] Saídas esperadas são comparadas às saídas observadas.
 
 **Dependências:** Tarefa 4.
 
@@ -145,7 +145,7 @@ containers/processos, módulos e sequência de uma inspeção.
 **Verificação:**
 
 - [x] Cada nó do diagrama possui arquivo/configuração de origem identificável.
-- [ ] Mermaid renderiza sem erro.
+- [x] Mermaid renderiza sem erro.
 - [x] Payload de exemplo valida contra os DTOs atuais.
 
 **Dependências:** Tarefas 1 e 3.

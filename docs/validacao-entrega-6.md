@@ -38,6 +38,8 @@ Os itens parciais dependem de evidências físicas, não de completar texto por 
 
 ## Verificações realizadas
 
+- CI do PR: 167 testes gerais, 37 testes do backend, lint, build do frontend,
+  recuperação dos artefatos MLOps e gate de qualidade do modelo aprovados.
 - `git diff --check` e links relativos Markdown: aprovados.
 - Quatro diagramas Mermaid renderizados com mermaid-cli; inspeção visual dos
   diagramas de arquitetura, sequência e hardware. Fontes ficam incorporadas nos Markdown.
