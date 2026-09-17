@@ -30,7 +30,16 @@ export type {
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${apiUrl}${path}`, { headers: { "Content-Type": "application/json" }, ...init });
-  if (!response.ok) throw new Error(`Falha ao consultar a API (${response.status}).`);
+  if (!response.ok) {
+    let detail: string | undefined;
+    try {
+      const payload = (await response.json()) as { detail?: string };
+      detail = payload.detail;
+    } catch {
+      // Mantém a mensagem padrão quando a API não devolve JSON.
+    }
+    throw new Error(detail ?? `Falha ao consultar a API (${response.status}).`);
+  }
   const contentType = response.headers.get("content-type") ?? "";
   if (!contentType.includes("application/json")) {
     throw new Error("A API retornou uma resposta inválida. Confirme se o backend está ativo na porta 8000.");

@@ -28,3 +28,16 @@ def test_dispatcher_confirms_mensagem_apenas_apos_nova_tentativa(monkeypatch) ->
 
     assert attempts == [b"event", b"event"]
     mqtt_client.ack.assert_called_once_with(7, 1)
+
+
+def test_dispatcher_confirms_mensagem_descartada_apos_limite(monkeypatch) -> None:
+    mqtt_client = SimpleNamespace(ack=Mock())
+    dispatcher = MQTTMessageDispatcher(mqtt_client, max_retries=2)
+    handler = AsyncMock(side_effect=LookupError("dispositivo desconhecido"))
+    monkeypatch.setattr(asyncio, "sleep", AsyncMock())
+    message = SimpleNamespace(payload=b"event", mid=9, qos=1)
+
+    asyncio.run(dispatcher.process(message, [handler]))
+
+    assert handler.await_count == 2
+    mqtt_client.ack.assert_called_once_with(9, 1)

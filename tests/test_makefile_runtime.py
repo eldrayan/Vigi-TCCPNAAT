@@ -23,3 +23,22 @@ def test_reset_data_removes_backend_volume_and_starts_clean_stack() -> None:
     assert "reset-data:\n\tdocker compose down" in content
     assert "docker volume rm vigi_backend_data" in content
     assert "$(MAKE) --no-print-directory up" in content
+
+
+def test_preview_camera_exposes_framing_options() -> None:
+    content = makefile()
+
+    assert "preview-camera:\n\t$(UV_RUN) python scripts/preview_camera.py" in content
+    assert '--camera-id "$(CAMERA)"' in content
+    assert '--width "$(WIDTH)"' in content
+    assert '--height "$(HEIGHT)"' in content
+    assert '--port "$(PREVIEW_PORT)"' in content
+
+
+def test_compose_control_commands_do_not_require_backend_credentials() -> None:
+    content = makefile()
+
+    assert "COMPOSE_CONTROL_ENV =" in content
+    assert "down:\n\t$(COMPOSE_CONTROL_ENV) docker compose down" in content
+    assert "ps:\n\t$(COMPOSE_CONTROL_ENV) docker compose ps" in content
+    assert "logs:\n\t$(COMPOSE_CONTROL_ENV) docker compose logs --follow" in content

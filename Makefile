@@ -7,7 +7,7 @@
 
 MQTT_IMAGE ?= eclipse-mosquitto:2.0.22
 -include .env
-export MQTT_EDGE_USERNAME MQTT_EDGE_PASSWORD
+export MQTT_EDGE_USERNAME MQTT_EDGE_PASSWORD MQTT_BACKEND_USERNAME MQTT_BACKEND_PASSWORD
 HOST ?= localhost
 PORT ?= 1883
 TOPIC ?= vigi/teste
@@ -30,6 +30,7 @@ SAVE_CAPTURES ?= false
 CAPTURE_DIR ?= captures
 FRONTEND_HOST ?= 0.0.0.0
 FRONTEND_PORT ?= 8081
+PREVIEW_PORT ?= 8090
 API_URL ?= http://127.0.0.1:8000
 UV_RUN ?= uv run --no-sync
 DATASET ?= dataset/vigi-cls
@@ -45,6 +46,7 @@ BENCHMARK_RUNS ?= 100
 BENCHMARK_WARMUP ?= 10
 BENCHMARK_OUTPUT ?= reports/benchmark-pi.json
 COLLECT_ARGS ?= --width 1280 --height 720
+COMPOSE_CONTROL_ENV = MQTT_BACKEND_USERNAME="$${MQTT_BACKEND_USERNAME:-vigi-compose-control}" MQTT_BACKEND_PASSWORD="$${MQTT_BACKEND_PASSWORD:-vigi-compose-control}"
 
 help:
 	@echo "make setup                         Instala as dependências travadas"
@@ -72,6 +74,7 @@ help:
 	@echo "make infer-help                    Mostra as opções do modelo"
 	@echo "make infer-image IMAGE=imagem.jpg Executa o modelo e publica no MQTT"
 	@echo "make infer-camera                  Captura da câmera e publica no MQTT"
+	@echo "make preview-camera                Exibe preview HTTP para ajustar o enquadramento"
 	@echo "make edge-up                       Executa a Estação 01 pelo sensor E18-D80NK"
 	@echo "make monitor-edge                  Mantém o estado da Raspberry publicado"
 	@echo "make mqtt-sub                      Escuta mensagens MQTT"
@@ -99,6 +102,7 @@ help:
 	@echo "make benchmark-model               Mede o desempenho do modelo"
 	@echo ""
 	@echo "Opções gerais: HOST, PORT, TOPIC, MODEL_TOPIC, MANIFEST, CAMERA e CAMERA_BACKEND"
+	@echo "Opções de câmera: WIDTH, HEIGHT e PREVIEW_PORT"
 	@echo "Opções MLOps: DATASET, MODEL, METRICS, BENCHMARK_IMAGES, BENCHMARK_RUNS e BENCHMARK_WARMUP"
 
 setup:
@@ -224,7 +228,7 @@ reset-data:
 	$(MAKE) --no-print-directory up
 
 down:
-	docker compose down
+	$(COMPOSE_CONTROL_ENV) docker compose down
 
 backend-up: ensure-env
 	docker compose up --build --detach mqtt
@@ -232,7 +236,7 @@ backend-up: ensure-env
 	docker compose up --detach backend
 
 backend-down:
-	docker compose down
+	$(COMPOSE_CONTROL_ENV) docker compose down
 
 frontend-up:
 	cd frontend && VITE_API_URL="$(API_URL)" npm run dev -- --host "$(FRONTEND_HOST)"
@@ -244,10 +248,10 @@ build:
 	docker compose build
 
 ps:
-	docker compose ps
+	$(COMPOSE_CONTROL_ENV) docker compose ps
 
 logs:
-	docker compose logs --follow
+	$(COMPOSE_CONTROL_ENV) docker compose logs --follow
 
 migrate:
 	docker compose run --rm --no-deps backend uv run --frozen --no-dev alembic upgrade head
@@ -270,6 +274,14 @@ infer-camera:
 		--backend "$(CAMERA_BACKEND)" \
 		--mqtt-host "$(HOST)" \
 		--mqtt-port "$(PORT)"
+
+preview-camera:
+	$(UV_RUN) python scripts/preview_camera.py \
+		--backend "$(CAMERA_BACKEND)" \
+		--camera-id "$(CAMERA)" \
+		--width "$(WIDTH)" \
+		--height "$(HEIGHT)" \
+		--port "$(PREVIEW_PORT)"
 
 run-esteira:
 	$(UV_RUN) python scripts/executar_esteira.py \
