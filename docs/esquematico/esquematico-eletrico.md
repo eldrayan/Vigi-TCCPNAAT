@@ -65,6 +65,30 @@ A documentação anterior atribuía ao divisor de 1 kΩ e 2,2 kΩ uma tensão no
 
 Antes de ligar qualquer saída à GPIO, o responsável pela bancada deve documentar o circuito definitivo, referências dos componentes, limites do fabricante e medições de nível alto/baixo. O desenho existente precisa ser corrigido e acompanhado dessas evidências. Este guia não fornece um circuito substituto sem essa verificação.
 
+### Resultado da auditoria do diagrama
+
+Auditoria documental realizada em 17/09/2026 sobre a imagem PNG, o projeto
+Fritzing e o contrato do software. Ela verifica a coerência dos arquivos, mas
+não substitui revisão por responsável pela montagem, medição elétrica ou ensaio
+na Raspberry Pi.
+
+| Item verificado | Evidência encontrada | Parecer |
+| --- | --- | --- |
+| Placa representada | O projeto Fritzing usa o componente `raspberry-pi-4B_1`, embora o título visual seja “Rasp 5”. | Inconsistente: substituir pelo componente da placa efetiva e conferir novamente a pinagem. |
+| Entrada usada pelo software | O nó intermediário do divisor chega ao `connector10` do componente Fritzing, correspondente ao BCM 17/pino físico 11; `GPIO_PIN=17` é o padrão do software. | Coerente apenas quanto ao pino lógico pretendido. |
+| Condicionamento do sinal | O arquivo liga a saída representada do sensor ao resistor de 1 kΩ, o nó da GPIO entre 1 kΩ e 2,2 kΩ e o resistor de 2,2 kΩ ao retorno. | A topologia de divisor é identificável, mas não está eletricamente aprovada. |
+| Nível de tensão | Para 5 V na entrada, os valores desenhados produzem aproximadamente 3,44 V nominais, antes de considerar tolerâncias e transientes. | Reprovado para conexão à GPIO até que um circuito compatível com 3,3 V seja especificado e medido. |
+| Terminais do E18-D80NK | O conector de três vias é nomeado, mas cada terminal não é rotulado com função, cor do cabo ou tensão esperada. | Ambíguo e insuficiente para montagem por terceiros. |
+| Câmera | A própria imagem informa que a câmera não está incluída no Fritzing. | A conexão CSI/USB deve seguir o manual da placa e da câmera escolhidas. |
+| Evidência física | Não há nesta revisão registro de medições, foto comparável ao circuito definitivo ou ensaio de detecção na placa. | Validação física pendente. |
+
+**Conclusão:** os artefatos históricos estão **reprovados como instrução de
+montagem ou energização**. Eles registram a intenção anterior, mas não satisfazem
+sozinhos o requisito de um esquemático elétrico reprodutível. Para aprovação,
+é necessário corrigir a placa representada, rotular todos os terminais,
+substituir ou justificar o condicionamento com base nos datasheets da variante
+real e anexar medições dos níveis alto e baixo antes de conectar a GPIO.
+
 ## Preparação, montagem e verificação
 
 1. Identificar a placa, a câmera, o cabo, a fonte e a variante do sensor. Registrar fotos legíveis e datasheets; verificar a numeração física do conector.

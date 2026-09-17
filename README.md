@@ -121,10 +121,12 @@ recuperação do modelo. As seções de coleta e treinamento são opcionais para
 
 ## 👥 Equipe de Desenvolvimento
 
-* **Alan Mendes Vieira**
-* **Elder Rayan Oliveira Silva**
-* **Leoncio Ferreira Flores Neto**
-* **Samuel Wagner Tiburi Silveira**
+| Nome                         | GitHub                                                |
+| ---------------------------- | ----------------------------------------------------- |
+| Alan Mendes Vieira           | [@alan-mendes-ufca](https://github.com/alan-mendes-ufca) |
+| Elder Rayan Oliveira Silva   | [@eldrayan](https://github.com/eldrayan)             |
+| Leôncio Ferreira Flores Neto | [@LeoncioFerreira](https://github.com/LeoncioFerreira)|
+| Samuel Wagner Tiburi Silveira| [@samsilveira](https://github.com/samsilveira)       |
 
 ---
 
