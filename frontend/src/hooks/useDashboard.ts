@@ -151,22 +151,16 @@ export function useDashboard() {
   );
 
   const configureAlarm = useCallback(
-    async (name: string, limit: number, stationId?: number, batchId?: number) => {
-      const targetStationId = stationId ?? data?.stations[0]?.id ?? 1;
-      let targetBatchId = batchId;
-      if (!targetBatchId) {
-        try {
-          const batches = await api.batches(targetStationId);
-          const activeBatch = batches.find((b) => b.status === "EM_ANDAMENTO" || b.status === "ATIVO") ?? batches[batches.length - 1];
-          targetBatchId = activeBatch?.id ?? 1;
-        } catch {
-          targetBatchId = 1;
-        }
+    async (name: string, limit: number, stationId: number) => {
+      const batches = await api.batches(stationId);
+      const activeBatch = batches.find((batch) => batch.status === "ATIVO" || batch.status === "EM_ANDAMENTO");
+      if (!activeBatch) {
+        throw new Error("A estação selecionada não possui um lote ativo.");
       }
-      await api.configureAlarm(targetStationId, targetBatchId, name, limit);
+      await api.configureAlarm(stationId, activeBatch.id, name, limit);
       await refresh(true);
     },
-    [data?.stations, refresh],
+    [refresh],
   );
 
   const configureContext = useCallback(

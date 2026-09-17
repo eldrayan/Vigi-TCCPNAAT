@@ -5,7 +5,7 @@ Autor: Leôncio Ferreira
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class AlarmResponseDTO(BaseModel):
@@ -31,3 +31,18 @@ class AcknowledgeAlarmDTO(BaseModel):
     """
 
     acknowledged_by: str
+
+
+class AlarmCreateDTO(BaseModel):
+    """
+    Descrição: Valida os dados de criação manual de alarme pelo operador.
+    Autor: Leôncio Ferreira
+    """
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    station_id: int = Field(gt=0)
+    batch_id: int = Field(gt=0)
+    name: str = Field(default="Alarme de qualidade", min_length=1, max_length=100)
+    threshold: float = Field(ge=0.0, le=100.0)
+    alarm_type: str = "LIMITE_NAO_CONFORMIDADE"

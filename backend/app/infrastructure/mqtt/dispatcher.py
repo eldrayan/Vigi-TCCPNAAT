@@ -43,6 +43,7 @@ class MQTTMessageDispatcher:
                     logger.exception(
                         "Mensagem descartada após %s tentativas.", self.max_retries
                     )
+                    self.client.ack(message.mid, message.qos)
                     return
                 delay = min(5 * (2 ** (attempt - 1)), 30)
                 logger.exception(

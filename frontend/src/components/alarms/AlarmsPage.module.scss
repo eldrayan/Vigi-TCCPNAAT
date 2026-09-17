@@ -27,6 +27,25 @@
   border-radius: 14px;
   background: #fff;
 }
+.success {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border: 1px solid #b9eadc;
+  border-radius: 8px;
+  color: #008f72;
+  background: #ecfdf5;
+  font-size: 13px;
+}
+.empty {
+  margin: 0;
+  padding: 28px 20px;
+  color: #64818f;
+  font-size: 13px;
+  text-align: center;
+}
 .alarm {
   display: flex;
   align-items: center;

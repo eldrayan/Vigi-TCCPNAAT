@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import errno
 import logging
 import socket
 import sys
@@ -165,7 +166,7 @@ def main() -> int:
     )
     parser.add_argument("--camera-id", type=int, default=0)
     parser.add_argument(
-        "--port", type=int, default=8080, help="Porta HTTP do servidor"
+        "--port", type=int, default=8090, help="Porta HTTP do servidor"
     )
     parser.add_argument("--width", type=int, default=1280)
     parser.add_argument("--height", type=int, default=720)
@@ -176,36 +177,49 @@ def main() -> int:
         format="%(asctime)s [%(levelname)s] %(message)s",
     )
 
-    cv2 = load_opencv()
-    logger.info("Inicializando câmera '%s'...", args.backend)
-    camera = create_camera(
-        backend=args.backend,
-        camera_id=args.camera_id,
-        width=args.width,
-        height=args.height,
-        warmup_seconds=1.5,
-    )
-
-    handler_class = make_handler(camera, cv2)
     address = ("", args.port)
-    httpd = StreamingServer(address, handler_class)
-
-    host_ip = detect_host_ip()
-    logger.info("=" * 60)
-    logger.info("PREVIEW AO VIVO DA CÂMERA INICIADO!")
-    logger.info("Abra no navegador do seu notebook:")
-    logger.info("👉 http://%s:%d", host_ip, args.port)
-    logger.info("Pressione Ctrl+C para encerrar o preview.")
-    logger.info("=" * 60)
-
     try:
-        httpd.serve_forever()
-    except KeyboardInterrupt:
-        logger.info("\nEncerrando servidor de preview...")
+        httpd = StreamingServer(address, server.BaseHTTPRequestHandler)
+    except OSError as exc:
+        if exc.errno == errno.EADDRINUSE:
+            logger.error(
+                "A porta %d já está em uso. Escolha outra com --port ou "
+                "PREVIEW_PORT.",
+                args.port,
+            )
+            return 2
+        raise
+
+    camera = None
+    try:
+        cv2 = load_opencv()
+        logger.info("Inicializando câmera '%s'...", args.backend)
+        camera = create_camera(
+            backend=args.backend,
+            camera_id=args.camera_id,
+            width=args.width,
+            height=args.height,
+            warmup_seconds=1.5,
+        )
+        httpd.RequestHandlerClass = make_handler(camera, cv2)
+
+        host_ip = detect_host_ip()
+        logger.info("=" * 60)
+        logger.info("PREVIEW AO VIVO DA CÂMERA INICIADO!")
+        logger.info("Abra no navegador do seu notebook:")
+        logger.info("👉 http://%s:%d", host_ip, args.port)
+        logger.info("Pressione Ctrl+C para encerrar o preview.")
+        logger.info("=" * 60)
+
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            logger.info("\nEncerrando servidor de preview...")
     finally:
         httpd.server_close()
-        camera.release()
-        logger.info("Câmera liberada.")
+        if camera is not None:
+            camera.release()
+            logger.info("Câmera liberada.")
 
     return 0
 

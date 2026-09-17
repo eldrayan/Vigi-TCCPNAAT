@@ -141,7 +141,12 @@ Execute o coletor a partir da raiz do repositório:
 
 ```bash
 python3 scripts/coletar_dataset.py --width 1280 --height 720
+# ou, pelo Makefile:
+make collect COLLECT_ARGS="--width 1280 --height 720"
 ```
+
+As linhas exibidas por `make help` são exemplos de comandos. Execute somente a
+linha desejada; não use `make make setup ...` nem copie o texto descritivo.
 
 Quando executado por SSH ou em outro terminal sem ambiente gráfico, o coletor
 detecta a ausência de `DISPLAY`/Wayland e ativa automaticamente o modo terminal.
@@ -320,6 +325,9 @@ Este roteiro reproduz o fluxo completo na Raspberry Pi: sensor → câmera →
 inferência no Edge → MQTT autenticado → FastAPI/SQLite → dashboard React.
 Execute todos os comandos a partir da raiz do repositório.
 
+Para operar duas ou mais Raspberrys com um broker central, consulte o
+[guia de configuração de múltiplas estações](docs/operacao/01-multiplas-estacoes.md).
+
 ### 1. Preparar a Raspberry e o modelo
 
 Instale Docker com Compose, `uv`, Git e os drivers da câmera CSI. A instalação
@@ -332,6 +340,20 @@ make dvc-pull
 ```
 
 Confirme que `models/active/manifest.json` existe antes de continuar.
+
+### Ajustar o enquadramento antes da esteira
+
+O preview HTTP permite posicionar a case e a câmera sem iniciar o sensor nem a
+inspeção contínua:
+
+```bash
+make preview-camera WIDTH=1296 HEIGHT=972 PREVIEW_PORT=8090
+```
+
+Abra `http://IP_DA_RASPBERRY:8090` no navegador. Encerre o preview com
+`Ctrl+C` antes de executar o coletor ou `make edge-up`, pois apenas um processo
+pode controlar a câmera por vez. A porta padrão é `8090` para não conflitar com
+o dashboard (`8081`) nem com serviços web que normalmente usam `8080`.
 
 ### 2. Configurar as credenciais locais
 
@@ -360,6 +382,13 @@ MQTT_EDGE_PASSWORD=troque-por-outra-senha-forte
 O broker não aceita conexões sem credenciais. O Edge publica somente nos tópicos
 da `ESTACAO_01`; o backend consome inspeções e estados do dispositivo.
 
+Uma Raspberry configurada somente como estação Edge precisa apenas das
+credenciais `MQTT_EDGE_*` e aponta `HOST` para o broker central. Os comandos
+`make ps`, `make logs` e `make down` continuam disponíveis para consultar ou
+parar containers remanescentes sem exigir as credenciais administrativas
+`MQTT_BACKEND_*`. Comandos que iniciam o broker ou o backend continuam exigindo
+essas credenciais.
+
 ### 3. Subir dashboard, API e broker
 
 ```bash
@@ -372,12 +401,12 @@ O Compose aplica as migrations automaticamente, mantém o SQLite em volume e
 inicia o dashboard, FastAPI e Mosquitto. Na rede local, acesse:
 
 ```text
-Dashboard: http://leocio-raspberry.local:8080
+Dashboard: http://leocio-raspberry.local:8081
 Swagger:   http://leocio-raspberry.local:8000/docs
 ```
 
 Se o mDNS não estiver disponível, obtenha o endereço com `hostname -I` e use
-`http://IP_DA_RASPBERRY:8080`. O dashboard encaminha API e SSE internamente;
+`http://IP_DA_RASPBERRY:8081`. O dashboard encaminha API e SSE internamente;
 por isso não exige configuração adicional de CORS nesse fluxo em containers.
 
 O CORS só é necessário para desenvolvimento separado com Vite. Nesse caso,
