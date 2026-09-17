@@ -1,8 +1,8 @@
 > **Projeto:** Vigi — Sistema Embarcado para Inspeção e Triagem de Linhas de Envase
-> <br>**Revisão:** 0.8.1
+> <br>**Revisão:** 0.9.0
 > <br>**Data da revisão:** 16/09/2026
 > <br>**Responsável:** Squad Vigi
-> <br>**Base auditada:** `origin/main`, commit `f335140`
+> <br>**Base auditada:** `origin/main`, commit `962e4b7`
 > <br>**Arquitetura-alvo:** versão destinada à `main`, sem LEDs e buzzer
 
 # Arquitetura do Vigi
@@ -28,6 +28,7 @@ Raspberry Pi 5.
 | 0.7.0 | 16/09/2026 | Integração da arquitetura com o dashboard React e a infraestrutura autenticada presentes na `main` |
 | 0.8.0 | 16/09/2026 | Estação Edge modular, outbox no fluxo contínuo, captura configurável e inicialização local previsível |
 | 0.8.1 | 16/09/2026 | Auditoria do esquemático incorporado pela `main` e alinhamento ao hardware do escopo final |
+| 0.9.0 | 16/09/2026 | Múltiplas estações Edge, preview HTTP da câmera, alarmes manuais e republicação de status após reconexão |
 
 ## Legenda de estado
 
@@ -54,6 +55,7 @@ flowchart LR
     end
 
     subgraph edge["Host Raspberry Pi 5 — processos Edge"]
+        preview["preview_camera.py<br/>ajuste HTTP :8090"]
         conveyor["run_conveyor.py<br/>laço contínuo"]
         inference["Motor de inferência<br/>YOLOv8n-cls"]
         oneshot["infer.py<br/>inspeção unitária"]
@@ -73,6 +75,7 @@ flowchart LR
 
     sensor --> conveyor
     camera --> conveyor
+    camera --> preview
     conveyor --> inference
     conveyor -->|"enqueue antes do envio"| outbox
 
@@ -97,11 +100,39 @@ flowchart LR
   autorização.
 - O fluxo iniciado por `make up` publica o dashboard na porta 8081; seu Nginx
   encaminha `/api/` ao backend.
+- O preview da câmera é um processo Edge separado, publicado por padrão na porta
+  8090. Ele deve ser encerrado antes do coletor ou da inspeção contínua porque
+  apenas um processo pode controlar a câmera por vez.
 - `/docs` é a documentação interativa OpenAPI e não substitui o dashboard.
 - Imagens capturadas não são enviadas pelo payload MQTT. No modo contínuo, elas
   podem ser gravadas localmente em `captures/`.
 - Dataset e pesos do modelo não ficam no Git; os ponteiros são versionados por
   DVC e a recuperação exige acesso autorizado ao remote.
+
+### Topologia com múltiplas estações
+
+Uma implantação com mais de uma Raspberry mantém broker, backend, banco e
+dashboard em um nó central. Cada estação Edge usa `STATION_CODE` e `DEVICE_ID`
+exclusivos, compartilha somente as credenciais MQTT de Edge e publica nos
+tópicos autorizados pela ACL central.
+
+```mermaid
+flowchart LR
+    edge1["Estação Edge 01<br/>sensor + câmera + inferência"]
+    edge2["Estação Edge 02<br/>sensor + câmera + inferência"]
+    broker["Mosquitto central<br/>ACL por estação"]
+    backend["FastAPI + SQLite"]
+    dashboard["Dashboard React"]
+
+    edge1 -->|"inspeções e status"| broker
+    edge2 -->|"inspeções e status"| broker
+    broker --> backend
+    backend --> dashboard
+```
+
+O procedimento completo para cadastrar estações e lotes, configurar rede e
+diagnosticar falhas está no
+[guia de múltiplas estações](../operacao/01-multiplas-estacoes.md).
 
 ## Dois fluxos de inspeção implementados
 
@@ -210,7 +241,7 @@ continuam sendo processos/componentes separados.
 | Capturas | Gravação opcional do quadro por inspeção | `edge/orchestration/capture_store.py` |
 | Inspeções | DTOs, consulta, persistência e consumo MQTT | `backend/app/modules/inspections/` |
 | Operações | Estações, lotes, limite de não conformidade e estado | `backend/app/modules/operations/` |
-| Alarmes | Geração, consulta e reconhecimento de alarmes | `backend/app/modules/alarms/` |
+| Alarmes | Geração automática ou manual, consulta e reconhecimento | `backend/app/modules/alarms/` |
 | Infraestrutura | Configuração, SQLite, event bus e cliente MQTT | `backend/app/infrastructure/` |
 | Eventos | Stream SSE em memória para clientes conectados | `backend/app/events/` |
 | Dashboard | Supervisão React, consumo REST/SSE e proxy Nginx | `frontend/` |
@@ -268,7 +299,7 @@ As combinações aceitas são:
 | `vigi/estacoes/{station_code}/inspecoes` | Edge | Backend (`vigi/estacoes/+/inspecoes`) | Caminho contextual atual |
 | `vigi/esteira/inspecoes` | Edge | Backend | Compatibilidade com o caminho legado |
 | `vigi/dispositivos/{device_id}/configuracao` | Backend | CLI unitária | Contexto retido de estação/lote |
-| `vigi/dispositivos/{device_id}/status` | `monitor_edge.py` | Backend | Estado retido de conexão, sensor, câmera e processamento |
+| `vigi/dispositivos/{device_id}/status` | `run_conveyor.py` ou `monitor_edge.py` | Backend | Estado retido, republicado após reconexão, de conexão, sensor, câmera e processamento |
 | `vigi/esteira/status` | Laço contínuo | Consumidores MQTT | LWT/status legado do publicador contínuo |
 | `vigi/esteira/alarmes` | Edge e backend | Consumidores MQTT | Hoje reúne alerta transitório do Edge e alarme de lote do backend, com contratos distintos |
 
@@ -292,6 +323,7 @@ deve separar/versionar os tópicos antes de tratá-los como interface estável.
 | `PUT /api/estacoes/{id}/lotes/{lote_id}/limite` | Define limite percentual e nome do alarme |
 | `PUT /api/estacoes/{id}/lote-ativo` | Ativa lote e publica o contexto retido para o dispositivo |
 | `GET /api/alarmes` | Lista alarmes persistidos |
+| `POST /api/alarmes` | Cria alarme manual para uma estação e um lote válidos |
 | `POST /api/alarmes/{id}/reconhecer` | Registra reconhecimento no backend |
 | `GET /api/eventos/stream` | Entrega SSE de inspeções, estados e alarmes enquanto o cliente está conectado |
 
@@ -305,10 +337,11 @@ Ele não aciona nem silencia dispositivos físicos, pois a versão destinada à
 | --- | --- | --- | --- |
 | Sensor e debounce | Implementado | Presente | Pendente de evidência final |
 | Captura CSI/USB | Implementada | Dublês e testes de integração de classe | Pendente de ensaio final |
+| Preview HTTP para enquadramento | Implementado | Presente | Pendente de ensaio final com câmera real |
 | Inferência e fail-safe | Implementados | Presente | Pendente no hardware alvo para a entrega |
 | Outbox das inspeções unitária e contínua | Implementada | Presente | Pendente de ensaio de queda/reconexão |
 | MQTT → backend → SQLite → API | Implementado | Teste de integração disponível | Reexecutar com broker isolado no SHA final |
-| Estações, lotes e alarmes | Implementados | Presente | Pendente de cenário integrado final |
+| Múltiplas estações, lotes e alarmes automáticos/manuais | Implementados | Presente | Pendente de cenário integrado final |
 | SSE | Implementado | Presente | Pendente com cliente real |
 | Dashboard React | Implementado | Build e lint disponíveis | Pendente de ensaio integrado na Raspberry Pi 5 |
 | Autenticação/autorização | Planejada | Ausente | Ausente |
@@ -316,6 +349,7 @@ Ele não aciona nem silencia dispositivos físicos, pois a versão destinada à
 ## Documentos relacionados
 
 - [README — instalação, execução e resultados](../../README.md)
+- [Operação com múltiplas estações](../operacao/01-multiplas-estacoes.md)
 - [Matriz da Entrega 6](../entrega-6/README.md)
 - [Regras de negócio](../requisitos/01-regras-de-negocio.md)
 - [Requisitos funcionais](../requisitos/02-requisitos-funcionais.md)

@@ -19,7 +19,7 @@ terceiros.
 ## Matriz de conformidade inicial
 
 Auditoria inicialmente realizada na branch `feat/sinalizacao-fisica` e
-reconciliada em 16/09/2026 com `origin/main` no commit `f335140`. Os estados
+reconciliada em 16/09/2026 com `origin/main` no commit `962e4b7`. Os estados
 abaixo descrevem a branch documental criada dessa base; não afirmam homologação
 da montagem nem publicação da documentação no repositório remoto.
 
@@ -29,14 +29,14 @@ a arquitetura, a montagem, os testes nem as evidências exigidas para a Entrega 
 
 | Critério da atividade | Artefato atual | Estado inicial | Evidência ou lacuna |
 | --- | --- | --- | --- |
-| Código-fonte desenvolvido | `edge/`, `backend/`, `frontend/`, `model_lifecycle/`, `scripts/`, `tests/` | Presente e testado automaticamente | 161 testes gerais e 33 testes do backend aprovados; frontend passou por lint e build |
+| Código-fonte desenvolvido | `edge/`, `backend/`, `frontend/`, `model_lifecycle/`, `scripts/`, `tests/` | Presente e testado automaticamente | 167 testes gerais e 37 testes do backend aprovados; frontend passou por lint e build |
 | Esquemáticos elétricos | [`docs/esquematico/`](../esquematico/esquematico-eletrico.md), incorporado pelo PR #39 | Presente, revisão elétrica pendente | O escopo documental foi limitado a Raspberry Pi, câmera e sensor; o circuito ainda requer conferência elétrica e evidência da montagem real |
 | Instruções de montagem | Manual da câmera, sensor E18-D80NK, Raspberry Pi 5 e alimentação, a consolidar | Pendente | A montagem final não inclui LEDs nem buzzer e ainda precisa ser ensaiada fisicamente |
-| Diagramas finais de arquitetura | [`docs/arquitetura/diagrama-arquitetural.md`](../arquitetura/diagrama-arquitetural.md) | Atualizado no working tree; render visual pendente | Revisão 0.8.0 inclui estação Edge modular, outbox contínua, MQTT autenticado, backend, SQLite e dashboard React; falta inspecionar a renderização dos três Mermaid |
+| Diagramas finais de arquitetura | [`docs/arquitetura/diagrama-arquitetural.md`](../arquitetura/diagrama-arquitetural.md) | Atualizado no working tree; render visual pendente | Revisão 0.9.0 inclui múltiplas estações, preview HTTP, outbox contínua, MQTT autenticado, backend, SQLite e dashboard React; falta inspecionar a renderização dos quatro Mermaid |
 | Pré-requisitos e recursos | [`README.md`](../../README.md) | Parcial | Lista extensa existe, mas mistura itens atuais e futuros e ainda não foi ensaiada em clone limpo |
 | Dependências e instalação | `pyproject.toml`, `uv.lock`, `backend/pyproject.toml`, `backend/uv.lock`, README | Parcial | Edge/backend têm locks; Picamera2 depende do sistema; acesso DVC é externo e precisa de procedimento de autorização |
 | Configuração | `.env.example`, `compose.yaml`, `Makefile`, `scripts/configurar_env.py`, README | Presente; ensaio limpo pendente | `make up` preserva valores existentes, completa chaves ausentes e gera credenciais locais; falta reproduzir em host sem configuração prévia |
-| Execução | `Makefile`, `scripts/`, README | Presente; ensaio físico pendente | README separa serviços, estação contínua, inferência sem hardware, verificação e encerramento seguro |
+| Execução | `Makefile`, `scripts/`, README e [`docs/operacao/01-multiplas-estacoes.md`](../operacao/01-multiplas-estacoes.md) | Presente; ensaio físico pendente | README separa serviços, preview, estação contínua, inferência sem hardware, múltiplas estações, verificação e encerramento seguro |
 | Resultado que confirma execução | `/health`, dashboard, API, logs e testes | Presente; evidência final pendente | README informa consultas e resultados observáveis; ainda é necessário registrar o ensaio integrado ligado ao SHA final |
 | Código compreensível | Pacotes por aquisição, inferência, mensagens, orquestração e módulos do backend | Presente | Responsabilidades principais são localizáveis; o pacote experimental de atuação não fará parte da `main` |
 | Reprodução completa por terceiro | Ainda sem evidência dedicada | Pendente | Exige clone limpo por terceiro e registro de sistema, versões, SHA, comandos, duração e bloqueios |
@@ -55,6 +55,10 @@ a arquitetura, a montagem, os testes nem as evidências exigidas para a Entrega 
 - configuração segura do `.env` por `scripts/configurar_env.py`;
 - captura configurável e gravação opcional dos quadros inspecionados;
 - dashboard React servido por Nginx, com consumo REST/SSE do backend;
+- preview HTTP da câmera na porta configurável `PREVIEW_PORT`;
+- operação com múltiplas estações Edge conectadas ao broker central;
+- criação manual de alarmes pelo dashboard/API;
+- republicação do último status da estação após reconexão MQTT;
 - testes automatizados com dublês de hardware.
 
 ### Limites que não podem ser ocultados
@@ -88,12 +92,12 @@ Validações executadas em 16/09/2026, sem alterar código-fonte:
 
 | Verificação | Resultado |
 | --- | --- |
-| Links locais do README, arquitetura, matriz, esquemático, plano e checklist | 27 links verificados; nenhum ausente |
+| Links locais do README, arquitetura, matriz, esquemático, operação, plano e checklist | 31 links verificados; nenhum ausente |
 | Higiene do diff | `git diff --check` aprovado |
-| Testes gerais do Edge, modelo e CLIs | 161 aprovados após integrar `68642fc` |
-| Testes do backend em Python 3.12 isolado | 33 aprovados, 1 integração MQTT ignorada e 1 aviso de depreciação do Starlette |
+| Testes gerais do Edge, modelo e CLIs | 167 aprovados após integrar `962e4b7` |
+| Testes do backend em Python 3.12 isolado | 37 aprovados, 1 integração MQTT ignorada e 1 aviso de depreciação do Starlette |
 | Ruff e frontend | Ruff, lint TypeScript/ESLint e build de produção aprovados |
-| Estrutura da arquitetura | 3 blocos Mermaid completos; renderização visual ainda pendente |
+| Estrutura da arquitetura | 4 blocos Mermaid completos; renderização visual ainda pendente |
 | Payload de inspeção do diagrama | Aceito por `InspectionCreateDTO` no ambiente Python 3.12 do backend |
 
 A suíte do backend precisou ser executada fora da restrição do sandbox porque a

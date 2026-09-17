@@ -10,7 +10,7 @@ em clone limpo e um ensaio físico produzem as evidências que permitem declarar
 a reprodução concluída.
 
 O planejamento foi iniciado em 16/09/2026 e transferido para a branch
-`docs/entrega-6`, criada da `origin/main` e atualizada até o commit `f335140`.
+`docs/entrega-6`, criada da `origin/main` e atualizada até o commit `962e4b7`.
 A implementação experimental de LEDs e buzzer não será integrada à `main` e
 fica explicitamente fora da Entrega 6.
 
@@ -114,6 +114,7 @@ As tarefas detalhadas e seus critérios de aceitação estão em
 | Dashboard recente ainda não foi ensaiado no hardware alvo | Médio | Executar lint/build e validar o fluxo integrado via Compose na Raspberry Pi 5 |
 | Testes simulados serem confundidos com homologação física | Alto | Manter estados de evidência separados e exigir registro de ensaio na Raspberry Pi 5 |
 | Instruções variarem entre `Makefile`, `.env.example` e README | Médio | Eleger o README como índice canônico e conferir cada comando contra a CLI/Compose |
+| Identificadores duplicados em múltiplas estações derrubarem clientes MQTT | Alto | Exigir `STATION_CODE` e `DEVICE_ID` únicos e validar cada estação pelo guia operacional |
 
 ## Questões abertas que exigem confirmação da equipe
 

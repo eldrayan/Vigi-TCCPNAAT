@@ -486,6 +486,36 @@ curl -f http://localhost:8000/api/inspecoes/resumo
 O histórico persistido inclui resultado, confiança e, quando não conforme, o
 tipo da não conformidade. O dashboard recebe atualizações por SSE.
 
+Para confirmar o estado publicado pelo processo Edge, consulte a estação
+cadastrada (substitua `1` pelo identificador retornado pela API):
+
+```bash
+curl -f http://localhost:8000/api/estacoes/1/status
+```
+
+O resultado esperado durante `make edge-up` informa conexão, sensor e câmera
+como `ONLINE`; o processamento pode alternar entre `ONLINE` e `IDLE`. Se a
+conexão MQTT cair e retornar, o Edge republica automaticamente o último estado.
+
+O operador também pode criar um alarme manual pelo dashboard. Para validar o
+mesmo fluxo diretamente pela API, use os identificadores de uma estação e de
+um lote pertencente a ela:
+
+```bash
+curl -f -X POST http://localhost:8000/api/alarmes \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "station_id": 1,
+    "batch_id": 1,
+    "name": "Verificação manual",
+    "threshold": 15.0,
+    "alarm_type": "LIMITE_NAO_CONFORMIDADE"
+  }'
+```
+
+A API responde com HTTP `201`, persiste o alarme e publica `alarm.created` no
+stream SSE. IDs inexistentes ou um lote de outra estação retornam HTTP `404`.
+
 ### 6. Testar sem o sensor ou a câmera
 
 Para demonstrar o restante da esteira com uma imagem existente, sem hardware

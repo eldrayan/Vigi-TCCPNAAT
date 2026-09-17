@@ -140,6 +140,7 @@ containers/processos, módulos e sequência de uma inspeção.
 - [x] Componentes implementados correspondem à base recente da `main`.
 - [x] Tópicos MQTT, rotas, bancos e módulos correspondem ao código.
 - [x] Limites da outbox e do frontend estão explícitos.
+- [x] Topologia de múltiplas estações e preview HTTP correspondem à `main`.
 
 **Verificação:**
 
