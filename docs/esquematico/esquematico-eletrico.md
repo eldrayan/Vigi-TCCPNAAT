@@ -1,100 +1,113 @@
-> **Projeto:** Vigi — Sistema Embarcado para Inspeção e Triagem de Linhas de Envase
-> **Revisão:** 1.2.0
-> **Responsável:** Squad Vigi (Lead: Elder Rayan Oliveira Silva)
-> **Milestone:** Engenharia de Hardware e Esquemático Elétrico
+# Hardware e interfaces da estação Vigi
 
-> [!CAUTION]
-> **Artefato candidato, ainda não aprovado para montagem.** O nível lógico e o
-> dimensionamento da interface precisam ser conferidos contra o modelo exato do
-> E18-D80NK, medições da bancada e documentação técnica dos componentes antes de
-> energizar a GPIO. A versão final deverá registrar evidências do circuito
-> realmente montado.
+Este guia descreve as interfaces exigidas pelo software entregue. **A montagem elétrica não foi validada nesta revisão documental.** O desenho Fritzing legado é preservado como referência histórica; não constitui um circuito aprovado para energização. A reprodução física completa permanece pendente da revisão do circuito e de ensaio na bancada.
 
----
+O sistema captura imagens quando detecta um recipiente, classifica e publica a inspeção. Não há controle implementado de cargas de potência ou descarte automático. O movimento da esteira, sua alimentação e seu comando são externos ao software atual.
 
-### Registro de Alterações
+## Componentes e evidência disponível
 
-| Versão | Responsável | Data | Alterações |
-| :--- | :--- | :--- | :--- |
-| **1.0.0** | Squad Vigi | 15/09/2026 | Elaboração inicial do circuito e dimensionamento de proteção GPIO. |
-| **1.1.0** | Squad Vigi | 15/09/2026 | Atualização do esquemático da bancada PoC. |
-| **1.2.0** | Squad Vigi | 16/09/2026 | Alinhamento ao escopo final: Raspberry Pi, câmera, sensor E18-D80NK e interface elétrica. |
+| Item | Quantidade | Evidência e limite |
+| --- | --- | --- |
+| Raspberry Pi 5 | 1 | Plataforma prevista no projeto; capacidade de RAM e funcionamento físico não foram aferidos nesta revisão. |
+| Sensor fotoelétrico E18-D80NK | 1 | Identificado em `edge/acquisition/sensor.py`; fabricante, variante, alimentação e características elétricas da unidade física precisam ser confirmados. |
+| Câmera CSI ou USB | 1 | Backends Picamera2 e OpenCV implementados; modelo, cabo, resolução útil e compatibilidade devem ser registrados na bancada. |
+| Fonte e armazenamento da Raspberry | 1 de cada | Selecionar conforme a placa e os periféricos efetivos; registrar modelo e capacidade utilizados. |
+| Condicionamento elétrico e interligações | A definir | Necessários para entregar níveis compatíveis à entrada GPIO; circuito, valores e tolerâncias pendentes de validação. |
+| Suporte, iluminação e transporte de recipientes | Conforme montagem | Devem manter posição e iluminação reproduzíveis; não são atuados pelo código. |
 
----
+Os valores dos componentes presentes nos artefatos antigos não integram uma BOM elétrica validada e precisam ser confirmados contra a montagem real.
 
-## Visão Geral do Sistema Elétrico da Bancada (PoC)
+## Diagrama de interfaces implementadas
 
-O sistema elétrico da bancada de testes (Prova de Conceito - PoC) do **Vigi** integra os elementos do fluxo de inspeção em tempo real:
-1. **Unidade Central de Processamento:** Raspberry Pi 5 (8GB), responsável pela execução do pipeline de inferência de visão computacional e pela orquestração da inspeção.
-2. **Sensoriamento de Presença Industrial:** Sensor fotoelétrico infravermelho reflexivo **E18-D80NK** (saída NPN coletor aberto alimentada a 5V).
-3. **Condicionamento de Nível Lógico (3,3V LVTTL):** Divisor resistivo ($R_{10} = 1\text{ k}\Omega$ e $R_{11} = 2.2\text{ k}\Omega$) para proteção da entrada digital da Raspberry Pi contra sobretensão.
+O diagrama abaixo é uma descrição funcional versionável, **não um esquemático elétrico de montagem**. Ele não define alimentação, pinagem do sensor nem o circuito de condicionamento.
 
----
+```mermaid
+flowchart LR
+    S[Sensor de presença] --> C[Condicionamento externo a validar]
+    C -->|Sinal ativo baixo| G[GPIO BCM 17 - pino físico 11]
+    G --> E[Edge na Raspberry Pi]
+    CSI[Câmera CSI - Picamera2] --> E
+    USB[Câmera USB - OpenCV] --> E
+    E --> I[Captura e classificação]
+    I --> M[Outbox e publicação MQTT]
+```
 
-## Esquemático Elétrico Oficial da Bancada
+Use uma das alternativas de câmera. O código não comanda atuador de descarte.
 
-O circuito foi documentado no **Fritzing** para comparação com a montagem real.
-A validação elétrica e física ainda precisa ser registrada antes da entrega final.
+## Pinagem e comportamento esperado pelo software
 
-![Esquemático Elétrico Oficial](./VigiEsquematico.png)
+**BCM é o número lógico usado pelo software; pino físico é a posição no conector.** O padrão `GPIO_PIN=17` indica BCM 17, correspondente ao pino físico 11, e não ao pino físico 17. A orientação do conector precisa ser conferida antes da conexão.
 
-* Arquivo de projeto Fritzing editável: [`VigiEsquematico.fzz`](./VigiEsquematico.fzz)
+| Interface | Configuração implementada | Procedimento / limite |
+| --- | --- | --- |
+| Entrada do sensor | BCM 17, pino físico 11, por padrão | Recebe somente a saída do condicionamento elétrico previamente validado. A alteração de `GPIO_PIN` exige conferir o novo mapeamento físico. |
+| Referência elétrica | GND, por exemplo pino físico 6 | O circuito de interface deve especificar sua referência; não deduzir o retorno pela cor dos fios. |
+| Alimentação do sensor | Não definida pelo software | Conferir datasheet da variante e projetar alimentação e retorno antes de ligar. Não usar a tabela histórica como aprovação. |
+| Câmera CSI | `CAMERA_BACKEND=picamera2`, `CAMERA=0` por padrão | Confirmar cabo e conector compatíveis com a Raspberry Pi 5 e a câmera. Conectar com alimentação desligada. |
+| Câmera USB | `CAMERA_BACKEND=opencv`, índice em `CAMERA` | Conferir qual dispositivo corresponde ao índice e seu acesso pelo usuário do Edge. |
 
----
+A classe `PhotoelectricSensor` instancia `DigitalInputDevice` com `pull_up=None` e `active_state=False`: a entrada precisa ter estado elétrico definido pelo circuito externo. Embora a assinatura da classe tenha um argumento `pull_up`, esse argumento não configura o dispositivo na implementação atual. Não presumir pull-up interno habilitado.
 
-## Mapeamento de Conexões da Raspberry Pi 5 (Header de 40 Pinos)
+- Sem recipiente: o software espera entrada inativa, em nível alto compatível com a GPIO.
+- Com recipiente: o software espera nível baixo; a ativação gera um evento de captura.
+- `DEBOUNCE_MS=50` é o padrão; a classe aceita de 30 a 100 ms.
+- Há bloqueio de novos gatilhos por 0,2 s após o último gatilho aceito (`rearm_delay_s`). Isso não comprova uma peça por evento nem a vazão máxima da linha: espaçamento, velocidade e posição precisam de ensaio.
 
-Abaixo está o mapeamento detalhado de cada conexão realizada no header da Raspberry Pi 5:
+Esses parâmetros são filtros de software. Não comprovam sincronismo físico, latência ponta a ponta ou eliminação de todos os disparos espúrios.
 
-| Pino Físico | Nome / Função BCM | Direção | Conexão de Destino | Função Técnica |
-| :---: | :---: | :---: | :--- | :--- |
-| **04** | **5.0V Power** | Saída | Alimentação do sensor E18-D80NK | Barramento de alimentação 5V DC |
-| **09** | **GND** | Referência | Terminal 2 do Resistor $R_{11}$ ($2.2\text{ k}\Omega$) | Referência de terra do divisor de tensão |
-| **11** | **GPIO 17** | **Entrada Digital** | Nó central do divisor (Terminal 2 de $R_{10}$ e Terminal 1 de $R_{11}$) | Sinal de gatilho do sensor com debounce de 50 ms (RNF08) |
-| **34** | **GND** | Referência | Pino 2 do Sensor E18-D80NK | Referência de terra do sensor fotoelétrico |
-| **Porta CSI / USB** | **Interface de Câmera** | Entrada de Dados | Módulo de Câmera (RPi Cam / USB) | Captura instantânea sincronizada da garrafa |
+## Artefatos elétricos históricos — NÃO validados
 
-> [!NOTE]
-> Conforme as diretrizes das páginas 19 e 20 da Apostila do PNAAT 2026, a documentação visual deve refletir estritamente o hardware funcional entregue na PoC para garantir total reprodutibilidade. Periféricos como o Display OLED SSD1306 e LEDs auxiliares de status constam na arquitetura conceitual para a fase de industrialização, não estando conectados nesta montagem para evitar inconsistência com o código em execução.
+![Desenho elétrico histórico, pendente de revisão e validação](./VigiEsquematico.png)
 
----
+- [Projeto Fritzing legado](./VigiEsquematico.fzz).
 
-## Circuito de Proteção da GPIO (Divisor de Tensão)
+A documentação anterior atribuía ao divisor de 1 kΩ e 2,2 kΩ uma tensão nominal de aproximadamente 3,44 V para entrada de 5 V e declarava esse resultado seguro. **Essa declaração foi retirada:** o cálculo nominal não valida compatibilidade elétrica, tolerâncias ou transientes. A topologia real da saída do sensor também precisa ser confirmada; não presumir que toda variante forneça a mesma saída.
 
-### Dimensionamento Elétrico
-O sensor **E18-D80NK** opera alimentado em **5V**. Sua saída NPN com pull-up envia sinal de 5V quando o feixe não está obstruído. Como as entradas GPIO da Raspberry Pi 5 toleram apenas **3,3V**, a ligação direta causaria queima do circuito de entrada do chip de I/O RP1 / Broadcom.
+Antes de ligar qualquer saída à GPIO, o responsável pela bancada deve documentar o circuito definitivo, referências dos componentes, limites do fabricante e medições de nível alto/baixo. O desenho existente precisa ser corrigido e acompanhado dessas evidências. Este guia não fornece um circuito substituto sem essa verificação.
 
-O divisor resistivo implementado utiliza resistores de precisão com os seguintes valores:
-* $R_{10} = 1\text{ k}\Omega$ (ligado entre a saída do sensor e a GPIO 17)
-* $R_{11} = 2.2\text{ k}\Omega$ (ligado entre a GPIO 17 e o terra GND)
+## Preparação, montagem e verificação
 
-$$V_{\text{GPIO17}} = V_{\text{IN}} \times \frac{R_{11}}{R_{10} + R_{11}} = 5\text{V} \times \frac{2.2\text{ k}\Omega}{1.0\text{ k}\Omega + 2.2\text{ k}\Omega} = 5\text{V} \times \frac{2.2}{3.2} \approx 3.43\text{V}$$
+1. Identificar a placa, a câmera, o cabo, a fonte e a variante do sensor. Registrar fotos legíveis e datasheets; verificar a numeração física do conector.
+2. Com a Raspberry e o sensor desligados, fixar câmera e sensor de forma que a detecção corresponda à região enquadrada. Instalar a câmera usando a interface escolhida e o cabo correto. Manter alimentação e controle da esteira documentados separadamente.
+3. Revisar e documentar o condicionamento externo. Com a GPIO desconectada, medir os níveis de saída com e sem recipiente e avaliar tolerâncias e comportamento na energização. **Não prosseguir para a conexão GPIO enquanto a compatibilidade não estiver demonstrada.**
+4. Desligar as alimentações e interligar a saída validada à BCM 17/pino 11 e a referência conforme o circuito aprovado. Não conectar sinal de 5 V diretamente à GPIO.
+5. Preparar o ambiente e recuperar o modelo conforme o [README](../../README.md). Conferir `GPIO_PIN`, `DEBOUNCE_MS`, `CAMERA_BACKEND` e `CAMERA` antes de executar.
+6. Executar `make preview-camera` para ajustar o enquadramento. Encerrar esse processo antes de `make edge-up`, pois a câmera pode não aceitar dois consumidores simultâneos.
+7. Para verificar o sensor isoladamente, sem disputa com o processo Edge, executar o diagnóstico abaixo. Colocar e retirar um recipiente: esperar alternância de `False` para `True` e retorno a `False`.
+8. Encerrar o diagnóstico e iniciar `make edge-up`. Passar recipientes individualmente e conferir inspeção nos logs e sua chegada ao backend/dashboard conforme o README. Repetir com intervalos e condições de iluminação documentados.
 
-Com $R_{11} = 2.0\text{ k}\Omega$, a tensão resultante é de $3.33\text{V}$. Ambos os valores situam a tensão de nível alto perfeitamente dentro da margem de segurança do padrão LVTTL de 3,3V.
+Após preparar o ambiente Python do Edge, executar na raiz do repositório:
 
-### Comportamento Lógico
-* **Sem objeto (feixe livre):** A saída do sensor permanece em nível alto (5V). O divisor entrega aproximadamente 3,4V na GPIO 17 (Nível Lógico 1).
-* **Com objeto (presença do frasco):** O transistor NPN do sensor satura, puxando a linha para 0V. A GPIO 17 detecta a borda de descida (Nível Lógico 0), disparando a interrupção determinística de captura (RN01).
+```bash
+.venv/bin/python - <<'PY'
+import time
+from edge.acquisition.sensor import PhotoelectricSensor
 
----
+sensor = PhotoelectricSensor(pin=17, debounce_ms=50)
+try:
+    while True:
+        print('Recipiente detectado:', sensor.is_detected, flush=True)
+        time.sleep(0.25)
+except KeyboardInterrupt:
+    pass
+finally:
+    sensor.close()
+PY
+```
 
-## Lista de Componentes da Bancada (Bill of Materials - BOM)
+Esse diagnóstico usa a BCM 17 explicitamente; ajustar o argumento se a montagem aprovada utilizar outro pino. Não chamar `trigger()` para validar hardware: esse método produz um evento sintético.
 
-| Item | Componente | Especificação | Qtd. | Função no Sistema |
-| :---: | :--- | :--- | :---: | :--- |
-| 1 | **Raspberry Pi 5 (8GB)** | SBC ARM Cortex-A76 quad-core @ 2.4GHz | 1 | Processamento central, inferência Edge AI e orquestração |
-| 2 | **Sensor E18-D80NK** | Sensor fotoelétrico reflexivo infravermelho NPN (3 a 80 cm) | 1 | Gatilho determinístico de posicionamento milimétrico do frasco |
-| 3 | **Resistor 1.0 kΩ** | Resistor de precisão 1/4W (R10) | 1 | Resistor série da interface da GPIO |
-| 4 | **Resistor 2.2 kΩ** | Resistor de precisão 1/4W (R11) | 1 | Resistor ligado ao GND na interface da GPIO |
-| 5 | **Câmera RPi / USB** | Módulo de câmera compatível | 1 | Captura ótica no plano focal |
-| 6 | **Fonte USB-C PD 27W** | Fonte regulada compatível com Raspberry Pi 5 | 1 | Alimentação primária da placa e periféricos |
-| 7 | **Protoboard e jumpers** | Placa de prototipagem e cabos de conexão | 1 | Distribuição dos sinais e barramentos da bancada |
+## Diagnóstico e evidências de aceitação física
 
----
+| Sintoma | Verificação |
+| --- | --- |
+| Log informa “Operando em modo stub” | A inicialização GPIO falhou; verificar dependências, acesso à GPIO e execução na placa. O processo continuar aberto não comprova que há sensor funcional. |
+| Sensor sempre inativo ou sempre ativo | Com o Edge parado, conferir alinhamento, alimentação, referência, níveis medidos, pino BCM e circuito externo. |
+| Duas inspeções para uma peça ou peças não detectadas | Registrar espaçamento e velocidade; investigar sinal e posicionamento antes de ajustar debounce. Considerar o bloqueio de 0,2 s. |
+| Câmera não abre | Conferir backend, índice, cabo e permissões; encerrar preview/coletor/outro processo que esteja usando a câmera. |
+| Dashboard mostra sensor ONLINE, mas não detecta peças | Esse estado publicado não substitui a verificação elétrica; conferir logs de stub e transições físicas. |
+| Classificação incorreta | Conferir foco, iluminação, posição e domínio do modelo; a revisão documental não valida acurácia na bancada. |
 
-## Relação com os Requisitos do Projeto
+Registrar: versão do código/modelo, circuito definitivo, componentes, níveis medidos, parâmetros, fotos da montagem, quantidade de peças e eventos, perdas/duplicações e evidências de chegada ao backend. A confirmação MQTT não prova persistência no backend.
 
-* **RN01 — Disparo Determinístico:** Garantido pelo sensor E18-D80NK conectado na GPIO 17, permitindo capturar o frame exatamente quando o centro da garrafa cruza a linha de visão.
-* **RN02 — Decisão Preventiva de Fail-Safe:** Em caso de falha de leitura ou baixa confiança, o software registra a inspeção como não conforme e publica o evento para supervisão.
-* **RNF01 — Latência Ponta a Ponta < 500 ms:** Deve ser comprovada no hardware alvo considerando sensor, captura, inferência, persistência e publicação.
-* **RNF08 — Filtro de Debounce de 30 a 100 ms:** Configurado em 50 ms no módulo `edge/acquisition/sensor.py`, eliminando falsos positivos originados por reflexos ou trepidação mecânica.
+**Estado desta revisão:** contratos de software inspecionados; circuito, câmera, sensor, captura física, latência e operação ponta a ponta não ensaiados. Requisitos de desempenho permanecem metas até haver medições. Não há evidência nesta revisão para tempos específicos de inferência, posição milimétrica de captura ou descarte mecânico preventivo.

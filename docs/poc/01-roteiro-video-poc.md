@@ -28,7 +28,7 @@ A case pode aparecer na apresentação da montagem. O dashboard cabe como saída
 - Manter iluminação, fundo e enquadramento consistentes. Identificar as amostras como A e B para relacionar cada entrada à respectiva saída.
 - Mostrar a case e confirmar como a Raspberry Pi e a câmera estão acomodadas. Apontar também os elementos externos, sem dizer que toda a instalação ocupa apenas a case. Explicar onde o processamento acontece. Se houver notebook conectado por acesso remoto, identificá-lo como tela de acesso, quando esse for seu papel real.
 - Organizar a gravação para mostrar a bancada e a saída legível, por enquadramento conjunto ou captura de tela com imagem da bancada sobreposta. Mostrar o quadro realmente usado pelo modelo, quando disponível.
-- Usar o terminal da CLI de inferência. Cada chamada produz uma decisão JSON, sem preview ou janela de inferência. Para tornar a entrada identificável, filmar o recipiente e o momento da captura, ou mostrar o arquivo de imagem usado. O vídeo pode ser gravado sem criar um dashboard.
+- Usar o terminal da CLI de inferência. Cada chamada produz uma decisão JSON, sem preview ou janela de inferência. Para tornar a entrada identificável, filmar o recipiente e o momento da captura, ou mostrar o arquivo de imagem usado. O vídeo pode ser gravado sem incluir o dashboard no vídeo.
 - Ensaiar o acionamento manual da CLI, com uma chamada por amostra. Só apresentar captura contínua ou acionada pelo sensor E18-D80NK se essa integração estiver implementada e funcionando na versão usada.
 
 ### Dados a confirmar antes da gravação
@@ -44,7 +44,7 @@ A case pode aparecer na apresentação da montagem. O dashboard cabe como saída
 | Saída disponível | Conferir `inspection_id`, `timestamp`, `result`, `category`, `nonconformity_type`, `technical_failure_type`, `confidence`, `processing_time_ms` e `model_format` no JSON |
 | Evidência do ensaio | Registrar amostras, saídas reais e limitações observadas |
 | Case e montagem | Confirmar componentes internos e externos; medir dimensões se forem citadas |
-| Dashboard | Registrar se está integrado, se é interface com dados simulados ou se ainda está previsto |
+| Dashboard | Registrar se está integrado, se é interface com dados simulados ou se não foi demonstrado na bancada |
 | Conectividade no ensaio | Registrar uso de internet, rede local e acesso remoto; só declarar offline para as funções testadas |
 
 ### Escolha da execução no ensaio
@@ -103,7 +103,7 @@ Em caso de erro ou instabilidade, descreva o que ocorreu e a limitação observa
 
 Imagem/ação: manter a saída real visível e apontar seus campos. Se a publicação estiver habilitada, consultar na API o `inspection_id` de uma amostra e mostrar o registro correspondente dentro destes 45 segundos. Identificar a tela como API, e não como dashboard. Se o dashboard vier a ser integrado, ele poderá ocupar esse espaço. Caso contrário, usar a saída da CLI ou repetir A, sem tratar a repetição como avaliação estatística.
 
-Se o painel tiver apenas dados simulados, reservá-lo para a explicação do pitch, onde será identificado como protótipo de interface. Na PoC, preservar a saída real da inferência. Se ainda estiver previsto, citar o dashboard no encerramento como parte a integrar.
+Se o painel tiver apenas dados simulados, reservá-lo para a explicação do pitch, onde será identificado como protótipo de interface. Na PoC, preservar a saída real da inferência. Se não for demonstrado, informar que a implementação existe e que sua validação nesta montagem não foi apresentada.
 
 > A decisão resume a previsão para a imagem apresentada. [Se disponível: este score acompanha a previsão; ele não representa a acurácia global.] Nos ciclos que mostramos, observamos [resumo fiel dos resultados]. Esses testes mostram o funcionamento inicial da captura com a inferência nesta bancada. Para avaliar a qualidade do modelo, ainda precisamos considerar os testes com imagens que ficaram fora do treinamento.
 
@@ -115,7 +115,7 @@ Imagem/ação: voltar à bancada ou ao fluxo simplificado. Identificar visualmen
 
 Adaptar a fala ao que estiver funcionando:
 
-> Nesta PoC, usamos [componentes realmente usados] e mostramos os resultados das amostras. O próximo passo é [integração ainda pendente, por exemplo: ligar o gatilho do sensor à captura e à inferência]. O código já permite enviar eventos por MQTT, gravá-los no SQLite e consultá-los pela API. [Informar se esse caminho foi demonstrado.] Ainda estão previstos o dashboard e a fila persistente no Edge para lidar com falhas de comunicação. [Citar somente o que de fato falta integrar.] Também precisamos ampliar os testes de classificação e medir o tempo do ciclo.
+> Nesta PoC, usamos [componentes realmente usados] e mostramos os resultados das amostras. O próximo passo é [integração ainda pendente, por exemplo: ligar o gatilho do sensor à captura e à inferência]. O código já permite enviar eventos por MQTT, gravá-los no SQLite e consultá-los pela API. [Informar se esse caminho foi demonstrado.] O dashboard React e a fila SQLite persistente no Edge estão implementados; informar quais foram verificados nesta montagem. A confirmação no broker não comprova persistência no backend. [Citar somente o que de fato falta integrar.] Também precisamos ampliar os testes de classificação e medir o tempo do ciclo.
 
 Os atuadores estão fora do escopo atual do projeto. Por isso, a rejeição mecânica de recipientes não deve ser anunciada como próxima entrega.
 

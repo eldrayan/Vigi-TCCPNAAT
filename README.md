@@ -21,8 +21,7 @@ O sistema **Vigi** atua como uma estação intermediária de inspeção não-int
 
 ## 🎯 Delimitação de Escopo (*Scope Boundaries*)
 
-### Dentro do Escopo (*In-Scope*)
-
+### Dentro do Escopo (*In-Scope*):
 1. Detecção física determinística da passagem de recipientes na esteira de testes via sensor fotoelétrico infravermelho **E18-D80NK**.
 2. Captura sincronizada de imagem do recipiente inspecionado no ponto focal.
 3. Classificação automatizada entre recipientes conformes e não-conformes por visão computacional na borda (Edge AI na Raspberry Pi 5).
@@ -30,49 +29,93 @@ O sistema **Vigi** atua como uma estação intermediária de inspeção não-int
 5. Envio de telemetria e alertas via MQTT para o broker Mosquitto, com consumo pelo **FastAPI** e visualização no dashboard **React**.
 6. Operação autônoma com sincronização de eventos pendentes após restabelecimento de conexão.
 
-### Fora do Escopo (*Out-of-Scope*)
-
+### Fora do Escopo (*Out-of-Scope*):
 1. Atuação mecânica de braços ejetores, cilindros pneumáticos ou comandos de potência na bancada de testes.
-2. Qualquer sinalização ou atuação física por LEDs, buzzer, torres luminosas,
-   sirenes ou atuadores de potência. A implementação experimental existente na
-   branch `feat/sinalizacao-fisica` não será integrada à `main` e não faz parte
-   da Entrega 6.
+2. Instalação e acionamento de atuadores físicos dedicados (torres luminosas e buzzers externos de painel).
 3. Substituição de sistemas normatizados de segurança humana (NR-12).
 4. Integração direta com sistemas corporativos de gestão (ERP/SAP).
 5. Análise de parâmetros físico-químicos ou microbiológicos do líquido envasado.
 
 ---
 
-## 🔄 Fluxo de Operação do Protótipo
+## Arquitetura e documentação
 
-Abaixo está representado o fluxo integrado de inspeção visual, processamento em borda, comunicação e consumo de dados do sistema **Vigi**:
+```mermaid
+flowchart LR
+    Sensor[Sensor e câmera] --> Edge[Edge Python / classificador PyTorch]
+    Edge --> Outbox[(Outbox SQLite do Edge)]
+    Outbox --> MQTT[Broker Mosquitto]
+    MQTT --> API[Backend FastAPI]
+    API --> DB[(SQLite do backend)]
+    API -->|REST e SSE| UI[Dashboard React / TypeScript]
+```
 
-<p align="center">
-  <img src="docs/img/Fluxo.jpeg" alt="Fluxo Atualizado do Protótipo Vigi" width="850">
-</p>
+O Edge e o backend são processos separados. O backend é um monólito modular
+com módulos de inspeções, operações e alarmes. Seu banco não é a outbox do Edge.
+A confirmação de publicação MQTT não comprova que o backend persistiu a inspeção:
+confira também o histórico da API ou do dashboard.
 
-1. **Sensor Fotoelétrico (E18-D80NK):** Detecta a presença física do recipiente na esteira e dispara o gatilho de hardware.
-2. **Câmera Digital:** Realiza a captura sincronizada do quadro focal do frasco posicionado.
-3. **Raspberry Pi 5 (Edge AI):** Executa o pipeline de **Visão Computacional** e modelo de classificação para identificação de não-conformidades.
-4. **Comunicação MQTT:** Transmite assincronamente os eventos de inspeção e telemetria para o broker Mosquitto.
-5. **Consumo dos Dados:**
-   * **SQLite:** Persistência local transacional dos registros de inspeção (*offline-first* com retenção de 30 dias).
-   * **Backend Python:** O FastAPI consome MQTT, acessa o SQLite e fornece dados ao dashboard por REST/SSE. A camada de dados permanece em Python para manter o mesmo ecossistema do modelo de visão computacional.
-   * **Frontend JavaScript:** O React apresenta indicadores, gráficos e alarmes no navegador, sem acessar diretamente o broker ou o banco de dados.
+- [Arquitetura, contratos e fluxos](docs/arquitetura/diagrama-arquitetural.md)
+- [Montagem e limites da validação elétrica](docs/esquematico/esquematico-eletrico.md)
+- [Recuperação de modelos e datasets](docs/dvc-dagshub.md)
+- [Manual do dashboard e diagnóstico](docs/operacao/02-dashboard-e-diagnostico.md)
+- [Múltiplas estações](docs/operacao/01-multiplas-estacoes.md)
+- [Matriz de aceitação e verificações da Entrega 6](docs/validacao-entrega-6.md)
 
-### Organização em monólito modular
+## Instalação inicial para operação
 
-O backend do Vigi adota a organização de um monólito modular: uma única aplicação FastAPI reúne as funções de negócio, separadas em módulos com responsabilidades definidas. O módulo de inspeções concentra rotas, validação dos dados, serviços e persistência em `backend/app/modules/inspections/`. Configuração, banco e comunicação MQTT ficam na infraestrutura compartilhada.
+O caminho principal usa uma Raspberry Pi 5 com Raspberry Pi OS **64 bits**, câmera
+CSI compatível com Picamera2 (ou webcam USB/OpenCV), sensor E18-D80NK e rede local.
+Consulte o manual elétrico antes de conectar o sensor: o circuito registrado ainda
+precisa de validação física. Não há ejeção mecânica implementada.
 
-Essa organização permite documentar cada responsabilidade junto do código correspondente e facilita a manutenção, sem exigir um serviço independente para cada função de negócio. A divisão por fluxo de dados dos diagramas complementa essa visão, mostrando como as informações passam entre os componentes.
+É necessário armazenamento para o sistema, ambiente Python, imagens Docker, modelo,
+bancos e capturas opcionais. Não há capacidade mínima medida nesta revisão; verifique
+`df -h` e dimensione a retenção/capturas para a bancada. Use alimentação e refrigeração
+adequadas à Raspberry Pi 5, conforme a documentação do fabricante.
 
-O Edge é um processo separado que publica eventos, e o Mosquitto é um serviço de infraestrutura. O termo monólito modular descreve a organização do backend; o sistema completo inclui esses componentes e o frontend React no navegador.
+O Edge aceita Python 3.11–3.13; para CSI, use `/usr/bin/python3` e os bindings da
+distribuição. A versão exata do Raspberry Pi OS e a combinação câmera/cabo devem
+ser registradas no ensaio de bancada. Não se exige GPU CUDA nem treinamento para operar.
 
-### Separação da stack
+```bash
+sudo apt update
+sudo apt install -y git make curl python3-venv python3-picamera2 python3-opencv python3-lgpio
+```
 
-O processamento de imagens, a inferência do modelo, a comunicação MQTT, a persistência e a API são implementados em **Python**. Essa escolha reduz a quantidade de tecnologias na camada de dados e facilita o compartilhamento de modelos, validações e contratos entre o processamento em borda e o backend.
+Instale [Docker Engine e o plugin Compose para Debian](https://docs.docker.com/engine/install/debian/)
+seguindo o procedimento oficial compatível com a versão do sistema. Confira também
+os [passos de acesso ao daemon](https://docs.docker.com/engine/install/linux-postinstall/):
+os comandos abaixo pressupõem que seu usuário consegue executar `docker info`.
+O grupo `docker` concede privilégios equivalentes a root; use apenas uma conta autorizada.
 
-Somente o frontend é implementado em **JavaScript**, com **React**. O React permite dividir o dashboard em componentes reutilizáveis, atualizar apenas os elementos afetados por novos eventos e integrar bibliotecas maduras como **Chart.js** e **Lucide**. Como o código é executado no navegador, o dashboard não adiciona uma segunda linguagem ao processamento de dados da Raspberry Pi.
+Instale o `uv` pelo [instalador oficial](https://docs.astral.sh/uv/getting-started/installation/):
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh -o /tmp/vigi-install-uv.sh
+sh /tmp/vigi-install-uv.sh
+export PATH="$HOME/.local/bin:$PATH"
+git clone https://github.com/eldrayan/Vigi-TCCPNAAT.git
+cd Vigi-TCCPNAAT
+uv --version
+docker info
+docker compose version
+make setup-rpi
+```
+
+Comece em um clone sem `.venv`: `make setup-rpi` só cria o ambiente com
+`--system-site-packages` se ele ainda não existir. Para preservar um ambiente anterior
+incompatível, renomeie-o antes de repetir o setup, por exemplo
+`mv .venv .venv.backup-antes-csi` (escolha um destino que ainda não exista).
+Confirme o acesso aos drivers:
+
+```bash
+uv run --no-sync python -c 'import picamera2, cv2, lgpio; print("Drivers disponíveis")'
+```
+
+Para webcam USB, Picamera2 não é o backend usado; configure `CAMERA_BACKEND=opencv`.
+Siga agora [Reprodução ponta a ponta](#reprodução-ponta-a-ponta), começando pela
+recuperação do modelo. As seções de coleta e treinamento são opcionais para operação.
 
 ---
 
@@ -88,44 +131,18 @@ Somente o frontend é implementado em **JavaScript**, com **React**. O React per
 ## 📁 Estrutura do Repositório
 
 ```text
-├── docs/
-│   ├── arquitetura/            # Diagramas e especificações arquiteturais (Roger Pressman)
-│   │   └── diagrama-arquitetural.md
-│   ├── entrega-6/README.md     # Matriz de conformidade e reprodutibilidade
-│   ├── esquematico/            # Engenharia elétrica e esquemático da bancada
-│   │   └── esquematico-eletrico.md
-│   ├── img/                    # Diagramas visuais e esquemáticos do sistema
-│   │   └── Fluxo.jpeg
-│   └── requisitos/             # Especificação de Requisitos (IEEE 29148 / PNAAT)
-│       ├── 01-regras-de-negocio.md
-│       ├── 02-requisitos-funcionais.md
-│       ├── 03-requisitos-nao-funcionais.md
-│       └── 05-requisitos-tecnicos.md
-├── edge/                        # Aplicação executada na Raspberry Pi
-│   ├── config.py                # Configuração e argumentos do nó de borda
-│   ├── acquisition/             # Contrato e backends de câmera
-│   │   └── backends/            # Picamera2 e OpenCV/USB
-│   ├── collection/              # Caso de uso de coleta do dataset
-│   │   ├── controller.py        # Coordenação do fluxo de captura
-│   │   ├── state.py             # Estado da sessão e classes
-│   │   ├── image_store.py       # Gravação atômica dos JPEGs
-│   │   ├── manifest.py          # Metadados da coleta
-│   │   └── views/               # Interfaces OpenCV e terminal/SSH
-│   ├── tools/
-│   │   └── collect_dataset.py   # Composição da ferramenta
-│   └── tests/                   # Testes unitários do Edge
-├── frontend/                    # Dashboard React, build Vite e servidor Nginx
-├── model_lifecycle/             # Ciclo de vida do modelo de classificação
-│   ├── inspection_classes.py    # Classes e códigos reconhecidos pelo Vigi
-│   ├── dataset_validation.py    # Integridade e identificação do dataset
-│   ├── model_evaluation.py      # Execução e relatórios da avaliação
-│   ├── quality_metrics.py       # Métricas e critérios do quality gate
-│   └── manifest.py              # Contrato do modelo promovido
-├── scripts/
-│   └── coletar_dataset.py       # Entrada compatível para a ferramenta modular
-├── tasks/                       # Plano e checklist da Entrega 6
-├── .gitignore
-└── README.md
+backend/             # FastAPI: módulos, infraestrutura, migrations e testes
+frontend/            # Dashboard React/TypeScript e proxy Nginx
+edge/                # Aquisição, inferência, mensageria e orquestração
+model_lifecycle/     # Dataset, manifesto, métricas e avaliação
+scripts/             # Entradas CLI de operação, coleta e MLOps
+infra/mosquitto/      # Broker autenticado e ACL por estação
+docs/                # Arquitetura, hardware, operação e requisitos
+training_configuration/ # Configurações de treinamento
+compose.yaml         # Backend, broker e frontend
+Makefile             # Comandos reproduzíveis
+pyproject.toml       # Dependências Python; uv.lock fixa resoluções
+models.dvc           # Ponteiro dos modelos, não contém os pesos
 ```
 
 ---
@@ -221,9 +238,10 @@ o DVC e o cliente DagsHub antes de iniciar um treinamento longo.
 
 ### Versionamento dos artefatos
 
-O DagsHub é o único remoto DVC do projeto. O login do cliente DagsHub não é
-repassado automaticamente ao DVC: use o procedimento e o script indicados
-abaixo.
+O DagsHub é o único remoto DVC do projeto. Para publicar artefatos ou
+baixá-los em um clone, siga [`docs/dvc-dagshub.md`](docs/dvc-dagshub.md).
+O login do cliente DagsHub não é repassado automaticamente ao DVC: use o
+script indicado no guia.
 
 ```ini
 [core]
@@ -343,10 +361,25 @@ Depois, prepare o ambiente Python do Edge e recupere os artefatos DVC:
 
 ```bash
 make setup-rpi
-make dvc-pull
+uv run dagshub login
+uv run python scripts/dvc_dagshub.py pull models.dvc
 ```
 
-Confirme que `models/active/manifest.json` existe antes de continuar.
+Valide o manifesto e o peso referenciado antes de continuar:
+
+```bash
+uv run --no-sync python - <<'PYTHON'
+from pathlib import Path
+from model_lifecycle.manifest import ModelManifest
+path = Path("models/active/manifest.json")
+manifest = ModelManifest.load(path)
+print("Modelo disponível:", manifest.resolve_model_path(path))
+PYTHON
+```
+
+O login exige uma conta DagsHub com acesso aos artefatos. Consulte o
+[guia DVC](docs/dvc-dagshub.md) se o download falhar. O dataset é necessário
+para treinamento/avaliação, mas não para operar com um modelo já promovido.
 
 ### Ajustar o enquadramento antes da esteira
 
@@ -376,9 +409,8 @@ make configure-env
 nano .env
 ```
 
-O arquivo gerado já contém senhas aleatórias. Se a equipe optar por editar o
-arquivo manualmente, mantenha os usuários distintos e nunca reutilize os valores
-de exemplo abaixo:
+Mantenha os nomes de usuário distintos e troque as duas senhas de exemplo por
+valores fortes:
 
 ```env
 MQTT_BACKEND_USERNAME=vigi-backend
@@ -405,12 +437,16 @@ make ps
 curl -f http://localhost:8000/health
 ```
 
+O `/health` deve retornar HTTP 200 e
+`{"status":"healthy","database":"connected","mqtt":"connected"}`.
+HTTP 503 indica que banco ou conexão MQTT ainda não estão disponíveis.
+
 O Compose aplica as migrations automaticamente, mantém o SQLite em volume e
 inicia o dashboard, FastAPI e Mosquitto. Na rede local, acesse:
 
 ```text
-Dashboard: http://leocio-raspberry.local:8081
-Swagger:   http://leocio-raspberry.local:8000/docs
+Dashboard: http://IP_DA_RASPBERRY:8081
+Swagger:   http://IP_DA_RASPBERRY:8000/docs
 ```
 
 Se o mDNS não estiver disponível, obtenha o endereço com `hostname -I` e use
@@ -423,7 +459,8 @@ e o dashboard com `make frontend-up API_URL=http://IP_DA_RASPBERRY:8000`.
 
 ### 4. Iniciar a inspeção contínua
 
-Em outro terminal na Raspberry, conecte o sensor E18-D80NK e a câmera e execute:
+Conclua previamente a montagem e as verificações do [manual elétrico](docs/esquematico/esquematico-eletrico.md).
+Em outro terminal na Raspberry, execute:
 
 ```bash
 make edge-up HOST=localhost
@@ -486,44 +523,46 @@ curl -f http://localhost:8000/api/inspecoes/resumo
 O histórico persistido inclui resultado, confiança e, quando não conforme, o
 tipo da não conformidade. O dashboard recebe atualizações por SSE.
 
-Para confirmar o estado publicado pelo processo Edge, consulte a estação
-cadastrada (substitua `1` pelo identificador retornado pela API):
-
-```bash
-curl -f http://localhost:8000/api/estacoes/1/status
-```
-
-O resultado esperado durante `make edge-up` informa conexão, sensor e câmera
-como `ONLINE`; o processamento pode alternar entre `ONLINE` e `IDLE`. Se a
-conexão MQTT cair e retornar, o Edge republica automaticamente o último estado.
-
-O operador também pode criar um alarme manual pelo dashboard. Para validar o
-mesmo fluxo diretamente pela API, use os identificadores de uma estação e de
-um lote pertencente a ela:
-
-```bash
-curl -f -X POST http://localhost:8000/api/alarmes \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "station_id": 1,
-    "batch_id": 1,
-    "name": "Verificação manual",
-    "threshold": 15.0,
-    "alarm_type": "LIMITE_NAO_CONFORMIDADE"
-  }'
-```
-
-A API responde com HTTP `201`, persiste o alarme e publica `alarm.created` no
-stream SSE. IDs inexistentes ou um lote de outra estação retornam HTTP `404`.
-
 ### 6. Testar sem o sensor ou a câmera
 
-Para demonstrar o restante da esteira com uma imagem existente, sem hardware
-de captura, execute:
+Para demonstrar o fluxo com uma imagem existente, sem hardware de captura,
+ative primeiro o lote para publicar o contexto retido no broker. No ambiente
+padrão recém-criado, estação e lote têm ID 1:
 
 ```bash
-make infer-image IMAGE=/caminho/imagem.jpg HOST=localhost
+curl -f -X PUT http://localhost:8000/api/estacoes/1/lote-ativo \
+  -H 'Content-Type: application/json' -d '{"batch_id":1}'
+set -a
+. ./.env
+set +a
+uv run --no-sync python - <<'PY'
+from pathlib import Path
+from edge.inference import InferenceEngine
+from edge.messaging import InspectionEvent, InspectionOutbox, MQTTInspectionPublisher, OperationalContext
+engine = InferenceEngine.from_manifest(Path('models/active/manifest.json'))
+decision = engine.inspect('docs/pitch/slides/assets/01_conforme.jpg')
+event = InspectionEvent.from_decision(decision, context=OperationalContext('ESTACAO_01', 'LOTE_01'))
+outbox = InspectionOutbox(Path('data/image-smoke-outbox.db'))
+outbox.enqueue(event)
+publisher = MQTTInspectionPublisher(host='localhost', port=1883, topic=event.inspections_topic)
+outbox.deliver(publisher)
+print(event.as_dict())
+PY
 ```
+
+Em instalações existentes, consulte `/api/estacoes` e os lotes da estação
+para selecionar os IDs corretos. Use o identificador MQTT configurado para o
+dispositivo; no cadastro inicial legado ele é `ESTACAO_01`. O arquivo `.env`
+é local e deve conter apenas configurações confiáveis e sintaxe de shell válida
+para esse carregamento; coloque senhas com caracteres especiais entre aspas.
+O exemplo usa o contexto padrão explicitamente; ajuste estação e lote para
+outros cadastros. Limitação atual: `make infer-image` usa o hostname como
+dispositivo, e o receptor de contexto de `scripts/infer.py` não aplica
+credenciais MQTT. No primeiro uso com broker autenticado essa CLI pode falhar
+mesmo com `.env` correto. O exemplo acima usa o publicador autenticado existente
+e não depende desse receptor. A CLI sem MQTT continua disponível para inferência local.
+Confira o `inspection_id` emitido na lista de inspeções da API. A imagem
+incluída serve para testar transporte e persistência, não para medir acurácia.
 
 Para inspecionar os tópicos MQTT com autenticação, use:
 
@@ -541,10 +580,6 @@ make down
 
 O histórico do backend e a outbox local do Edge são preservados. Para consultar
 todos os atalhos disponíveis, execute `make help`.
-
-O acompanhamento dos artefatos, lacunas e evidências da documentação final está
-na [matriz da Entrega 6](docs/entrega-6/README.md). O trabalho restante está
-organizado no [plano](tasks/plan.md) e na [checklist executável](tasks/todo.md).
 
 Para executar somente a inferência local, sem publicação MQTT, use diretamente a CLI:
 
@@ -604,22 +639,15 @@ Docker, publicação no GHCR ou deploy automático na Raspberry Pi nesta etapa.
 
 ---
 
-## Esquema elétrico da bancada — revisão pendente
+## Esquema Elétrico da Bancada
 
-O repositório contém um projeto Fritzing candidato em `docs/esquematico/`.
-Ele ainda **não deve ser usado como instrução final de montagem**: o circuito do
-sensor precisa ser conferido contra o componente e a montagem reais antes de
-energizar a Raspberry Pi.
+O **Vigi** inclui o registro elétrico da bancada e um procedimento de revisão:
 
-<p align="center">
-  <img src="docs/esquematico/VigiEsquematico.png" alt="Esquemático Elétrico da Bancada Vigi" width="850">
-</p>
+O [manual de montagem e interfaces](docs/esquematico/esquematico-eletrico.md)
+contém pinagem, componentes e checklist de bancada. O desenho elétrico legado é
+preservado como referência pendente de validação, não como circuito certificado.
+Não existe acionamento elétrico ou mecânico de descarte no software entregue.
 
-Consulte a [análise do esquemático](docs/esquematico/esquematico-eletrico.md)
-para conhecer a pinagem proposta, a lista de materiais e as correções ainda
-necessárias. A montagem final da Entrega 6 deverá conter somente Raspberry Pi,
-câmera, sensor E18-D80NK, alimentação e o circuito de interface efetivamente
-validado pela equipe.
 
 ---
 
