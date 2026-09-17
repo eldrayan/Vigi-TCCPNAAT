@@ -496,7 +496,7 @@
           <ul>
             <li>Inferência de rede neural ultrarrápida em borda.</li>
             <li>Latência total ponta a ponta inferior a 500 ms (RNF01).</li>
-            <li>Ejeção preventiva Fail-Safe em caso de incerteza (RN02).</li>
+            <li>Decisão fail-safe e registro de baixa confiança ou falha técnica (RN02).</li>
           </ul>
         </div>
 
@@ -531,7 +531,7 @@
             <li><strong>Case Compacta:</strong> Abriga com segurança a Raspberry Pi 5 e o módulo de câmera CSI, protegendo contra umidade e poeira da linha.</li>
             <li><strong>Posicionamento Ótico:</strong> Enquadramento calibrado no plano focal exato por onde os frascos transitam.</li>
             <li><strong>Alimentação Estável:</strong> Fonte USB-C PD de 27W garantindo fornecimento contínuo de 5V / 5A para placa e periféricos.</li>
-            <li><strong>Isolamento Galvânico:</strong> Comando do atuador mecânico por módulo relé KY-019 com diodo flyback para proteção da GPIO.</li>
+            <li><strong>Interface do sensor:</strong> Condicionamento elétrico entre o E18-D80NK e a GPIO 17, sujeito à validação da montagem final.</li>
           </ul>
         </div>
 
@@ -572,7 +572,7 @@
       <div class="slide-header">
         <div class="category-tag">Resiliência Operacional</div>
         <h1 class="slide-title">Autonomia Local e Operação Offline</h1>
-        <p class="slide-subtitle">O laço crítico de inspeção e rejeição não depende de rede externa para operar</p>
+        <p class="slide-subtitle">O laço crítico de inspeção e registro não depende de rede externa para operar</p>
       </div>
 
       <div class="grid-3">
@@ -593,7 +593,7 @@
         <div class="card card-highlight">
           <div class="card-title">Determinismo Temporal</div>
           <p style="font-size: 19px; line-height: 1.6; color: #cbd5e1;">
-            O controle direto dos GPIOs via chip RP1 garante resposta rápida na leitura de borda do sensor e no acionamento do relé, eliminando variações de latência induzidas por tráfego de rede.
+            O acesso direto à GPIO pelo chip RP1 permite detectar a borda do sensor sem depender do tráfego de rede.
           </p>
         </div>
       </div>
@@ -624,7 +624,7 @@
             <li><strong>02_sem_tampa:</strong> Ausência total da tampa de rosca.</li>
             <li><strong>03_tampa_torta:</strong> Desalinhamento angular com perda de lacre.</li>
             <li><strong>04_amassado:</strong> Deformações na estrutura plástica do corpo.</li>
-            <li><strong>Fail-Safe (RN02):</strong> Classificações com baixa confiança são rejeitadas preventivamente.</li>
+            <li><strong>Fail-Safe (RN02):</strong> Classificações com baixa confiança são registradas para intervenção do operador.</li>
           </ul>
         </div>
       </div>
@@ -649,7 +649,7 @@
             <li><strong>Sensor Fotoelétrico E18-D80NK:</strong> Feixe infravermelho posicionado milimetricamente no plano da esteira para detecção da borda frontal do frasco.</li>
             <li><strong>Circuito Divisor de Tensão:</strong> Condiciona o nível de saída do sensor (5V) para a tensão segura da GPIO (3.3V LVTTL).</li>
             <li><strong>Câmera Digital:</strong> Ajustada com iluminação controlada para congelar o movimento do recipiente sem borrão.</li>
-            <li><strong>Mecanismo de Descarte:</strong> Módulo relé acionado instantaneamente na identificação de defeito para rejeição da peça.</li>
+            <li><strong>Resultado observável:</strong> A inspeção é registrada, publicada e apresentada ao operador no dashboard.</li>
           </ul>
         </div>
 
@@ -685,13 +685,12 @@
   "result": "CONFORME",
   "confidence": 0.984,
   "inference_time_ms": 23.4,
-  "action": "LIBERADO",
-  "relay_triggered": false
+  "operational_status": "REGISTRADO"
 }</div>
           <ul>
             <li>Interrupção da GPIO 17 disparada sem falsos positivos.</li>
             <li>Frame capturado e classificado com alta confiança (98.4%).</li>
-            <li>Atuador permanece em repouso e o frasco segue na esteira.</li>
+            <li>O resultado é persistido e disponibilizado para supervisão.</li>
           </ul>
         </div>
       </div>
@@ -702,7 +701,7 @@
       <div class="slide-header">
         <div class="category-tag">Ciclo de Demonstração 2</div>
         <h1 class="slide-title">Execução com Não Conformidade e Fail-Safe</h1>
-        <p class="slide-subtitle">Identificação em tempo real de falha crítica e rejeição mecânica preventiva</p>
+        <p class="slide-subtitle">Identificação em tempo real de falha crítica com registro preventivo e alerta operacional</p>
       </div>
 
       <div class="grid-2">
@@ -717,19 +716,18 @@
         </div>
 
         <div class="card card-highlight" style="justify-content: center; gap: 16px;">
-          <div class="card-title">Disparo Imediato de Fail-Safe (RN02)</div>
+          <div class="card-title">Registro Preventivo de Fail-Safe (RN02)</div>
           <div class="code-box">{
   "inspection_id": "insp_20260915_002",
   "result": "NAO_CONFORME",
   "nonconformity_type": "SEM_TAMPA",
   "confidence": 0.971,
-  "action": "EJECAO_MECANICA",
-  "relay_triggered": true
+  "operational_status": "REGISTRADO"
 }</div>
           <ul>
             <li>Classificação imediata como não conforme em 24 ms.</li>
-            <li>GPIO 23 comutada em nível alto, energizando o relé KY-019.</li>
-            <li>Frasco ejetado para o canal de descarte sem contaminar a esteira.</li>
+            <li>Evento gravado na outbox e publicado via MQTT.</li>
+            <li>Resultado disponibilizado ao operador para intervenção.</li>
           </ul>
         </div>
       </div>
@@ -892,7 +890,7 @@
           <p style="font-size: 21px; color: #38bdf8; font-weight: 600; margin-bottom: 14px;">Ação Imediata e Segregação</p>
           <ul>
             <li><strong>Alerta visual instantâneo:</strong> Notificação do defeito antes que o recipiente avance para a máquina empacotadora.</li>
-            <li><strong>Segregação automatizada:</strong> Comando elétrico de relé para desvio mecânico de frascos reprovados.</li>
+            <li><strong>Apoio à triagem:</strong> Alertas e histórico para orientar a intervenção do operador.</li>
             <li><strong>Intervenção ágil:</strong> Correção rápida na alimentação da tampadora sem necessidade de parar a linha inteira.</li>
           </ul>
         </div>
@@ -966,7 +964,7 @@
         <div class="card card-highlight" style="justify-content: center; gap: 22px;">
           <div class="card-title">Síntese do Escopo Homologado</div>
           <ul>
-            <li><strong>Hardware PoC:</strong> Raspberry Pi 5 conectada de forma segura ao sensor E18-D80NK e módulo relé.</li>
+            <li><strong>Hardware PoC:</strong> Raspberry Pi 5 conectada à câmera e ao sensor E18-D80NK, com validação da interface elétrica exigida antes da energização.</li>
             <li><strong>Pipeline MLOps:</strong> Dataset versionado, modelo YOLOv8n quantizado e inferência local determinística.</li>
             <li><strong>Supervisão Integrada:</strong> Telemetria MQTT, backend FastAPI e Dashboard React em tempo real.</li>
             <li><strong>Reprodutibilidade:</strong> Manual passo a passo no README e esquemáticos oficiais em Fritzing.</li>

@@ -548,11 +548,9 @@ Docker, publicação no GHCR ou deploy automático na Raspberry Pi nesta etapa.
 ## Esquema elétrico da bancada — revisão pendente
 
 O repositório contém um projeto Fritzing candidato em `docs/esquematico/`.
-Ele ainda **não deve ser usado como instrução final de montagem**: a versão
-atual inclui relé/solenoide de ejeção, que está fora do escopo desta entrega e
-não possui integração correspondente na `main`. O circuito do sensor também
-precisa ser conferido contra o componente e a montagem reais antes de energizar
-a Raspberry Pi.
+Ele ainda **não deve ser usado como instrução final de montagem**: o circuito do
+sensor precisa ser conferido contra o componente e a montagem reais antes de
+energizar a Raspberry Pi.
 
 <p align="center">
   <img src="docs/esquematico/VigiEsquematico.png" alt="Esquemático Elétrico da Bancada Vigi" width="850">

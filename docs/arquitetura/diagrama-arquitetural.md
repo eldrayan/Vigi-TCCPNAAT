@@ -27,7 +27,7 @@ Raspberry Pi 5.
 | 0.6.1 | 16/09/2026 | Exclusão da sinalização experimental por LEDs e buzzer da arquitetura destinada à `main` |
 | 0.7.0 | 16/09/2026 | Integração da arquitetura com o dashboard React e a infraestrutura autenticada presentes na `main` |
 | 0.8.0 | 16/09/2026 | Estação Edge modular, outbox no fluxo contínuo, captura configurável e inicialização local previsível |
-| 0.8.1 | 16/09/2026 | Auditoria do esquemático incorporado pela `main`, mantendo relé e solenoide fora da arquitetura-alvo |
+| 0.8.1 | 16/09/2026 | Auditoria do esquemático incorporado pela `main` e alinhamento ao hardware do escopo final |
 
 ## Legenda de estado
 

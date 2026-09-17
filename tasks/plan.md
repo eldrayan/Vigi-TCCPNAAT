@@ -108,7 +108,7 @@ As tarefas detalhadas e seus critérios de aceitação estão em
 | Risco | Impacto | Mitigação |
 | --- | --- | --- |
 | Modelo e dataset dependem de remote DVC restrito | Alto | Documentar o fluxo de autorização, conferir ponteiros e ensaiar com uma identidade sem configuração prévia |
-| Esquemático integrado inclui relé/solenoide fora do escopo e circuito ainda não validado | Alto | Corrigir fonte Fritzing, imagem, texto e BOM; manter somente sensor, câmera, alimentação e componentes realmente usados e medidos |
+| Circuito do sensor ainda não possui validação elétrica registrada | Alto | Conferir fonte Fritzing, imagem, texto e BOM contra os componentes realmente usados e as medições da bancada |
 | Diagrama atual mistura implementação e visão futura | Alto | Produzir diagrama "como está" e mover evolução planejada para seção própria |
 | Alertas operacionais não usam a outbox das inspeções | Médio | Documentar o limite e não prometer entrega offline dos alertas |
 | Dashboard recente ainda não foi ensaiado no hardware alvo | Médio | Executar lint/build e validar o fluxo integrado via Compose na Raspberry Pi 5 |
