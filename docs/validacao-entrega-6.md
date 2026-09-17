@@ -9,7 +9,7 @@ UTC, em computador Linux x86_64; não representa ensaio da Raspberry Pi.
 | Critério | Evidência no repositório | Resultado e pendência |
 | --- | --- | --- |
 | Código-fonte desenvolvido | `edge/`, `backend/`, `frontend/`, `model_lifecycle/`, `scripts/` | Atendido: código organizado e disponível. |
-| Esquemático elétrico | [Manual, artefatos históricos e parecer](esquematico/esquematico-eletrico.md) | Parcial: auditoria documental concluída e artefato histórico reprovado para montagem; circuito definitivo, variante do sensor, condicionamento e medições precisam de bancada. |
+| Esquemático elétrico | [Diagrama canônico da Pi 5, manual e parecer](esquematico/esquematico-eletrico.md) | Atendido documentalmente: novo SVG representa Pi 5, BCM 17 e pull-up externo de 10 kΩ para a variante NPN de coletor aberto; confirmação da variante e medições continuam pendentes na bancada. |
 | Diagramas de arquitetura atualizados | [Componentes e sequência](arquitetura/diagrama-arquitetural.md) e diagrama do README | Atendido documentalmente: bancos distintos, serviços, contratos e contexto operacional conferidos no código. |
 | Manual no README | [README](../README.md) | Atendido documentalmente: caminho de instalação, configuração, operação e verificação, com limitações explícitas. |
 | Pré-requisitos e recursos | README: instalação inicial; manual elétrico: componentes | Parcial para reprodução física: versão exata do sistema, câmera/cabo e capacidade de armazenamento da bancada não medidos. |
@@ -28,7 +28,7 @@ Os itens parciais dependem de evidências físicas, não de completar texto por 
 | Achado / critério | Evidência inicial | Alteração e estado esperado | Responsável / dependência | Risco e validação |
 | --- | --- | --- | --- | --- |
 | Arquitetura desatualizada | Node-RED na imagem; outbox descrita como futura; bancos confundidos | Mermaid de componentes/seqüência incorporados, contratos reais e separação dos bancos | Agente arquitetura; código MQTT/API | Confundir ACK com persistência: revisado e testado pela API. |
-| Hardware inconsistente | Componente de Pi 4B renomeado como Pi 5, terminais do sensor sem função e 3,44 V apresentados como seguros | Manual de interfaces, pinagem, checklist e parecer de reprovação para montagem | Agente hardware; correção do circuito e ensaio físico futuro | Não inventar circuito aprovado; divergências e resultado parcial explícitos. |
+| Hardware inconsistente | Componente de Pi 4B renomeado como Pi 5, terminais do sensor sem função e 3,44 V apresentados como seguros | Novo SVG canônico para Pi 5, BCM 17 e saída NPN com pull-up de 10 kΩ em 3,3 V; legado isolado | Agente hardware; confirmação da variante e ensaio físico futuro | Diagrama corrigido documentalmente; não confundir com validação física. |
 | Recuperação de artefatos | Link DVC ausente e autenticação pouco clara | Guia DVC novo, pull explícito, validação de manifesto/peso | Agente documentação técnica; acesso DagsHub | Quatro arquivos recuperados e manifesto carregado. |
 | Instalação e manual principal | Roteiro disperso e pré-requisitos incompletos | README reorganizado, clone, ferramentas, CSI e resultados esperados | Orquestrador; integração dos guias | Build e Compose verificados; Pi permanece sem ensaio. |
 | Operação de lotes | Painel sugeria atualização automática do Edge | Parar Edge, atualizar BATCH_CODE, reiniciar; preservar seed legado na ACL | Agente operação + revisão independente | Conferência em `scripts/run_conveyor.py` e migration 0007. |
@@ -46,6 +46,8 @@ Os itens parciais dependem de evidências físicas, não de completar texto por 
 - PNG e projeto Fritzing auditados contra a configuração do software. O caminho
   pretendido até BCM 17 foi identificado, mas o artefato foi reprovado para
   montagem pelas inconsistências registradas no manual elétrico.
+- Novo SVG canônico inspecionado quanto à identificação da Pi 5, GPIO17/pino 11,
+  GND comum, alimentação e pull-up externo de 10 kΩ em 3,3 V.
 - 32 testes existentes de manifesto, outbox, sincronização, contexto, sensor e
   configuração: aprovados. Usado ambiente Python já disponível no computador;
   isso não comprova instalação limpa do Edge na Raspberry.

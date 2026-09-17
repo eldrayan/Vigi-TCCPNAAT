@@ -1,6 +1,6 @@
 # Hardware e interfaces da estação Vigi
 
-Este guia descreve as interfaces exigidas pelo software entregue. **A montagem elétrica não foi validada nesta revisão documental.** O desenho Fritzing legado é preservado como referência histórica; não constitui um circuito aprovado para energização. A reprodução física completa permanece pendente da revisão do circuito e de ensaio na bancada.
+Este guia descreve as interfaces exigidas pelo software entregue. O diagrama canônico foi corrigido para representar a **Raspberry Pi 5** e uma interface de coletor aberto em 3,3 V. **A montagem elétrica ainda não foi validada fisicamente.** O desenho Fritzing legado é preservado apenas como referência histórica e não deve ser usado para energização.
 
 O sistema captura imagens quando detecta um recipiente, classifica e publica a inspeção. Não há controle implementado de cargas de potência ou descarte automático. O movimento da esteira, sua alimentação e seu comando são externos ao software atual.
 
@@ -12,10 +12,40 @@ O sistema captura imagens quando detecta um recipiente, classifica e publica a i
 | Sensor fotoelétrico E18-D80NK | 1 | Identificado em `edge/acquisition/sensor.py`; fabricante, variante, alimentação e características elétricas da unidade física precisam ser confirmados. |
 | Câmera CSI ou USB | 1 | Backends Picamera2 e OpenCV implementados; modelo, cabo, resolução útil e compatibilidade devem ser registrados na bancada. |
 | Fonte e armazenamento da Raspberry | 1 de cada | Selecionar conforme a placa e os periféricos efetivos; registrar modelo e capacidade utilizados. |
-| Condicionamento elétrico e interligações | A definir | Necessários para entregar níveis compatíveis à entrada GPIO; circuito, valores e tolerâncias pendentes de validação. |
+| Resistor de pull-up de 10 kΩ | 1 | Liga a saída NPN de coletor aberto ao 3V3 da Pi; confirmar a variante do sensor antes da montagem. |
+| Cabos e interligações | Conforme montagem | Devem seguir o diagrama canônico; níveis alto e baixo ainda precisam ser medidos na bancada. |
 | Suporte, iluminação e transporte de recipientes | Conforme montagem | Devem manter posição e iluminação reproduzíveis; não são atuados pelo código. |
 
 Os valores dos componentes presentes nos artefatos antigos não integram uma BOM elétrica validada e precisam ser confirmados contra a montagem real.
+
+## Diagrama elétrico canônico — Raspberry Pi 5
+
+![Esquemático elétrico do sensor E18-D80NK com Raspberry Pi 5](./diagrama-eletrico-pi5.svg)
+
+Este circuito se aplica **somente** à variante E18-D80NK com saída NPN de
+coletor aberto. O resistor externo de 10 kΩ mantém a entrada em 3,3 V quando o
+transistor de saída está aberto; durante a detecção, o sensor leva o sinal ao
+GND. Isso corresponde a `pull_up=None` e `active_state=False` no software.
+
+Antes de energizar, conferir a variante da unidade física e medir o nó de sinal
+com a GPIO desconectada. Se a saída for push-pull, PNP ou tiver outra pinagem,
+este circuito não se aplica. A documentação oficial da Raspberry Pi classifica
+as GPIOs como sinais de 3,3 V; por isso, 5 V nunca deve chegar ao pino 11.
+
+### Ligações do circuito corrigido
+
+| Origem | Destino | Função |
+| --- | --- | --- |
+| Fonte regulada +5 V | Marrom/V+ do sensor | Alimentação da variante documentada |
+| GND da fonte | Azul/GND do sensor e pino físico 6/GND da Pi 5 | Referência comum |
+| Preto/saída NPN do sensor | Pino físico 11/BCM 17 da Pi 5 | Sinal ativo em nível baixo |
+| Pino físico 1/3V3 da Pi 5 | Nó de sinal, por R1 de 10 kΩ | Pull-up externo compatível com a GPIO |
+| Câmera | Conector CSI compatível ou USB | Captura de imagem; não passa pelo circuito do sensor |
+
+Referências usadas na revisão documental:
+
+- [documentação oficial de hardware e GPIO da Raspberry Pi](https://www.raspberrypi.com/documentation/computers/raspberry-pi.html);
+- [datasheet de uma variante E18-D80NK NPN de três fios](https://naylampmechatronics.com/img/cms/Datasheets/000236%20-%20E18-D80NK.pdf). A unidade física deve ser conferida, pois há variantes com identificação e comportamento diferentes no mercado.
 
 ## Diagrama de interfaces implementadas
 
@@ -55,7 +85,7 @@ A classe `PhotoelectricSensor` instancia `DigitalInputDevice` com `pull_up=None`
 
 Esses parâmetros são filtros de software. Não comprovam sincronismo físico, latência ponta a ponta ou eliminação de todos os disparos espúrios.
 
-## Artefatos elétricos históricos — NÃO validados
+## Artefatos elétricos históricos — NÃO USAR NA MONTAGEM
 
 ![Desenho elétrico histórico, pendente de revisão e validação](./VigiEsquematico.png)
 
@@ -63,7 +93,7 @@ Esses parâmetros são filtros de software. Não comprovam sincronismo físico, 
 
 A documentação anterior atribuía ao divisor de 1 kΩ e 2,2 kΩ uma tensão nominal de aproximadamente 3,44 V para entrada de 5 V e declarava esse resultado seguro. **Essa declaração foi retirada:** o cálculo nominal não valida compatibilidade elétrica, tolerâncias ou transientes. A topologia real da saída do sensor também precisa ser confirmada; não presumir que toda variante forneça a mesma saída.
 
-Antes de ligar qualquer saída à GPIO, o responsável pela bancada deve documentar o circuito definitivo, referências dos componentes, limites do fabricante e medições de nível alto/baixo. O desenho existente precisa ser corrigido e acompanhado dessas evidências. Este guia não fornece um circuito substituto sem essa verificação.
+Antes de ligar qualquer saída à GPIO, o responsável pela bancada deve confirmar a variante e medir os níveis alto/baixo. O SVG acima substitui o desenho legado como referência canônica, mas não substitui o ensaio físico.
 
 ### Resultado da auditoria do diagrama
 
@@ -82,12 +112,11 @@ na Raspberry Pi.
 | Câmera | A própria imagem informa que a câmera não está incluída no Fritzing. | A conexão CSI/USB deve seguir o manual da placa e da câmera escolhidas. |
 | Evidência física | Não há nesta revisão registro de medições, foto comparável ao circuito definitivo ou ensaio de detecção na placa. | Validação física pendente. |
 
-**Conclusão:** os artefatos históricos estão **reprovados como instrução de
-montagem ou energização**. Eles registram a intenção anterior, mas não satisfazem
-sozinhos o requisito de um esquemático elétrico reprodutível. Para aprovação,
-é necessário corrigir a placa representada, rotular todos os terminais,
-substituir ou justificar o condicionamento com base nos datasheets da variante
-real e anexar medições dos níveis alto e baixo antes de conectar a GPIO.
+**Conclusão:** os artefatos Fritzing históricos continuam **reprovados como
+instrução de montagem ou energização**. O novo SVG corrige a placa, a pinagem e
+o condicionamento para a variante NPN de coletor aberto. A aprovação física
+continua condicionada à confirmação da variante real e às medições dos níveis
+alto e baixo antes de conectar a GPIO.
 
 ## Preparação, montagem e verificação
 

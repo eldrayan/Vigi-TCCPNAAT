@@ -30,7 +30,7 @@ a arquitetura, a montagem, os testes nem as evidências exigidas para a Entrega 
 | Critério da atividade | Artefato atual | Estado inicial | Evidência ou lacuna |
 | --- | --- | --- | --- |
 | Código-fonte desenvolvido | `edge/`, `backend/`, `frontend/`, `model_lifecycle/`, `scripts/`, `tests/` | Presente e testado automaticamente | 167 testes gerais e 37 testes do backend aprovados; frontend passou por lint e build |
-| Esquemáticos elétricos | [`docs/esquematico/`](../esquematico/esquematico-eletrico.md), incorporado pelo PR #39 | Presente, reprovado para montagem | A auditoria confirmou o caminho pretendido até BCM 17, mas encontrou componente de Pi 4B renomeado como Pi 5, terminais do sensor sem função e condicionamento sem margem elétrica demonstrada; corrigir e ensaiar na bancada |
+| Esquemáticos elétricos | [`docs/esquematico/`](../esquematico/esquematico-eletrico.md) | Corrigido documentalmente; ensaio físico pendente | Novo SVG canônico representa Pi 5, BCM 17/pino 11, GND comum e pull-up externo de 10 kΩ em 3,3 V para a variante NPN de coletor aberto; Fritzing antigo permanece apenas como histórico |
 | Instruções de montagem | [`docs/esquematico/esquematico-eletrico.md`](../esquematico/esquematico-eletrico.md) | Presente; validação física pendente | O guia identifica componentes, pinagem lógica, procedimento seguro e checklist; o circuito definitivo ainda precisa de revisão e ensaio na bancada |
 | Diagramas finais de arquitetura | [`docs/arquitetura/diagrama-arquitetural.md`](../arquitetura/diagrama-arquitetural.md) | Presente e renderizado | Diagramas de componentes, sequência e contratos foram renderizados e inspecionados; não certificam a montagem física |
 | Pré-requisitos e recursos | [`README.md`](../../README.md) | Presente | Inclui Raspberry Pi OS 64 bits, câmera CSI/USB, sensor, alimentação, armazenamento, rede, pacotes do sistema, Docker, Compose, Git e `uv` |
@@ -92,13 +92,13 @@ Validações executadas entre 16 e 17/09/2026, sem alterar código-fonte:
 
 | Verificação | Resultado |
 | --- | --- |
-| Links locais da documentação versionada | 110 links Markdown e 10 referências de assets dos slides verificados; nenhum ausente |
+| Links locais da documentação versionada | 111 links Markdown e 10 referências de assets dos slides verificados; nenhum ausente |
 | Higiene do diff | `git diff --check` aprovado |
 | Testes gerais do Edge, modelo e CLIs | 167 aprovados após integrar `962e4b7` |
 | Testes do backend em Python 3.12 isolado | 37 aprovados, 1 integração MQTT ignorada e 1 aviso de depreciação do Starlette |
 | Ruff e frontend | Ruff, lint TypeScript/ESLint e build de produção aprovados |
 | Estrutura da arquitetura | Diagramas Mermaid renderizados e inspecionados visualmente |
-| Diagrama elétrico histórico | PNG e Fritzing auditados; intenção de conexão ao BCM 17 confirmada, mas artefato reprovado para montagem até correção e ensaio físico |
+| Diagrama elétrico | Novo SVG canônico da Pi 5 inspecionado; PNG e Fritzing antigos mantidos como histórico reprovado; confirmação da variante e ensaio físico ainda pendentes |
 | Payload de inspeção do diagrama | Aceito por `InspectionCreateDTO` no ambiente Python 3.12 do backend |
 | Smoke integrado | Compose saudável e o mesmo `inspection_id` confirmado da emissão até a API, conforme [`docs/validacao-entrega-6.md`](../validacao-entrega-6.md) |
 | Artefatos MLOps | Modelo recuperado pelo DVC/DagsHub e manifesto/peso validados; dataset e modelo também passaram pelos gates do CI |
