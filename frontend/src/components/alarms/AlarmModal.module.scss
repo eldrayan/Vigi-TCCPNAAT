@@ -43,6 +43,7 @@
   font-weight: 600;
 }
 .configModal input,
+.configModal select,
 .alertModal input {
   min-height: 42px;
   border: 1px solid #c7d8dc;
@@ -51,6 +52,11 @@
   color: #05243c;
   background: #fff;
   font: inherit;
+  font-weight: 400;
+}
+.configModal small {
+  color: #79919b;
+  font-size: 12px;
   font-weight: 400;
 }
 .actions {

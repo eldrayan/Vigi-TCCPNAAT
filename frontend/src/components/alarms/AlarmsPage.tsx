@@ -3,7 +3,7 @@
  * Autor: Leôncio Ferreira
  */
 
-import { ShieldAlert } from "lucide-react";
+import { CheckCircle2, ShieldAlert } from "lucide-react";
 import { useState } from "react";
 
 import type { PageData } from "../../app/page-types";
@@ -17,6 +17,7 @@ import styles from "./AlarmsPage.module.scss";
 export function AlarmsPage({ alarms, stations, onAcknowledgeAlarm, onConfigureAlarm }: PageData) {
   const [configuring, setConfiguring] = useState(false);
   const [acknowledgingAlarm, setAcknowledgingAlarm] = useState<Alarm | null>(null);
+  const [feedback, setFeedback] = useState<string | null>(null);
   return (
     <>
       <PageSection
@@ -24,11 +25,22 @@ export function AlarmsPage({ alarms, stations, onAcknowledgeAlarm, onConfigureAl
         description="Visualize eventos não conformes e alertas que exigem atenção."
         action={
           <button className={styles.configure} type="button" onClick={() => setConfiguring(true)}>
-            Adicionar alarme
+            Configurar alarme
           </button>
         }
       >
+        {feedback && (
+          <p className={styles.success} role="status" aria-live="polite" aria-atomic="true">
+            <CheckCircle2 size={16} aria-hidden="true" />
+            {feedback}
+          </p>
+        )}
         <div className={styles.list}>
+          {alarms.length === 0 && (
+            <p className={styles.empty} role="status">
+              Nenhum alarme disparado. As regras configuradas serão exibidas aqui quando o limite for excedido.
+            </p>
+          )}
           {alarms.map((alarm) => (
             <article className={styles.alarm} key={alarm.id}>
               <div className={styles.icon}>
@@ -44,11 +56,7 @@ export function AlarmsPage({ alarms, stations, onAcknowledgeAlarm, onConfigureAl
               </div>
               <time>{formatDate(alarm.created_at)}</time>
               {alarm.status === "ABERTO" && (
-                <button
-                  className={styles.acknowledge}
-                  type="button"
-                  onClick={() => setAcknowledgingAlarm(alarm)}
-                >
+                <button className={styles.acknowledge} type="button" onClick={() => setAcknowledgingAlarm(alarm)}>
                   Reconhecer
                 </button>
               )}
@@ -56,7 +64,17 @@ export function AlarmsPage({ alarms, stations, onAcknowledgeAlarm, onConfigureAl
           ))}
         </div>
       </PageSection>
-      {configuring && <AlarmConfigurationModal onClose={() => setConfiguring(false)} onSave={onConfigureAlarm} />}
+      {configuring && (
+        <AlarmConfigurationModal
+          stations={stations}
+          onClose={() => setConfiguring(false)}
+          onSave={async (name, limit, stationId) => {
+            setFeedback(null);
+            await onConfigureAlarm(name, limit, stationId);
+            setFeedback(`Regra “${name}” configurada com sucesso.`);
+          }}
+        />
+      )}
       {acknowledgingAlarm && (
         <ActiveAlarmModal
           alarm={acknowledgingAlarm}

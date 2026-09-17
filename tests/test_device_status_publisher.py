@@ -84,3 +84,22 @@ def test_status_publisher_configures_credentials_when_provided() -> None:
     )
 
     assert client.credentials == ("vigi-edge", "senha-segura")
+
+
+def test_status_publisher_republishes_online_state_after_reconnect() -> None:
+    client = ClientStub()
+    publisher = MQTTDeviceStatusPublisher(
+        host="mqtt.local", device_id="estacao-01", client=client
+    )
+    publisher.start(sensor="ONLINE", camera="ONLINE", processing="IDLE")
+
+    publications_before_reconnect = len(client.publications)
+    client.on_connect(client, None, None, 0, None)
+
+    assert len(client.publications) == publications_before_reconnect + 1
+    reconnected = json.loads(client.publications[-1][1])
+    assert reconnected["connection"] == "ONLINE"
+    assert reconnected["sensor"] == "ONLINE"
+    assert reconnected["camera"] == "ONLINE"
+    assert reconnected["processing"] == "IDLE"
+    assert client.publications[-1][2:] == (1, True)

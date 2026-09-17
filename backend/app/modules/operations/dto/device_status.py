@@ -5,8 +5,11 @@ Autor: Leôncio Ferreira
 
 from datetime import datetime
 from enum import StrEnum
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field
+
+from ._normalization import normalize_code
 
 
 class ComponentStatus(StrEnum):
@@ -42,4 +45,6 @@ class DeviceStatusMessageDTO(DeviceStatusDTO):
     Autor: Leôncio Ferreira
     """
 
-    device_id: str = Field(min_length=1, max_length=100)
+    device_id: Annotated[
+        str, Field(min_length=1, max_length=100), AfterValidator(normalize_code)
+    ]

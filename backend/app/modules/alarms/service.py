@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.modules.inspections.model import Inspection
 from app.modules.operations.model import Batch
 
-from .dto import AlarmResponseDTO
+from .dto import AlarmCreateDTO, AlarmResponseDTO
 from .repository import AlarmRepository
 
 
@@ -101,6 +101,38 @@ class AlarmService:
                         return AlarmResponseDTO.model_validate(alarm)
 
         return None
+
+    async def create_manual(
+        self, session: AsyncSession, dto: AlarmCreateDTO
+    ) -> AlarmResponseDTO:
+        """
+        Descrição: Cria um alarme manual imediatamente a pedido do operador.
+        Autor: Leôncio Ferreira
+        """
+        batch = await session.get(Batch, dto.batch_id)
+        if batch is None or batch.station_id != dto.station_id:
+            raise LookupError("Lote não encontrado para a estação selecionada.")
+
+        result = await session.execute(
+            select(
+                func.count(Inspection.inspection_id),
+                func.sum(func.iif(Inspection.result == "NAO_CONFORME", 1, 0)),
+            ).where(Inspection.batch_id == batch.id)
+        )
+        total, nonconforming = result.one()
+        rate = (nonconforming or 0) * 100 / total if total else 0.0
+
+        alarm = await self.repository.create_open(
+            session,
+            station_id=dto.station_id,
+            batch_id=dto.batch_id,
+            alarm_type=dto.alarm_type,
+            rate=rate,
+            threshold=dto.threshold,
+            name=dto.name,
+            created_at=datetime.now(UTC),
+        )
+        return AlarmResponseDTO.model_validate(alarm)
 
     async def list_all(self, session: AsyncSession) -> list[AlarmResponseDTO]:
         return [

@@ -22,3 +22,19 @@ def test_entrypoint_exposes_the_station_parser() -> None:
     )
 
     assert (args.station_code, args.batch_code) == ("ESTACAO_02", "LOTE_02")
+
+
+def test_inspection_publisher_uses_device_specific_client_id() -> None:
+    content = (
+        Path(__file__).parents[1] / "scripts" / "run_conveyor.py"
+    ).read_text(encoding="utf-8")
+
+    assert 'client_id=f"vigi-edge-{args.device_id}"' in content
+
+
+def test_readiness_diagnostic_uses_requested_station_code() -> None:
+    content = (
+        Path(__file__).parents[1] / "scripts" / "run_conveyor.py"
+    ).read_text(encoding="utf-8")
+
+    assert 'print(f"\\nDiagnóstico de prontidão — {args.station_code}")' in content

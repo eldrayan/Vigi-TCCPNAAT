@@ -46,7 +46,7 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     validate_arguments(args)
 
-    print("\nDiagnóstico de prontidão — Estação 01")
+    print(f"\nDiagnóstico de prontidão — {args.station_code}")
     print("-" * 42)
     camera = None
     sensor = None
@@ -149,6 +149,7 @@ def main(argv: list[str] | None = None) -> int:
             args.mqtt_port,
             username=args.mqtt_username,
             password=args.mqtt_password,
+            client_id=f"vigi-edge-{args.device_id}",
         ),
         context=context,
         on_idle=report_idle,

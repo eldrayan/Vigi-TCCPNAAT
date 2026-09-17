@@ -25,11 +25,13 @@ class MQTTDeviceStatusPublisher:
         self.port = port
         self.device_id = device_id
         self.topic = f"vigi/dispositivos/{device_id}/status"
+        self._current_state: tuple[str, str, str, str] | None = None
         self.client = configure_mqtt_client(
             client or create_mqtt_client(client_id=f"vigi-status-{device_id}"),
             username,
             password,
         )
+        self.client.on_connect = self._on_connect
         self.client.will_set(
             self.topic,
             json.dumps(self._payload("OFFLINE", "OFFLINE", "OFFLINE", "OFFLINE")),
@@ -55,6 +57,7 @@ class MQTTDeviceStatusPublisher:
         processing: str,
         sensor: str = "ONLINE",
     ) -> None:
+        self._current_state = ("ONLINE", camera, processing, sensor)
         publication = self.client.publish(
             self.topic,
             json.dumps(self._payload("ONLINE", camera, processing, sensor)),
@@ -66,6 +69,7 @@ class MQTTDeviceStatusPublisher:
             raise TimeoutError("Tempo limite excedido ao publicar estado no MQTT.")
 
     def stop(self) -> None:
+        self._current_state = ("OFFLINE", "OFFLINE", "OFFLINE", "OFFLINE")
         publication = self.client.publish(
             self.topic,
             json.dumps(self._payload("OFFLINE", "OFFLINE", "OFFLINE", "OFFLINE")),
@@ -75,6 +79,27 @@ class MQTTDeviceStatusPublisher:
         publication.wait_for_publish(timeout=5)
         self.client.disconnect()
         self.client.loop_stop()
+
+    def _on_connect(
+        self,
+        client: Any,
+        userdata: Any,
+        flags: Any,
+        reason_code: Any,
+        properties: Any = None,
+    ) -> None:
+        """Republica o último estado após a conexão ou reconexão ao broker."""
+        del userdata, flags, properties
+        if getattr(reason_code, "is_failure", False) or self._current_state is None:
+            return
+
+        connection, camera, processing, sensor = self._current_state
+        client.publish(
+            self.topic,
+            json.dumps(self._payload(connection, camera, processing, sensor)),
+            qos=1,
+            retain=True,
+        )
 
     def _payload(
         self,
