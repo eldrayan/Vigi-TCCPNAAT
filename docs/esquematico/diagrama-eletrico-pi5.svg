@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Esquemático elétrico do sensor E18-D80NK com Raspberry Pi 5</title>
+  <desc id="desc">Sensor NPN de coletor aberto alimentado em 5 volts, saída ligada ao GPIO17 da Raspberry Pi 5 com resistor de pull-up de 10 quilo-ohms para 3,3 volts e terra comum.</desc>
+  <defs>
+    <style>
+      .title { font: 700 28px sans-serif; fill: #152238; }
+      .subtitle { font: 16px sans-serif; fill: #42526e; }
+      .box-title { font: 700 21px sans-serif; fill: #152238; }
+      .label { font: 17px sans-serif; fill: #152238; }
+      .small { font: 14px sans-serif; fill: #42526e; }
+      .wire { fill: none; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+      .power { stroke: #c62828; }
+      .signal { stroke: #ef6c00; }
+      .ground { stroke: #263238; }
+      .camera { stroke: #1565c0; stroke-dasharray: 10 7; }
+      .node { fill: #ef6c00; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#1565c0"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="720" fill="#ffffff"/>
+  <text x="60" y="55" class="title">Vigi — interface do E18-D80NK com Raspberry Pi 5</text>
+  <text x="60" y="85" class="subtitle">Variante exigida: saída NPN de coletor aberto, ativa em nível baixo • GPIO configurada sem pull-up interno</text>
+
+  <rect x="60" y="145" width="270" height="300" rx="14" fill="#fff8e1" stroke="#f9a825" stroke-width="3"/>
+  <text x="195" y="185" text-anchor="middle" class="box-title">E18-D80NK</text>
+  <text x="195" y="212" text-anchor="middle" class="small">confirmar variante na unidade física</text>
+  <circle cx="330" cy="260" r="7" fill="#c62828"/>
+  <text x="90" y="266" class="label">Marrom — V+ 5 V</text>
+  <circle cx="330" cy="330" r="7" fill="#ef6c00"/>
+  <text x="90" y="336" class="label">Preto — saída NPN</text>
+  <circle cx="330" cy="400" r="7" fill="#263238"/>
+  <text x="90" y="406" class="label">Azul — GND</text>
+
+  <rect x="450" y="125" width="200" height="85" rx="12" fill="#ffebee" stroke="#c62828" stroke-width="3"/>
+  <text x="550" y="160" text-anchor="middle" class="box-title">Fonte 5 Vcc</text>
+  <text x="550" y="188" text-anchor="middle" class="small">regulada e dimensionada</text>
+  <path d="M450 165 H390 V260 H330" class="wire power"/>
+  <text x="397" y="153" class="small">+5 V</text>
+
+  <rect x="790" y="125" width="350" height="380" rx="14" fill="#e8f5e9" stroke="#2e7d32" stroke-width="3"/>
+  <text x="965" y="165" text-anchor="middle" class="box-title">Raspberry Pi 5</text>
+  <text x="965" y="192" text-anchor="middle" class="small">conector GPIO de 40 pinos</text>
+  <circle cx="790" cy="250" r="7" fill="#c62828"/>
+  <text x="820" y="256" class="label">Pino 1 — 3V3</text>
+  <circle cx="790" cy="330" r="7" fill="#ef6c00"/>
+  <text x="820" y="336" class="label">Pino 11 — BCM GPIO17 (entrada)</text>
+  <circle cx="790" cy="400" r="7" fill="#263238"/>
+  <text x="820" y="406" class="label">Pino 6 — GND</text>
+  <rect x="820" y="440" width="270" height="42" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="2"/>
+  <text x="955" y="467" text-anchor="middle" class="label">Câmera CSI ou USB</text>
+
+  <path d="M330 330 H790" class="wire signal"/>
+  <circle cx="700" cy="330" r="7" class="node"/>
+  <path d="M790 250 H700 V278" class="wire power"/>
+  <path d="M700 278 v10 m0 0 l-13 10 26 12-26 12 26 12-13 10 v-14" fill="none" stroke="#152238" stroke-width="3"/>
+  <text x="720" y="298" class="label">R1 10 kΩ</text>
+  <text x="720" y="319" class="small">pull-up externo para 3,3 V</text>
+
+  <path d="M330 400 H790" class="wire ground"/>
+  <path d="M550 210 V400" class="wire ground"/>
+  <circle cx="550" cy="400" r="7" fill="#263238"/>
+  <text x="565" y="427" class="small">GND comum</text>
+
+  <path d="M1090 461 H1150" class="wire camera" marker-end="url(#arrow)"/>
+  <text x="1150" y="445" text-anchor="end" class="small">interface própria</text>
+
+  <rect x="60" y="545" width="1080" height="125" rx="12" fill="#f4f6f8" stroke="#607d8b" stroke-width="2"/>
+  <text x="85" y="578" class="box-title">Condições obrigatórias antes de energizar</text>
+  <text x="85" y="608" class="label">1. Confirmar no datasheet e na etiqueta que a unidade possui saída NPN de coletor aberto.</text>
+  <text x="85" y="635" class="label">2. Medir a saída: nível alto não pode exceder 3,3 V; níveis lógicos devem atender à especificação da placa.</text>
+  <text x="85" y="662" class="label">3. Não usar o divisor legado de 1 kΩ/2,2 kΩ e não aplicar 5 V diretamente ao GPIO17.</text>
+</svg>

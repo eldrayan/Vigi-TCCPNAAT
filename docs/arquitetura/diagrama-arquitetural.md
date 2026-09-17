@@ -1,229 +1,136 @@
-> **Projeto:** Vigi — Sistema Embarcado para Inspeção e Triagem de Linhas de Envase  
-> **Revisão:** 0.5.0  
-> **Responsável:** Squad Vigi (Lead: Elder Rayan Oliveira Silva)  
-> **Milestone:** Estruturação de Requisitos e Design Arquitetural
+# Arquitetura implementada do Vigi
 
----
+Este documento descreve o código entregue. Diagramas não certificam montagem elétrica, desempenho ou operação física: essas verificações permanecem dependentes de ensaio na bancada. Consulte o [manual de execução](../../README.md) e o [manual elétrico](../esquematico/esquematico-eletrico.md).
 
-### Registro de Alterações
-
-| Versão | Responsável | Data | Alterações |
-| :--- | :--- | :--- | :--- |
-| **0.1.0** | Squad Vigi | 06/09/2026 | Elaboração inicial do Diagrama Arquitetural orientado a Fluxo de Dados (Pressman). |
-| **0.2.0** | Squad Vigi | 06/09/2026 | Simplificação de atuadores físicos e inclusão de buffer offline. |
-| **0.3.0** | Squad Vigi | 06/09/2026 | Integração do sensor fotoelétrico infravermelho E18-D80NK. |
-| **0.4.0** | Squad Vigi | 08/09/2026 | Atualização do armazenamento local para banco SQLite e dashboard de supervisão para FastAPI e React. |
-| **0.5.0** | Squad Vigi | 08/09/2026 | Alinhamento da topologia embarcada (All-in-One na Raspberry Pi 5), esquemas de dados e payloads. |
-
----
-
-## 🏛️ Visão Geral da Arquitetura
-
-### Organização do software
-
-O backend é organizado como um monólito modular: uma aplicação FastAPI com responsabilidades separadas em módulos, compartilhando a infraestrutura de configuração, banco e MQTT. O módulo de inspeções está em `backend/app/modules/inspections/`, com rotas, DTOs, serviços, repositório e modelo de persistência. Essa separação facilita localizar, documentar e manter cada responsabilidade.
-
-A implantação da PoC também inclui o processo de inferência no Edge e o broker Mosquitto, executados separadamente. Portanto, monólito modular descreve o backend, não a execução de todo o sistema em um único processo. O dashboard React permanece previsto para o navegador.
-
-### Visão por fluxo de dados
-
-Os blocos abaixo descrevem a arquitetura proposta. O fluxo já implementado e as integrações pendentes estão detalhados no [README](../../README.md), incluindo a persistência atual pelo consumidor MQTT e a fila local no Edge ainda prevista.
-
-A arquitetura do sistema **Vigi** adota o modelo de **Design Orientado ao Fluxo de Dados** (*Roger S. Pressman*), estruturada em três camadas modulares e desacopladas:
-
-1. **Camada de Entradas (*Inputs*):** Detecção de presença física pelo sensor fotoelétrico infravermelho **E18-D80NK** e aquisição instantânea de imagem sob demanda pela câmera digital.
-2. **Camada de Processamento e Serviços (*Edge Node — Raspberry Pi 5*):** 
-   * Tratamento de sinal digital com filtro de *debounce* (30-100 ms);
-   * Captura sincronizada de quadro no plano focal de inspeção;
-   * Inferência de Inteligência Artificial (*Edge AI*);
-   * Lógica de decisão preventiva (*Fail-Safe*);
-   * Gravação transacional segura no banco de dados local **SQLite** (modo WAL);
-   * Broker **Mosquitto** e backend **FastAPI** executando localmente na Raspberry Pi via loopback (*localhost*).
-3. **Camada de Saídas e Supervisão (*Outputs*):** Publicação assíncrona orientada a eventos via protocolo **MQTT**, consumo pelo FastAPI e entrega de indicadores ao **Dashboard React** no navegador via **HTTP / SSE** através da rede local (Wi-Fi/Ethernet).
-
----
-
-## 📊 Diagrama Arquitetural (Fluxo de Dados)
-
-<p align="center">
-  <img src="../img/Fluxo.jpeg" alt="Fluxo Atualizado do Protótipo Vigi" width="850">
-</p>
-
-### Representação em Bloco Lógico (Mermaid)
+## Componentes e responsabilidades
 
 ```mermaid
-flowchart LR
-    subgraph ENTRADAS["1. Camada de Entradas (Ambiente Físico)"]
-        direction TB
-        S1["Sensor Fotoelétrico IR E18-D80NK<br/><i>(Gatilho Digital NPN via GPIO)</i>"]
-        S2["Câmera Digital / RPi Cam<br/><i>(Captura de Frame sob Demanda)</i>"]
-    end
-
-    subgraph RASPBERRY["2. Nó de Borda Integrado (Raspberry Pi 5)"]
-        direction TB
-        subgraph PROCESSAMENTO["Pipeline de Decisão & Persistência"]
-            direction TB
-            P1["Filtro de Debounce & Sincronização<br/><i>(30 ms a 100 ms / RNF08)</i>"]
-            P2["Motor de Visão & Inferência Edge AI<br/><i>(OpenCV + Modelo Classificador)</i>"]
-            P3["Motor de Decisão & Fail-Safe<br/><i>(Conforme vs. Não-Conforme / RN02)</i>"]
-            P4["Banco de Dados Local SQLite<br/><i>(Modo WAL / Transações ACID / 30 dias)</i>"]
-            
-            P1 -->|Disparo de Captura| P2
-            P2 -->|Score de Confiança| P3
-            P3 -->|Gravação do Evento| P4
-        end
-
-        subgraph SAIDAS_LOCAIS["Serviços Locais Embarcados"]
-            direction TB
-            O1["Cliente Publicador MQTT<br/><i>(Payloads JSON Assíncronos)</i>"]
-            O2["Broker Mosquitto Local<br/><i>(Distribuição em Localhost)</i>"]
-            O3["Backend FastAPI<br/><i>(Consumidor MQTT, API REST e SSE)</i>"]
-            
-            O1 -->|Localhost TCP:1883| O2
-            O2 -->|Localhost MQTT| O3
-        end
-    end
-
-    subgraph SUPERVISAO["3. Camada de Supervisão (Navegador Web)"]
-        direction TB
-        O4["Dashboard Web React<br/><i>(Chart.js, Lucide e SCSS)</i>"]
-    end
-
-    S1 -->|Interrupção Digital| P1
-    S2 -->|Frame Sincronizado| P2
-    P3 -->|Evento de Inspeção| O1
-    P4 -.->|Sincronização Pós-Queda| O1
-    P4 <-->|Consultas REST e Histórico| O3
-    O3 -->|Wi-Fi / LAN (HTTP e SSE)| O4
+flowchart TB
+    S[Sensor de presença] --> E[Edge Python: aquisição e orquestração]
+    C[Câmera CSI ou USB] --> E
+    M[Manifesto e peso PyTorch ativo] --> I[Classificador YOLOv8]
+    E --> I
+    I --> D[Decisão de inspeção]
+    D --> Q[(SQLite outbox do Edge)]
+    Q --> P[Sincronizador MQTT]
+    P --> B[Broker Mosquitto]
+    B --> A[Backend FastAPI]
+    A --> DB[(SQLite do backend)]
+    A -->|REST e SSE| R[Dashboard React no navegador]
+    R -->|REST: estação e lote| A
+    A -->|Configuração retida por dispositivo| B
+    B -->|Contexto operacional| E
+    E -->|Status por dispositivo| B
 ```
 
----
+- **Edge:** `edge/acquisition` captura imagens e lê o sensor; `edge/inference` classifica e aplica a decisão; `edge/orchestration` coordena o ciclo; `edge/messaging` implementa eventos, contexto, status e entrega. Os scripts oferecem inferência pontual e execução contínua. Não há atuação de rejeição mecânica implementada.
+- **Artefatos:** o manifesto seleciona o checkpoint operacional PyTorch `.pt`. Dataset e pesos são recuperados por DVC; não se presume que estejam presentes no clone. Treinamento é um fluxo separado da operação.
+- **Backend:** monólito modular FastAPI com módulos de inspeções, operações e alarmes. Consome MQTT, valida DTOs, persiste entidades e expõe REST/SSE. Não consulta o arquivo da outbox do Edge.
+- **Frontend:** aplicação React implementada, com estações, lotes, inspeções, indicadores, status e alarmes. Consome a API; não acessa MQTT ou SQLite diretamente.
+- **Implantação:** broker, backend e frontend são serviços separados; o Edge executa no dispositivo conectado ao hardware. Serviços podem estar em outro host alcançável pela rede. Processamento local não implica autenticação de todas as interfaces nem operação validada sem rede.
 
-## 🔍 Detalhamento das Camadas
+## Sequência de inspeção e confirmação
 
-### 1. Camada de Entradas (*Inputs*)
-* **Sensor Fotoelétrico Infravermelho E18-D80NK:** Instalado na lateral da esteira. Ao detectar a passagem da garrafa, fecha contato para nível lógico baixo (NPN), gerando uma interrupção na GPIO da Raspberry Pi 5.
-* **Câmera Digital (RPi Camera Module / USB HD):** Acionada sob demanda apenas no instante em que o frasco está centralizado no plano de teste.
-
-### 2. Camada de Processamento (*Edge Node — Raspberry Pi 5*)
-* **Debounce & Sincronização:** Filtra oscilações eletromecânicas do sinal do sensor E18-D80NK (30 a 100 ms, conforme [RNF08](../requisitos/03-requisitos-nao-funcionais.md)).
-* **Pipeline de Visão & Edge AI:**
-  * Pré-processamento e normalização do frame;
-  * Classificação visual (`CONFORME`, `SEM_TAMPA`, `TAMPA_TORTA` ou `AMASSADO`) com acurácia mínima de 90% ([RNF06](../requisitos/03-requisitos-nao-funcionais.md)).
-* **Mecanismo de Decisão & *Fail-Safe*:**
-  * Em caso de baixa confiança ou falha de leitura, o recipiente é preventivamente marcado como não-conforme, registrado sob a categoria `FALHA_TECNICA` e segregado do Pareto de defeitos do produto ([RN02](../requisitos/01-regras-de-negocio.md), [RN11](../requisitos/01-regras-de-negocio.md)).
-* **Persistência Local com SQLite (*Offline-First*):**
-  * Cada ciclo de inspeção é gravado em banco relacional SQLite local com garantia ACID em modo *Write-Ahead Logging* (WAL), permitindo gravações concorrentes com leituras do dashboard sem corrupção e retido por até 30 dias ([RN04](../requisitos/01-regras-de-negocio.md), [RN10](../requisitos/01-regras-de-negocio.md), [RNF03](../requisitos/03-requisitos-nao-funcionais.md)). O campo `sync_status` gerencia a fila de envio e retransmissão ordenada ao broker MQTT ([RNF04](../requisitos/03-requisitos-nao-funcionais.md)).
-
-### 3. Camada de Saídas (*IoT & Supervisão*)
-* **Publicador MQTT Local:** Envia assincronamente as mensagens JSON para o broker Mosquitto em *localhost* sem bloquear o laço de inspeção. O broker também aceita inscrições de clientes remotos via Wi-Fi (ex: painéis OLED ou supervisórios de linha).
-* **Backend FastAPI:** Executa na Raspberry Pi, consome os eventos do broker Mosquitto local, consulta diretamente o SQLite para métricas históricas de OEE e relatórios ([US07](../requisitos/02-requisitos-funcionais.md), [US08](../requisitos/02-requisitos-funcionais.md)) e disponibiliza API REST e eventos via SSE.
-* **Dashboard React:** Interface web executada no navegador do cliente (notebook, tablet ou terminal do operador), consumindo exclusivamente a API do FastAPI via Wi-Fi/LAN com tempo de resposta $< 2\text{ s}$ ([US02](../requisitos/02-requisitos-funcionais.md), [US03](../requisitos/02-requisitos-funcionais.md), [RNF11](../requisitos/03-requisitos-nao-funcionais.md)).
-
-### Separação entre backend e frontend
-
-O **backend e toda a camada de dados** rodam inteiramente na Raspberry Pi em Python: processamento de imagens, inferência, publicação e consumo MQTT, persistência SQLite, validações e API FastAPI. Manter essas responsabilidades no mesmo ecossistema simplifica a comunicação com o modelo e evita duplicar regras em linguagens diferentes.
-
-O **frontend** utiliza JavaScript com React e não acessa diretamente MQTT nem SQLite. Ele é servido e executado no navegador do usuário, consumindo o FastAPI por REST/SSE. O React favorece a composição de telas por componentes, atualizações incrementais em tempo real e a integração com Chart.js e Lucide, recursos adequados ao dashboard operacional do Vigi.
-
----
-
-## ⏱️ Pipeline Temporal de Inspeção
-
-```text
-[T0: Presença Física] ──> [T1: Gatilho & Captura] ──> [T2: Inferência Edge AI] ──> [T3: Decisão & SQLite] ──> [T4: Publicação MQTT Local] ──> [T5: FastAPI + React via Wi-Fi]
-   (Sensor E18-D80NK)       (Câmera + Debounce)          (Raspberry Pi 5)             (Persistência Local)           (Broker Localhost)          (Dashboard no Navegador)
-       
-|<─────────────────────────────────────────────────── Latência Total < 500 ms (RNF01) ───────────────────────────────────────────────────>|
+```mermaid
+sequenceDiagram
+    participant U as Operador / React
+    participant A as FastAPI
+    participant B as Mosquitto
+    participant E as Edge
+    participant Q as Outbox SQLite
+    participant D as SQLite backend
+    U->>A: Ativar lote da estação
+    A->>B: Configuração por device_id (retida)
+    Note over E: edge-up carrega estação e lote dos argumentos / .env
+    Note over E: Sensor dispara captura e classificação
+    E->>Q: Gravar evento pendente
+    Q-->>E: Evento persistido localmente
+    E->>B: Inspeção QoS 1
+    B-->>E: Confirmação MQTT
+    E->>Q: Marcar SINCRONIZADO
+    B->>A: Entregar inspeção
+    A->>D: Validar e persistir
+    A-->>U: Evento SSE
+    U->>A: Consultar inspeção por ID
+    A-->>U: Registro persistido
 ```
 
----
+A confirmação MQTT é confirmação de publicação no broker, **não** confirmação de persistência no backend. A sequência entre confirmação ao Edge e entrega ao backend pode variar. Consulte o mesmo `inspection_id` pela API para comprovar o percurso. Falhas de validação ou indisponibilidade do consumidor exigem diagnóstico; não existe confirmação transacional ponta a ponta.
 
-## 🗄️ Estrutura da Tabela de Persistência Local (SQLite)
+## Dois bancos com funções distintas
 
-```sql
-CREATE TABLE IF NOT EXISTS inspecoes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-    resultado VARCHAR(20) NOT NULL,            -- 'CONFORME' | 'NAO_CONFORME'
-    categoria VARCHAR(30),                     -- 'ANOMALIA_PRODUTO' | 'FALHA_TECNICA' | NULL
-    codigo VARCHAR(50),                        -- 'SEM_TAMPA', 'TAMPA_TORTA', 'AMASSADO', 'ERRO_CAPTURA', etc. | NULL
-    confianca REAL,                            -- Ex: 0.96 (NULL ou 0.0 em falhas técnicas sem inferência)
-    tempo_processamento_ms INTEGER,           -- Ex: 185
-    sync_status VARCHAR(20) DEFAULT 'PENDENTE' -- 'PENDENTE' | 'SINCRONIZADO'
-);
-```
+O processo `make edge-up` usa estação/lote recebidos na inicialização; após
+alterar o lote no painel, atualize `BATCH_CODE` e reinicie o Edge. A CLI
+`scripts/infer.py` tenta obter contexto MQTT, mas seu receptor não configura
+credenciais atualmente. Veja o teste autenticado por imagem no README.
 
----
+| Banco | Conteúdo e responsabilidade |
+|---|---|
+| SQLite do Edge | `inspection_outbox`: sequência, ID único, tópico, JSON, criação, sincronização e estado `PENDENTE`/`SINCRONIZADO`; `operational_context`: última estação e lote conhecidos. |
+| SQLite do backend | Entidades operacionais, inspeções e alarmes usados pela API e pelo painel. Configurado por `DATABASE_URL`; padrão `sqlite+aiosqlite:///./data/vigi.db`. |
 
-## 📡 Mapeamento de Tópicos MQTT
+A outbox tenta entregar pendentes por ordem e interrompe a tentativa ao ocorrer erro. A limpeza remove registros sincronizados expirados; registros pendentes não são descartados por essa rotina. Retenção configurada não equivale a garantia de capacidade de disco. Contexto persistido permite recuperação sem broker quando disponível; a primeira operação ainda exige um contexto válido. A CLI sem MQTT pode apenas imprimir a decisão, portanto não comprova persistência ou entrega.
 
-### 1. Tópico de Inspeções: `vigi/esteira/inspecoes`
+## Contratos MQTT
 
-* **Exemplo 1: Não-Conformidade (Anomalia do Produto):**
+Os valores abaixo são os padrões do código; variáveis de ambiente podem alterar as inscrições do backend. `station_code` é o código textual da estação, não seu ID numérico no banco.
+
+| Tópico padrão | Direção e contrato |
+|---|---|
+| `vigi/estacoes/{station_code}/inspecoes` | Edge → backend; `InspectionEvent` / `InspectionCreateDTO`, QoS 1, sem retenção. Backend assina `vigi/estacoes/+/inspecoes`. |
+| `vigi/dispositivos/{device_id}/configuracao` | Backend → Edge; `OperationalContextDTO`, QoS 1 e mensagem retida ao ativar lote. |
+| `vigi/dispositivos/{device_id}/status` | Edge → backend; `DeviceStatusMessageDTO`, QoS 1 e retenção, incluindo desconexão via Last Will. |
+| `vigi/esteira/inspecoes` | Compatibilidade com publicador/CLI legado; backend mantém inscrição e aceita contrato com estação/lote ambos ausentes. Não usar como padrão para novas estações. |
+| `vigi/esteira/alarmes` | Backend publica alarmes gerados por inspeções; payload `AlarmResponseDTO`. O publicador Edge também possui método para alarmes, o que não implica consumo desses alarmes pelo backend. |
+| `vigi/esteira/status` | Status legado disponível no publicador de inspeção; não substitui status por dispositivo e não integra a inscrição atual do backend. |
+
+### Inspeção (exemplo ilustrativo, não medição)
+
 ```json
 {
-  "id_inspecao": 1042,
-  "timestamp": "2026-09-06T14:30:01.250Z",
-  "resultado": "NAO_CONFORME",
-  "categoria": "ANOMALIA_PRODUTO",
-  "codigo": "SEM_TAMPA",
-  "confianca": 0.94,
-  "tempo_processamento_ms": 180
+  "inspection_id": 1758067200000001,
+  "timestamp": "2026-09-17T00:00:00Z",
+  "station_code": "ESTACAO-01",
+  "batch_code": "LOTE-01",
+  "result": "NAO_CONFORME",
+  "category": "ANOMALIA_PRODUTO",
+  "nonconformity_type": "SEM_TAMPA",
+  "technical_failure_type": null,
+  "confidence": 0.95,
+  "processing_time_ms": 100.0,
+  "model_format": "pytorch"
 }
 ```
 
-* **Exemplo 2: Recipiente Conforme (Aprovado):**
+O ID é inteiro positivo; confiança fica entre 0 e 1; tempo é não negativo. Estação e lote devem ser informados juntos. `CONFORME` exige categoria e tipos de falha nulos. `NAO_CONFORME` exige `ANOMALIA_PRODUTO` com `SEM_TAMPA`, `TAMPA_TORTA` ou `AMASSADO`, ou `FALHA_TECNICA` com `ERRO_CAPTURA`, `BAIXA_CONFIANCA` ou `ERRO_INFERENCIA`. O contrato rejeita campos extras. Confiança não é acurácia, e tempo de processamento não certifica latência do ciclo físico.
+
+### Configuração e status (exemplos ilustrativos)
+
+```json
+{"station_code": "ESTACAO-01", "batch_code": "LOTE-01"}
+```
+
 ```json
 {
-  "id_inspecao": 1043,
-  "timestamp": "2026-09-06T14:30:03.100Z",
-  "resultado": "CONFORME",
-  "categoria": null,
-  "codigo": null,
-  "confianca": 0.98,
-  "tempo_processamento_ms": 175
+  "device_id": "EDGE-01",
+  "connection": "ONLINE",
+  "sensor": "ONLINE",
+  "camera": "IDLE",
+  "processing": "IDLE",
+  "timestamp": "2026-09-17T00:00:00Z"
 }
 ```
 
-* **Exemplo 3: Falha Técnica (*Fail-Safe* Preventivo — RN02):**
-```json
-{
-  "id_inspecao": 1044,
-  "timestamp": "2026-09-06T14:30:05.300Z",
-  "resultado": "NAO_CONFORME",
-  "categoria": "FALHA_TECNICA",
-  "codigo": "ERRO_CAPTURA",
-  "confianca": null,
-  "tempo_processamento_ms": 210
-}
-```
+Os estados admitidos pelo DTO são `ONLINE`, `IDLE`, `OFFLINE` e `ERROR`. Status representa o que o processo reporta; não prova a integridade elétrica do componente. O recebimento do contexto na inicialização e a sua persistência não devem ser interpretados como aplicação dinâmica garantida de toda troca de lote: confira o procedimento operacional de reinício e configuração.
 
-### 2. Tópico de Alarmes de Linha: `vigi/esteira/alarmes`
-```json
-{
-  "id_alarme": "ALM-20260906-0042",
-  "tipo_alarme": "FALHAS_RECORRENTES",
-  "contagem_consecutiva": 4,
-  "severidade": "ALTA",
-  "timestamp": "2026-09-06T14:32:00.100Z"
-}
-```
+### Alarmes
 
-### 3. Tópico de Status do Dispositivo (*LWT*): `vigi/esteira/status`
-```json
-{
-  "status": "ONLINE",
-  "uptime_segundos": 3600,
-  "registros_pendentes_sync": 0
-}
-```
+O payload de resposta contém `id`, `station_id`, `batch_id`, `alarm_type`, `name`, `rate`, `threshold`, `status`, `created_at`, `acknowledged_at` e `acknowledged_by`. Datas de reconhecimento e responsável podem ser nulos. Consulte os DTOs de alarmes e as rotas REST para criação e reconhecimento; não confunda esse payload com uma inspeção.
 
----
+## Fontes do contrato e verificação
 
-## 📄 Documentos Relacionados
+- [Evento Edge](../../edge/messaging/event.py), [outbox](../../edge/messaging/outbox.py) e [contexto](../../edge/messaging/context.py).
+- [Inscrição MQTT do backend](../../backend/app/main.py) e [configuração](../../backend/app/config.py).
+- [DTO de inspeção](../../backend/app/modules/inspections/dto/inspection_create.py), [status](../../backend/app/modules/operations/dto/device_status.py) e [alarmes](../../backend/app/modules/alarms/dto.py).
 
-* [01. Regras de Negócio](../requisitos/01-regras-de-negocio.md)
-* [02. Requisitos Funcionais](../requisitos/02-requisitos-funcionais.md)
-* [03. Requisitos Não-Funcionais](../requisitos/03-requisitos-nao-funcionais.md)
-* [05. Requisitos Técnicos e Justificativas](../requisitos/05-requisitos-tecnicos.md)
+Metas de desempenho e disponibilidade nos requisitos continuam sendo metas até haver relatório de ensaio correspondente. A imagem histórica `docs/img/Fluxo.jpeg` não representa a arquitetura atual; os diagramas deste documento são a referência vigente.

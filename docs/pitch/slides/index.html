@@ -294,7 +294,7 @@
       <div class="brand">
         <img src="../../img/logos/vigi_vetor_azul.svg" alt="Vigi">
       </div>
-      
+
       <div class="top-nav-sections">
         <button class="section-btn" onclick="goToSlide(1)">Contexto & Problema</button>
         <button class="section-btn" onclick="goToSlide(5)">Arquitetura & Solução</button>
@@ -335,7 +335,7 @@
             </div>
             <div style="background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); padding: 12px 18px; border-radius: 12px;">
               <span style="font-size: 13px; color: #94a3b8; display: block;">Inferência de Borda</span>
-              <strong style="font-size: 16px; color: #fff;">YOLOv8n / TFLite INT8</strong>
+              <strong style="font-size: 16px; color: #fff;">YOLOv8n-cls / PyTorch</strong>
             </div>
             <div style="background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); padding: 12px 18px; border-radius: 12px;">
               <span style="font-size: 13px; color: #94a3b8; display: block;">Comunicação</span>
@@ -482,11 +482,11 @@
       <div class="grid-3">
         <div class="card card-highlight">
           <div class="card-title">1. Gatilho Físico</div>
-          <p style="margin-bottom: 14px; font-weight: 600; color: #38bdf8; font-size: 20px;">Sensor E18-D80NK (3.3V)</p>
+          <p style="margin-bottom: 14px; font-weight: 600; color: #38bdf8; font-size: 20px;">Sensor E18-D80NK + interface GPIO</p>
           <ul>
-            <li>Detecção ótica determinística do frasco na esteira.</li>
-            <li>Filtro debounce (50 ms) contra trepidações e ruídos.</li>
-            <li>Sincronismo milimétrico com o campo de visão da câmera.</li>
+            <li>Detecção de presença; comportamento sujeito a ensaio.</li>
+            <li>Debounce configurável; ajustar e verificar no ensaio.</li>
+            <li>Alinhar sensor, enquadramento e velocidade na bancada.</li>
           </ul>
         </div>
 
@@ -495,8 +495,8 @@
           <p style="margin-bottom: 14px; font-weight: 600; color: #38bdf8; font-size: 20px;">Raspberry Pi 5 (8GB)</p>
           <ul>
             <li>Inferência de rede neural ultrarrápida em borda.</li>
-            <li>Latência total ponta a ponta inferior a 500 ms (RNF01).</li>
-            <li>Ejeção preventiva Fail-Safe em caso de incerteza (RN02).</li>
+            <li>Meta: latência ponta a ponta inferior a 500 ms (RNF01); medir na bancada.</li>
+            <li>Baixa confiança gera falha técnica; não há ejeção física.</li>
           </ul>
         </div>
 
@@ -505,7 +505,7 @@
           <p style="margin-bottom: 14px; font-weight: 600; color: #38bdf8; font-size: 20px;">MQTT + SQLite + Dashboard</p>
           <ul>
             <li>Registro imediato de metadados de cada inspeção.</li>
-            <li>Fila local para garantia de operação sem rede externa.</li>
+            <li>Outbox local para tentar novamente entregas pendentes.</li>
             <li>Supervisão operacional e gráficos em tempo real.</li>
           </ul>
         </div>
@@ -528,15 +528,15 @@
         <div class="card card-highlight" style="justify-content: center; gap: 20px;">
           <div class="card-title">Estrutura Física da Estação</div>
           <ul>
-            <li><strong>Case Compacta:</strong> Abriga com segurança a Raspberry Pi 5 e o módulo de câmera CSI, protegendo contra umidade e poeira da linha.</li>
+            <li><strong>Case:</strong> Acomodação da Raspberry Pi 5 e câmera; proteção ambiental não certificada.</li>
             <li><strong>Posicionamento Ótico:</strong> Enquadramento calibrado no plano focal exato por onde os frascos transitam.</li>
-            <li><strong>Alimentação Estável:</strong> Fonte USB-C PD de 27W garantindo fornecimento contínuo de 5V / 5A para placa e periféricos.</li>
-            <li><strong>Isolamento Galvânico:</strong> Comando do atuador mecânico por módulo relé KY-019 com diodo flyback para proteção da GPIO.</li>
+            <li><strong>Alimentação:</strong> Fonte compatível com a Raspberry Pi 5; capacidade e estabilidade devem ser verificadas com os periféricos da bancada.</li>
+            <li><strong>Interface do sensor:</strong> Condicionamento elétrico e montagem dependem de validação; não há atuação mecânica implementada.</li>
           </ul>
         </div>
 
         <div class="card" style="padding: 15px; align-items: center; justify-content: center; overflow: hidden;">
-          <img src="../../esquematico/VigiEsquematico.png" alt="Esquemático Elétrico" style="width: 100%; height: 100%; object-fit: contain; border-radius: 12px;">
+          <img src="../../esquematico/VigiEsquematico.png" alt="Esquemático existente, pendente de validação elétrica" style="width: 100%; height: 100%; object-fit: contain; border-radius: 12px;">
         </div>
       </div>
     </div>
@@ -551,13 +551,13 @@
 
       <div class="grid-2">
         <div class="card" style="padding: 15px; align-items: center; justify-content: center; overflow: hidden;">
-          <img src="../../img/Fluxo.jpeg" alt="Arquitetura de Fluxo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 12px;">
+          <div style="font-size: 24px; line-height: 1.8;">Sensor + câmera → Edge + modelo<br>↓<br>Outbox SQLite → MQTT<br>↓<br>FastAPI → SQLite do backend<br>↓<br>React via REST / SSE<br><a href="../../arquitetura/diagrama-arquitetural.md">Diagramas e contratos atuais</a></div>
         </div>
 
         <div class="card card-highlight" style="justify-content: center; gap: 20px;">
           <div class="card-title">Caminho do Dado no Sistema</div>
           <ul>
-            <li><strong>Nó Edge (Python 3.12):</strong> Coleta o frame, executa o pré-processamento e a inferência TFLite em menos de 25 ms.</li>
+            <li><strong>Nó Edge:</strong> Aquisição, pré-processamento, inferência PyTorch e outbox SQLite; ambiente da câmera conforme o README.</li>
             <li><strong>Mensageria MQTT (Mosquitto):</strong> Publicação assíncrona de eventos estruturados em JSON no tópico industrial.</li>
             <li><strong>Backend FastAPI:</strong> Arquitetura em monólito modular, consumindo a fila MQTT e orquestrando as regras de negócio.</li>
             <li><strong>Banco SQLite:</strong> Armazenamento transacional leve, determinístico e local para histórico de auditoria.</li>
@@ -572,7 +572,7 @@
       <div class="slide-header">
         <div class="category-tag">Resiliência Operacional</div>
         <h1 class="slide-title">Autonomia Local e Operação Offline</h1>
-        <p class="slide-subtitle">O laço crítico de inspeção e rejeição não depende de rede externa para operar</p>
+        <p class="slide-subtitle">Inferência local e fila persistente; recuperação após falhas depende de ensaio</p>
       </div>
 
       <div class="grid-3">
@@ -586,14 +586,14 @@
         <div class="card card-highlight">
           <div class="card-title">Fila Local de Contingência</div>
           <p style="font-size: 19px; line-height: 1.6; color: #cbd5e1;">
-            Em eventual falha de rede ou queda momentânea do broker MQTT, o nó Edge enfileira os eventos localmente. A esteira não para e nenhum registro de não conformidade é perdido, sendo sincronizado assim que a conexão restabelece.
+            Em eventual falha de rede ou queda momentânea do broker MQTT, o nó Edge enfileira os eventos localmente. A entrega é tentada novamente; capacidade de disco, falhas de energia e persistência no backend exigem verificações próprias.
           </p>
         </div>
 
         <div class="card card-highlight">
           <div class="card-title">Determinismo Temporal</div>
           <p style="font-size: 19px; line-height: 1.6; color: #cbd5e1;">
-            O controle direto dos GPIOs via chip RP1 garante resposta rápida na leitura de borda do sensor e no acionamento do relé, eliminando variações de latência induzidas por tráfego de rede.
+            O gatilho do sensor é lido localmente. A latência do ciclo físico precisa ser medida; não há acionamento de cargas de potência no sistema entregue.
           </p>
         </div>
       </div>
@@ -603,8 +603,8 @@
     <div class="slide-area" id="slide-8" data-presenter="Samuel">
       <div class="slide-header">
         <div class="category-tag">Inteligência Artificial de Borda</div>
-        <h1 class="slide-title">Classificador YOLOv8n-cls e Otimização TFLite</h1>
-        <p class="slide-subtitle">Modelo compacto com quantização INT8 para altíssimo throughput com baixo consumo térmico</p>
+        <h1 class="slide-title">Classificador YOLOv8n-cls e Artefatos Versionados</h1>
+        <p class="slide-subtitle">Modelo ativo definido pelo manifesto; desempenho depende de ensaio na bancada</p>
       </div>
 
       <div class="grid-2-equal">
@@ -612,8 +612,8 @@
           <div class="card-title">Treinamento vs. Inferência</div>
           <ul>
             <li><strong>Treinamento no Ambiente MLOps:</strong> Modelo supervisionado treinado com dataset versionado via DVC e rastreado no DagsHub.</li>
-            <li><strong>Exportação Otimizada:</strong> Conversão dos pesos para TensorFlow Lite com quantização pós-treinamento em inteiros de 8 bits (INT8).</li>
-            <li><strong>Ganhos Práticos:</strong> Redução de 75% no consumo de memória RAM e inferência média de <strong>23,4 ms</strong> por imagem na Pi 5.</li>
+            <li><strong>Modelo operacional:</strong> Checkpoint PyTorch .pt selecionado pelo manifesto e recuperado com DVC.</li>
+            <li><strong>Medição pendente:</strong> Registrar memória, latência e condições de ensaio antes de anunciar resultados.</li>
           </ul>
         </div>
 
@@ -646,10 +646,10 @@
         <div class="card card-highlight" style="justify-content: center; gap: 20px;">
           <div class="card-title">Montagem Operacional da Bancada</div>
           <ul>
-            <li><strong>Sensor Fotoelétrico E18-D80NK:</strong> Feixe infravermelho posicionado milimetricamente no plano da esteira para detecção da borda frontal do frasco.</li>
-            <li><strong>Circuito Divisor de Tensão:</strong> Condiciona o nível de saída do sensor (5V) para a tensão segura da GPIO (3.3V LVTTL).</li>
+            <li><strong>Sensor Fotoelétrico E18-D80NK:</strong> Posição e atraso de captura precisam ser ajustados na bancada.</li>
+            <li><strong>Condicionamento Elétrico:</strong> Circuito legado pendente de revisão e medição antes de conectar à GPIO.</li>
             <li><strong>Câmera Digital:</strong> Ajustada com iluminação controlada para congelar o movimento do recipiente sem borrão.</li>
-            <li><strong>Mecanismo de Descarte:</strong> Módulo relé acionado instantaneamente na identificação de defeito para rejeição da peça.</li>
+            <li><strong>Resultado:</strong> Registro de classificação; retirada física da peça depende do procedimento do operador.</li>
           </ul>
         </div>
 
@@ -680,18 +680,23 @@
 
         <div class="card card-highlight" style="justify-content: center; gap: 16px;">
           <div class="card-title">Resposta do Sistema no Ciclo</div>
-          <div class="code-box">{
-  "inspection_id": "insp_20260915_001",
+          <div class="code-box" style="font-size: 14px; line-height: 1.3;">{
+  "inspection_id": 1758067200000002,
+  "timestamp": "2026-09-17T00:00:00Z",
+  "station_code": "ESTACAO-01",
+  "batch_code": "LOTE-01",
   "result": "CONFORME",
-  "confidence": 0.984,
-  "inference_time_ms": 23.4,
-  "action": "LIBERADO",
-  "relay_triggered": false
-}</div>
+  "category": null,
+  "nonconformity_type": null,
+  "technical_failure_type": null,
+  "confidence": 0.95,
+  "processing_time_ms": 100.0,
+  "model_format": "pytorch"
+}</div><p style="font-size: 14px;">Exemplo ilustrativo; não representa medição de bancada.</p>
           <ul>
-            <li>Interrupção da GPIO 17 disparada sem falsos positivos.</li>
-            <li>Frame capturado e classificado com alta confiança (98.4%).</li>
-            <li>Atuador permanece em repouso e o frasco segue na esteira.</li>
+            <li>Gatilho GPIO: confirmar seu comportamento em ensaio físico.</li>
+            <li>Confiança ilustrativa; substituir pela saída registrada na demonstração.</li>
+            <li>Resultado conforme registrado; não há atuação mecânica.</li>
           </ul>
         </div>
       </div>
@@ -702,7 +707,7 @@
       <div class="slide-header">
         <div class="category-tag">Ciclo de Demonstração 2</div>
         <h1 class="slide-title">Execução com Não Conformidade e Fail-Safe</h1>
-        <p class="slide-subtitle">Identificação em tempo real de falha crítica e rejeição mecânica preventiva</p>
+        <p class="slide-subtitle">Classificação e registro de falha; intervenção física cabe ao operador</p>
       </div>
 
       <div class="grid-2">
@@ -717,19 +722,24 @@
         </div>
 
         <div class="card card-highlight" style="justify-content: center; gap: 16px;">
-          <div class="card-title">Disparo Imediato de Fail-Safe (RN02)</div>
-          <div class="code-box">{
-  "inspection_id": "insp_20260915_002",
+          <div class="card-title">Classificação de Não Conformidade</div>
+          <div class="code-box" style="font-size: 14px; line-height: 1.3;">{
+  "inspection_id": 1758067200000003,
+  "timestamp": "2026-09-17T00:00:00Z",
+  "station_code": "ESTACAO-01",
+  "batch_code": "LOTE-01",
   "result": "NAO_CONFORME",
+  "category": "ANOMALIA_PRODUTO",
   "nonconformity_type": "SEM_TAMPA",
-  "confidence": 0.971,
-  "action": "EJECAO_MECANICA",
-  "relay_triggered": true
-}</div>
+  "technical_failure_type": null,
+  "confidence": 0.95,
+  "processing_time_ms": 100.0,
+  "model_format": "pytorch"
+}</div><p style="font-size: 14px;">Exemplo ilustrativo; não representa medição de bancada.</p>
           <ul>
-            <li>Classificação imediata como não conforme em 24 ms.</li>
-            <li>GPIO 23 comutada em nível alto, energizando o relé KY-019.</li>
-            <li>Frasco ejetado para o canal de descarte sem contaminar a esteira.</li>
+            <li>Classificação como não conforme no exemplo ilustrativo.</li>
+            <li>Evento persistido na outbox e encaminhado ao broker.</li>
+            <li>Conferir o registro na API; remoção física não é implementada.</li>
           </ul>
         </div>
       </div>
@@ -744,23 +754,27 @@
       <div class="slide-header">
         <div class="category-tag">Integração & Telemetria</div>
         <h1 class="slide-title">Telemetria MQTT e Persistência no SQLite</h1>
-        <p class="slide-subtitle">Estrutura de dados desacoplada garantindo rastreabilidade completa por lote</p>
+        <p class="slide-subtitle">Eventos por estação e lote; confirmar persistência pela API</p>
       </div>
 
       <div class="grid-2">
         <div class="card card-highlight" style="justify-content: center; gap: 18px;">
           <div class="card-title">Contrato de Dados da Inspeção</div>
-          <div class="code-box">{
-  "timestamp": "2026-09-15T23:58:00Z",
-  "station_id": "estacao-edge-01",
-  "inspection_id": "insp_8f91a2bc",
+          <div class="code-box" style="font-size: 14px; line-height: 1.3;">{
+  "inspection_id": 1758067200000004,
+  "timestamp": "2026-09-17T00:00:00Z",
+  "station_code": "ESTACAO-01",
+  "batch_code": "LOTE-01",
   "result": "NAO_CONFORME",
-  "nonconformity": "TAMPA_TORTA",
-  "confidence": 0.962,
-  "latency_ms": 28.1
-}</div>
+  "category": "ANOMALIA_PRODUTO",
+  "nonconformity_type": "SEM_TAMPA",
+  "technical_failure_type": null,
+  "confidence": 0.95,
+  "processing_time_ms": 100.0,
+  "model_format": "pytorch"
+}</div><p style="font-size: 14px;">Exemplo ilustrativo; não representa medição de bancada.</p>
           <p style="font-size: 17px; color: #94a3b8;">
-            Payload validado por schema Pydantic e publicado assincronamente no tópico MQTT <code>vigi/estacoes/{id}/inspecoes</code>.
+            Payload validado por schema Pydantic e publicado assincronamente no tópico MQTT <code>vigi/estacoes/{station_code}/inspecoes</code>.
           </p>
         </div>
 
@@ -828,7 +842,7 @@
         <div class="card">
           <div class="card-title">Gestão de Alarmes Críticos</div>
           <ul>
-            <li><strong>Configuração de Limiares:</strong> Definição de tolerância máxima de rejeições consecutivas.</li>
+            <li><strong>Configuração de Limiares:</strong> Limite percentual por lote; recorrência fixa em três não conformidades consecutivas.</li>
             <li><strong>Alerta Visual em Destaque:</strong> Modal crítico acionado ao atingir o limite para intervenção na tampadora.</li>
             <li><strong>Reconhecimento de Falha:</strong> Registro de ciência do operador para fins de auditoria de processo.</li>
           </ul>
@@ -841,16 +855,16 @@
       <div class="slide-header">
         <div class="category-tag">Métricas & Evolução</div>
         <h1 class="slide-title">Resultados Verificados, Limitações e Próximos Passos</h1>
-        <p class="slide-subtitle">Balanço técnico entre os requisitos homologados e a rota para industrialização</p>
+        <p class="slide-subtitle">Balanço entre implementação, evidências disponíveis e ensaios pendentes</p>
       </div>
 
       <div class="grid-3">
         <div class="card card-highlight">
-          <div class="card-title">Resultados Homologados</div>
+          <div class="card-title">Implementação e Evidências Pendentes</div>
           <ul>
-            <li>Latência total &lt; 500 ms (inferência INT8 em 23,4 ms).</li>
+            <li>Latência: meta sujeita a ensaio e relatório.</li>
             <li>Isolamento de borda sem dependência de internet externa.</li>
-            <li>Integração completa: Gatilho → IA → MQTT → API → UI.</li>
+            <li>Fluxo implementado: gatilho → IA → MQTT → API → UI; ensaio físico pendente.</li>
           </ul>
         </div>
 
@@ -892,7 +906,7 @@
           <p style="font-size: 21px; color: #38bdf8; font-weight: 600; margin-bottom: 14px;">Ação Imediata e Segregação</p>
           <ul>
             <li><strong>Alerta visual instantâneo:</strong> Notificação do defeito antes que o recipiente avance para a máquina empacotadora.</li>
-            <li><strong>Segregação automatizada:</strong> Comando elétrico de relé para desvio mecânico de frascos reprovados.</li>
+            <li><strong>Resposta operacional:</strong> Segregação física pelo operador; automação mecânica fora do escopo.</li>
             <li><strong>Intervenção ágil:</strong> Correção rápida na alimentação da tampadora sem necessidade de parar a linha inteira.</li>
           </ul>
         </div>
@@ -922,7 +936,7 @@
           <div class="card-title">Disponibilidade</div>
           <p style="font-weight: 700; color: #38bdf8; margin-bottom: 12px; font-size: 20px;">Menos Tempo de Parada</p>
           <p style="font-size: 19px; line-height: 1.55; color: #cbd5e1;">
-            Ao barrar frascos deformados antes da encaixotadora, elimina-se o tempo perdido com paradas para desobstrução mecânica de esteiras e limpeza de líquidos derramados.
+            Identificar frascos deformados pode apoiar a prevenção de paradas. O benefício depende da resposta operacional e de medição em produção.
           </p>
         </div>
 
@@ -930,22 +944,22 @@
           <div class="card-title">Performance</div>
           <p style="font-weight: 700; color: #38bdf8; margin-bottom: 12px; font-size: 20px;">Cadência Nominal</p>
           <p style="font-size: 19px; line-height: 1.55; color: #cbd5e1;">
-            A linha opera em sua velocidade nominal de projeto, sem necessidade de desaceleração da esteira para viabilizar inspeção visual manual por amostragem.
+            A velocidade compatível com captura e inferência deve ser determinada por ensaio; a cadência nominal ainda não está comprovada.
           </p>
         </div>
 
         <div class="card card-highlight">
           <div class="card-title">Qualidade</div>
-          <p style="font-weight: 700; color: #38bdf8; margin-bottom: 12px; font-size: 20px;">Zero Defeito no Lote</p>
+          <p style="font-weight: 700; color: #38bdf8; margin-bottom: 12px; font-size: 20px;">Qualidade: benefício esperado</p>
           <p style="font-size: 19px; line-height: 1.55; color: #cbd5e1;">
-            Garantia de que 100% dos produtos expedidos estejam conformes e lacrados, eliminando retrabalhos, descarte de embalagens secundárias e devoluções.
+            A identificação de defeitos pode apoiar a resposta operacional. Não há garantia de classificação perfeita ou eliminação de devoluções.
           </p>
         </div>
       </div>
 
       <div style="background: rgba(15, 23, 42, 0.9); border: 1px dashed #475569; padding: 14px 24px; border-radius: 12px; margin-top: 15px;">
         <p style="font-size: 16px; color: #94a3b8; font-style: italic;">
-          * <strong>Nota Técnica:</strong> Os ganhos percentuais quantitativos no OEE dependem de amostragem em regime contínuo de produção industrial. A presente avaliação valida qualitativamente o impacto direto do sistema sobre os fatores causadores de perda.
+          * <strong>Nota Técnica:</strong> Os ganhos percentuais quantitativos no OEE dependem de amostragem em regime contínuo de produção industrial. Os benefícios apresentados são hipóteses de impacto, não resultados homologados.
         </p>
       </div>
     </div>
@@ -959,17 +973,17 @@
       <div class="slide-header">
         <div class="category-tag">Encerramento Oficial</div>
         <h1 class="slide-title">Conclusão do Projeto e Reprodutibilidade</h1>
-        <p class="slide-subtitle">Sistema validado de ponta a ponta com documentação completa para replicação</p>
+        <p class="slide-subtitle">Software integrado e documentação preparada para orientar a replicação</p>
       </div>
 
       <div class="grid-2">
         <div class="card card-highlight" style="justify-content: center; gap: 22px;">
-          <div class="card-title">Síntese do Escopo Homologado</div>
+          <div class="card-title">Síntese do Escopo Documentado</div>
           <ul>
-            <li><strong>Hardware PoC:</strong> Raspberry Pi 5 conectada de forma segura ao sensor E18-D80NK e módulo relé.</li>
-            <li><strong>Pipeline MLOps:</strong> Dataset versionado, modelo YOLOv8n quantizado e inferência local determinística.</li>
+            <li><strong>Hardware PoC:</strong> Raspberry Pi 5, câmera e sensor; segurança elétrica e montagem pendentes de validação.</li>
+            <li><strong>Pipeline MLOps:</strong> Dataset e modelo YOLOv8n versionados, com inferência local e desempenho físico ainda a medir.</li>
             <li><strong>Supervisão Integrada:</strong> Telemetria MQTT, backend FastAPI e Dashboard React em tempo real.</li>
-            <li><strong>Reprodutibilidade:</strong> Manual passo a passo no README e esquemáticos oficiais em Fritzing.</li>
+            <li><strong>Reprodutibilidade:</strong> Manual passo a passo no README e artefatos Fritzing identificados como pendentes de validação elétrica.</li>
           </ul>
         </div>
 

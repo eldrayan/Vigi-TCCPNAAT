@@ -23,7 +23,7 @@ formato.
 
 | Nó | `STATION_CODE` | `DEVICE_ID` | Lote de exemplo |
 | --- | --- | --- | --- |
-| Raspberry central/estação 1 | `estacao-01` | `estacao-01` | `LOTE_01` |
+| Raspberry central/estação 1 (seed legado) | `ESTACAO_01` | `ESTACAO_01` | `LOTE_01` |
 | Raspberry estação 2 | `estacao-02` | `estacao-02` | `LOTE_02` |
 
 O `DEVICE_ID` também compõe o identificador dos clientes MQTT. Reutilizá-lo em
@@ -32,14 +32,14 @@ duas Raspberrys faz uma conexão substituir a outra.
 ## 2. Escolher a rede
 
 Na mesma rede local, use o IP privado do nó central, por exemplo
-`10.1.30.5`. Em redes diferentes, conecte as Raspberrys ao mesmo Tailnet e use
-o IP Tailscale do nó central, por exemplo `100.67.236.30`.
+`IP_DO_NO_CENTRAL`. Em redes diferentes, conecte as Raspberrys ao mesmo Tailnet e use
+o IP Tailscale do nó central, por exemplo `IP_TAILSCALE_DO_NO_CENTRAL`.
 
 Não exponha a porta MQTT `1883` diretamente à internet. De cada estação Edge,
 valide o caminho até o broker:
 
 ```bash
-nc -vz 100.67.236.30 1883
+nc -vz IP_DO_NO_CENTRAL 1883
 ```
 
 ## 3. Autorizar as estações no broker central
@@ -49,7 +49,7 @@ vírgula e exatamente no mesmo formato usado pelas estações:
 
 ```env
 MQTT_BIND_HOST=0.0.0.0
-MQTT_STATION_CODES=estacao-01,estacao-02
+MQTT_STATION_CODES=ESTACAO_01,estacao-02
 ```
 
 O Mosquitto gera a ACL durante a inicialização. Depois de alterar a lista,
@@ -70,7 +70,7 @@ O exemplo abaixo deve ser executado contra a API central. Ajuste
 `vigi_api_url` caso o backend esteja em outro endereço:
 
 ```bash
-vigi_api_url=http://100.67.236.30:8000
+vigi_api_url=http://IP_DO_NO_CENTRAL:8000
 
 vigi_station_id=$(curl --fail --silent --show-error \
   -X POST "$vigi_api_url/api/estacoes" \
@@ -107,17 +107,21 @@ valores iguais ao contexto ativo no backend.
 
 ## 5. Configurar cada Raspberry Edge
 
-Prepare o ambiente e o modelo em cada estação:
+Prepare o sistema operacional, ferramentas e Picamera2 conforme o [README](../../README.md). Em cada estação, prepare o ambiente e autentique o acesso ao modelo:
 
 ```bash
 make setup-rpi
-make model-pull
+make dvc-login
+uv run --no-sync python scripts/dvc_dagshub.py pull models.dvc
 ```
 
-Exemplo de `.env` para a estação 2:
+Verifique manifesto e peso pelo [guia DVC](../dvc-dagshub.md).
+Os valores `IP_DO_NO_CENTRAL` abaixo devem ser substituídos pelo endereço real.
+
+Exemplo de `.env` para a estação 2 (parâmetros de câmera são ponto de partida, não calibração validada):
 
 ```env
-HOST=100.67.236.30
+HOST=IP_DO_NO_CENTRAL
 PORT=1883
 
 MQTT_EDGE_USERNAME=vigi-edge
@@ -165,12 +169,9 @@ Quando a montagem estiver pronta, inicie a inspeção:
 make edge-up
 ```
 
-O projeto não precisa iniciar a esteira automaticamente no boot. Se existir um
-serviço de testes anterior, desabilite-o:
-
-```bash
-systemctl --user disable --now vigi-edge-estacao-02.service
-```
+A execução é manual. Antes de iniciar, confira se já existe outro processo ou serviço
+usando a câmera; encerre apenas aquele que você identificou. Não há um nome de
+serviço systemd universal instalado por este roteiro.
 
 ## 7. Verificar a operação
 
@@ -209,30 +210,15 @@ curl --fail --silent --show-error \
 | `not authorised` no MQTT | Código ausente na ACL | Atualize `MQTT_STATION_CODES` e recrie o broker |
 | `Connection refused` | IP, rota ou porta incorretos | Execute `nc -vz HOST 1883` |
 | Uma estação derruba a outra | `DEVICE_ID`/client ID repetido | Use um `DEVICE_ID` exclusivo em cada Raspberry |
-| Continua `OFFLINE` após reiniciar o broker | Edge antigo não republica o status retido | Reinicie `make edge-up` e atualize o checkout para obter a correção de reconexão |
-| Backend repete `Dispositivo sem estação cadastrada` | Status retido usa identificador legado, como `ESTACAO_01` | Atualize o backend; identificadores recebidos agora são normalizados e mensagens descartadas recebem ACK |
+| Continua `OFFLINE` | Sem status válido recebido | Confira processo Edge, conexão, credenciais, ACL e identificação; compare horário do status e logs |
+| `Dispositivo sem estação cadastrada` | Cadastro e identificação divergentes | Confira `device_id` no cadastro da API e no `.env` da estação |
 | `Pipeline handler in use` | Preview, coletor ou serviço usando a câmera | Encerre o outro processo; use apenas um por vez |
 | `Address already in use` | Porta do preview ocupada | Use `PREVIEW_PORT=8090` ou outra porta livre |
 | Estação/lote ausente offline | Contexto operacional não configurado | Cadastre estação, crie o lote e mantenha o `.env` consistente |
-| `make ps/down` pede credenciais backend | Checkout antigo do projeto | Atualize o código; estações Edge não precisam desses segredos |
 
-Em Raspberry Pi OS com desktop, o WirePlumber pode reservar a câmera CSI. Para
-uma estação dedicada, desabilite apenas o perfil de captura de vídeo no arquivo
-`~/.config/wireplumber/wireplumber.conf.d/10-vigi-disable-video-capture.conf`:
 
-```text
-wireplumber.profiles = {
-  main = {
-    hardware.video-capture = disabled
-  }
-}
-```
-
-Depois, reinicie o gerenciador multimídia:
-
-```bash
-systemctl --user restart wireplumber.service
-```
+Para diagnóstico operacional e confirmação de persistência, consulte o
+[manual do dashboard](02-dashboard-e-diagnostico.md).
 
 ## Checklist para adicionar uma nova estação
 
